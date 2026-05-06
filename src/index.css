@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* Global input improvements for readability */
+input, select, textarea {
+  font-size: 15px !important;
+  color: #1a2e22 !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #9CA3AF !important;
+  opacity: 1 !important;
+}
+
+/* Stronger input borders */
+input, select, textarea {
+  border: 1.5px solid #D1D5DB !important;
+  border-radius: 10px !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #1A4D35 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(26,77,53,0.1) !important;
+}
+
+/* Larger body text for older users */
+body {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+p, span, div, label {
+  letter-spacing: 0.01em;
+}

@@ -1,0 +1,44 @@
+# Query: import { useAuth } from '../context/AuthContext'
+# ContextLines: 1
+
+8 results - 8 files
+
+src\pages\Browse.jsx:
+  3  import { supabase } from '../supabase/config'
+  4: import { useAuth } from '../context/AuthContext'
+  5  
+
+src\pages\EditListing.jsx:
+  3  import { supabase } from '../supabase/config'
+  4: import { useAuth } from '../context/AuthContext'
+  5  
+
+src\pages\Home.jsx:
+  2  import { Link } from 'react-router-dom'
+  3: import { useAuth } from '../context/AuthContext'
+  4  
+
+src\pages\HowItWorks.jsx:
+  3  import { Link } from 'react-router-dom'
+  4: import { useAuth } from '../context/AuthContext'
+  5  const HOUSEHOLD_STEPS = [
+
+src\pages\JunkshopProfile.jsx:
+  3  import { supabase } from '../supabase/config'
+  4: import { useAuth } from '../context/AuthContext'
+  5  
+
+src\pages\Junkshops.jsx:
+  3  import { supabase } from '../supabase/config'
+  4: import { useAuth } from '../context/AuthContext'
+  5  
+
+src\pages\ListingDetail.jsx:
+  3  import { supabase } from '../supabase/config'
+  4: import { useAuth } from '../context/AuthContext'
+  5  
+
+src\pages\PostItem.jsx:
+  3  import { supabase } from '../supabase/config'
+  4: import { useAuth } from '../context/AuthContext'
+  5  
