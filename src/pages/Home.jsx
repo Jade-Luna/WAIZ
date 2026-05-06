@@ -437,14 +437,8 @@ export default function Home() {
               { label: 'Sign up',            path: '/signup'       },
               { label: 'Log in',             path: '/login'        },
             ]},
-            { title: 'Company', links: [
-              { label: 'About WAIZ', path: '/how-it-works' },
-              { label: 'Contact us', path: '/how-it-works' },
-            ]},
-            { title: 'Legal', links: [
-              { label:'Privacy Policy', path:'/how-it-works' },
-              {label:'Terms of Use',   path:'/how-it-works' },
-            ]},
+          
+
           ].map(col => (
             <div key={col.title}>
               <div className="text-xs font-medium tracking-widest uppercase mb-4" style={{ color: '#D8F3DC' }}>{col.title}</div>
@@ -457,6 +451,37 @@ export default function Home() {
               ))}
             </div>
           ))}
+
+           <div>
+  <div className="text-xs font-medium tracking-widest uppercase mb-4" style={{ color: '#D8F3DC' }}>Company</div>
+  <Link to="/about" className="block text-xs mb-2 hover:opacity-80 transition" style={{ color: '#74C69D' }}>
+    About WAIZ
+  </Link>
+  <button
+    onClick={() => setShowContact(true)}
+    className="block text-xs mb-2 hover:opacity-80 transition text-left"
+    style={{ color: '#74C69D', background: 'none', border: 'none', cursor: 'pointer' }}>
+    Contact us
+  </button>
+</div> 
+
+            <div>
+  <div className="text-xs font-medium tracking-widest uppercase mb-4"
+    style={{ color:'#D8F3DC' }}>Legal</div>
+  <button
+    onClick={() => setShowPrivacy(true)}
+    className="block text-xs mb-2 hover:opacity-80 transition text-left"
+    style={{ color:'#74C69D', background:'none', border:'none', cursor:'pointer' }}>
+    Privacy Policy
+  </button>
+  <button
+    onClick={() => setShowTerms(true)}
+    className="block text-xs mb-2 hover:opacity-80 transition text-left"
+    style={{ color:'#74C69D', background:'none', border:'none', cursor:'pointer' }}>
+    Terms of Use
+  </button>
+</div>
+
         </div>
         <div className="border-t pt-6 flex justify-between items-center" style={{ borderColor: '#2D6A4F' }}>
           <span className="text-xs" style={{ color: '#74C69D' }}>© 2025 WAIZ · Baguio City, Philippines</span>
