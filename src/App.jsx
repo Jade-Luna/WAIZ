@@ -18,6 +18,7 @@ import { supabase } from './supabase/config'
 import ChooseRole from './pages/ChooseRole'
 import ContactModal from './components/ContactModal'
 import { useState } from 'react'
+import About from './pages/About'
 
 const RoleGuard = () => {
   const { user, profile, loading } = useAuth()
@@ -129,6 +130,7 @@ const dashRedirect = profile?.role === 'junkshop'
     <Routes>
       <Route path="/"          element={<Home />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
+      <Route path="/about" element={<About />} />
       <Route path="/browse"    element={<Browse />} />
       <Route path="/junkshops" element={<Junkshops />} />
       <Route path="/login"  element={<Login />} />
