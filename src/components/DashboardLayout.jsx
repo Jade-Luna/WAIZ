@@ -108,7 +108,7 @@ const fetchNotifications = async () => {
   }
 `}</style>
       <aside
-  className="flex flex-col sticky top-0 h-screen shrink-0 transition-all duration-200 z-30"
+  className="flex flex-col fixed top-0 left-0 h-screen shrink-0 transition-all duration-200 z-30"
   style={{ width: collapsed ? '64px' : '220px', minWidth: collapsed ? '64px' : '220px', backgroundColor:'#0D2B1F' }}>
 
 
@@ -145,7 +145,7 @@ const fetchNotifications = async () => {
         )}
 
         {/* Nav items */}
-        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 px-2 py-3 space-y-0.5">
   {NAV.map(item => {
     const isActive = activeTab === item.key
     const dotCount = item.key === 'messages'
@@ -202,7 +202,7 @@ const fetchNotifications = async () => {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 min-w-0 overflow-x-hidden">
+      <main className="flex-1 min-w-0 overflow-x-hidden" style={{ marginLeft: collapsed ? '64px' : '220px', transition: 'margin-left 0.2s' }}>
         {/* Top bar */}
         <div className="h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100 sticky top-0 z-30">
   <div className="text-sm font-medium text-gray-500">
