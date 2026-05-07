@@ -10,10 +10,10 @@ const BARANGAYS = [
   'Dontogan','Engineers Hill','Fairview Village','Ferdinand','Fort del Pilar',
   'Gabriela Silang','General Luna Road','Gibraltar','Greenwater Village',
   'Guisad Central','Guisad Sorong','Happy Hollow','Happy Homes','Harrison Road',
-  'Holy Ghost Extension','Holy Ghost Proper','Honeymoon','Irisan','Imelda Marcos',
+  'Holy Ghost Extension','Holy Ghost Proper','Honeymoon','Irisan',
   'Kabayanihan','Kagitingan','Kayang Extension','Kayang-Hilltop','Kias',
   'Loakan Apugan','Loakan Liwanag','Loakan Proper','Loakan Road','Lopez Jaena',
-  'Lourdes Subdivision Extension','Lourdes Subdivision Proper','Lower Quirino',
+  'Lourdes Subdivision Extension','Lourdes Subdivision Proper','Lower Quirino Hill',
   'Lualhati','Lucnab','Magsaysay Private Road','Magsaysay Lower','Magsaysay Upper',
   'Manuel A. Roxas','Market Subdivision','Middle Quezon Hill','Military Cut-off',
   'Mines View Park','Modern Site East','Modern Site West','MRR-Queen of Peace',
@@ -23,25 +23,48 @@ const BARANGAYS = [
   'Quirino Hill Proper','Quirino Hill West','Quirino-Magsaysay','Rock Quarry',
   'Salud Mitra','San Antonio Village','San Luis Village','San Roque Village',
   'San Vicente','Santa Escolastica','Santo Rosario','Santo Tomas Proper',
-  'Santo Tomas School Area','Session Road','Sierra Vista','Slaughter House',
-  'South Drive','Teodora Alonzo','Trancoville','Victoria Village'
+  'Santo Tomas School Area','Session Road','Sierra Vista','Slaughter House Area',
+  'South Drive','Teodora Alonzo','Trancoville','Victoria Village',
 ]
 
 export default function Signup() {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [searchParams] = useSearchParams()
-const [role, setRole] = useState(searchParams.get('role') || 'household')
+  const [role, setRole] = useState(searchParams.get('role') || 'household')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
+
+  // Barangay search state — separate from form so we can clear suggestions independently
+  const [barangayInput,       setBarangayInput]       = useState('')
+  const [barangaySuggestions, setBarangaySuggestions] = useState([])
+  const [barangaySelected,    setBarangaySelected]    = useState(false)
 
   const [form, setForm] = useState({
     email: '', password: '', confirmPassword: '',
     firstName: '', lastName: '', phone: '', barangay: '',
     shopName: '', dtiNumber: ''
   })
-  const [agreedToTerms, setAgreedToTerms] = useState(false)
+
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
+
+  const handleBarangayInput = (val) => {
+    setBarangayInput(val)
+    setBarangaySelected(false)
+    update('barangay', val)
+    if (val.length < 1) { setBarangaySuggestions([]); return }
+    setBarangaySuggestions(
+      BARANGAYS.filter(b => b.toLowerCase().startsWith(val.toLowerCase())).slice(0, 6)
+    )
+  }
+
+  const selectBarangay = (b) => {
+    setBarangayInput(b)
+    update('barangay', b)
+    setBarangaySuggestions([])  // ✅ hide suggestions immediately
+    setBarangaySelected(true)
+  }
 
   const handleGoogle = async () => {
     await supabase.auth.signInWithOAuth({
@@ -59,8 +82,7 @@ const [role, setRole] = useState(searchParams.get('role') || 'household')
     if (form.password.length < 8) {
       setError('Password must be at least 8 characters.'); return
     }
-    setLoading(false)
-navigate(role === 'junkshop' ? '/dashboard/junkshop' : '/dashboard/household')
+    setLoading(true)
 
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: form.email,
@@ -74,31 +96,31 @@ navigate(role === 'junkshop' ? '/dashboard/junkshop' : '/dashboard/household')
     }
 
     const userId = data.user?.id || data.session?.user?.id
-if (userId) {
-  const { error: profileError } = await supabase.from('profiles').insert({
-    id: userId,
-    role,
-    full_name: role === 'household'
-      ? `${form.firstName} ${form.lastName}`
-      : form.shopName,
-    phone: form.phone,
-    barangay: form.barangay,
-  })
+    if (userId) {
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: userId,
+        role,
+        full_name: role === 'household'
+          ? `${form.firstName} ${form.lastName}`
+          : form.shopName,
+        phone:    form.phone,
+        barangay: form.barangay,
+      })
 
-  if (profileError) {
-    setError('Account created but profile setup failed. Please contact support.')
-    setLoading(false)
-    return
-  }
+      if (profileError) {
+        setError('Account created but profile setup failed. Please contact support.')
+        setLoading(false)
+        return
+      }
 
-  if (role === 'junkshop') {
-    await supabase.from('junkshops').insert({
-      id: userId,
-      shop_name: form.shopName,
-      dti_number: form.dtiNumber || null,
-    })
-  }
-}
+      if (role === 'junkshop') {
+        await supabase.from('junkshops').insert({
+          id:         userId,
+          shop_name:  form.shopName,
+          dti_number: form.dtiNumber || null,
+        })
+      }
+    }
 
     setLoading(false)
     navigate('/login')
@@ -150,16 +172,15 @@ if (userId) {
               <div className="grid grid-cols-2 gap-3 mb-6">
                 {[
                   { value: 'household', label: 'Household', desc: 'I have recyclables to sell', icon: '🏠' },
-                  { value: 'junkshop', label: 'Junkshop', desc: 'I buy recyclables', icon: '🏪' }
+                  { value: 'junkshop',  label: 'Junkshop',  desc: 'I buy recyclables',          icon: '🏪' }
                 ].map(opt => (
                   <div key={opt.value}
                     onClick={() => setRole(opt.value)}
                     className="border-2 rounded-2xl p-4 text-center cursor-pointer transition"
                     style={{
-                      borderColor: role === opt.value ? '#2D6A4F' : '#E5E7EB',
+                      borderColor:     role === opt.value ? '#2D6A4F' : '#E5E7EB',
                       backgroundColor: role === opt.value ? '#D8F3DC' : '#fff'
-                    }}
-                  >
+                    }}>
                     <div className="text-2xl mb-2">{opt.icon}</div>
                     <div className="text-sm font-medium text-gray-700">{opt.label}</div>
                     <div className="text-xs text-gray-400 mt-1">{opt.desc}</div>
@@ -236,34 +257,33 @@ if (userId) {
                   value={form.phone} onChange={e => update('phone', e.target.value)} />
               </div>
 
+              {/* Barangay with predictive search */}
               <div className="relative">
-  <label className="block text-xs font-medium text-gray-500 mb-1.5">
-    Barangay in Baguio City
-  </label>
-  <input
-    className={inputClass}
-    placeholder="Search barangay..."
-    value={form.barangay}
-    onChange={e => { update('barangay', e.target.value); update('_hideSuggestions', false) }}
-    onBlur={() => setTimeout(() => update('_hideSuggestions', true), 150)}
-    autoComplete="off"
-  />
-  {form.barangay.length >= 2 && !form._hideSuggestions && (
-    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
-      style={{ maxHeight:'180px', overflowY:'auto' }}>
-      {BARANGAYS.filter(b =>
-        b.toLowerCase().includes(form.barangay.toLowerCase())
-      ).slice(0,6).map(b => (
-        <button key={b} type="button"
-          onMouseDown={e => e.preventDefault()}
-          onClick={() => update('barangay', b)}
-          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 transition">
-          {b}
-        </button>
-      ))}
-    </div>
-  )}
-</div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                  Barangay in Baguio City
+                </label>
+                <input
+                  className={inputClass}
+                  placeholder="Type first letter to search..."
+                  value={barangayInput}
+                  onChange={e => handleBarangayInput(e.target.value)}
+                  autoComplete="off"
+                  required
+                />
+                {/* ✅ Only show suggestions when typing and not yet selected */}
+                {barangaySuggestions.length > 0 && !barangaySelected && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
+                    style={{ maxHeight:'180px', overflowY:'auto' }}>
+                    {barangaySuggestions.map(b => (
+                      <button key={b} type="button"
+                        onClick={() => selectBarangay(b)}
+                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 transition">
+                        {b}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div className="flex gap-3">
                 <button type="button" onClick={() => setStep(1)}
@@ -315,6 +335,23 @@ if (userId) {
                 </div>
               )}
 
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  checked={agreedToTerms}
+                  onChange={e => setAgreedToTerms(e.target.checked)}
+                  className="mt-0.5 shrink-0 w-4 h-4 cursor-pointer"
+                  style={{ accentColor:'#1A4D35' }}
+                />
+                <label htmlFor="terms" className="text-xs text-gray-500 leading-relaxed cursor-pointer">
+                  I have read and agree to WAIZ's{' '}
+                  <Link to="/how-it-works" className="underline" style={{ color:'#1A4D35' }}>Terms of Use</Link>{' '}
+                  and{' '}
+                  <Link to="/how-it-works" className="underline" style={{ color:'#1A4D35' }}>Privacy Policy</Link>
+                </label>
+              </div>
+
               <div className="flex gap-3">
                 <button type="button" onClick={() => setStep(2)}
                   className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-500 hover:bg-gray-50 transition">
@@ -323,34 +360,12 @@ if (userId) {
                 <button type="submit" disabled={loading || !agreedToTerms}
                   className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition"
                   style={{
-  backgroundColor: (!agreedToTerms || loading)
-    ? '#9CA3AF'
-    : role === 'junkshop' ? '#E9935A' : '#2D6A4F'
-}}>
+                    backgroundColor: (!agreedToTerms || loading) ? '#9CA3AF'
+                      : role === 'junkshop' ? '#E9935A' : '#2D6A4F'
+                  }}>
                   {loading ? 'Creating...' : role === 'junkshop' ? 'Submit for Verification' : 'Create Account'}
                 </button>
               </div>
-
-              <div className="flex items-start gap-3 mt-2">
-  <input
-    type="checkbox"
-    id="terms"
-    checked={agreedToTerms}
-    onChange={e => setAgreedToTerms(e.target.checked)}
-    className="mt-0.5 shrink-0 w-4 h-4 cursor-pointer"
-    style={{ accentColor:'#1A4D35' }}
-  />
-  <label htmlFor="terms" className="text-xs text-gray-500 leading-relaxed cursor-pointer">
-    I have read and agree to WAIZ's{' '}
-    <Link to="/how-it-works" className="underline" style={{ color:'#1A4D35' }}>
-      Terms of Use
-    </Link>{' '}
-    and{' '}
-    <Link to="/how-it-works" className="underline" style={{ color:'#1A4D35' }}>
-      Privacy Policy
-    </Link>
-  </label>
-</div>
             </form>
           )}
 

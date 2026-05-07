@@ -107,8 +107,8 @@ const fetchNotifications = async () => {
     50%       { opacity: 0.4; transform: scale(0.6); }
   }
 `}</style>
-      <aside
-  className="flex flex-col sticky top-0 h-screen shrink-0 transition-all duration-200 z-30"
+      // ✅ Fix
+<aside className="flex flex-col fixed top-0 left-0 h-screen shrink-0 transition-all duration-200 z-30"
   style={{ width: collapsed ? '64px' : '220px', minWidth: collapsed ? '64px' : '220px', backgroundColor:'#0D2B1F' }}>
 
 
@@ -131,10 +131,14 @@ const fetchNotifications = async () => {
         {/* User info */}
         {!collapsed && (
           <div className="px-4 py-4 border-b" style={{ borderColor:'#1A4D35' }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-medium mb-2"
-              style={{ backgroundColor:'#1A4D35', color:'#B7E4C7' }}>
-              {profile?.full_name?.slice(0,2).toUpperCase() || 'U'}
-            </div>
+  
+<div className="w-9 h-9 rounded-xl overflow-hidden mb-2 flex items-center justify-center text-sm font-medium shrink-0"
+  style={{ backgroundColor:'#1A4D35', color:'#B7E4C7' }}>
+  {profile?.avatar_url || profile?.photo_url
+    ? <img src={profile.avatar_url || profile.photo_url} alt="avatar" className="w-full h-full object-cover" />
+    : profile?.full_name?.slice(0,2).toUpperCase() || 'U'
+  }
+</div>
             <div className="text-sm font-medium truncate" style={{ color:'#D8F3DC' }}>
               {profile?.full_name || 'User'}
             </div>
@@ -184,38 +188,30 @@ const fetchNotifications = async () => {
 
         {/* Bottom links */}
 <div className="px-2 py-3 border-t space-y-0.5" style={{ borderColor:'#1A4D35' }}>
-  {isJunk && (
-    <Link to="/browse"
-      className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm"
-      style={{ color:'#74C69D' }}>
-      <span style={{ color:'#52B788' }}><BrowseIcon /></span>
-      {!collapsed && <span>Marketplace</span>}
-    </Link>
-  )}
-  <button onClick={() => setShowSignOutModal(true)}
-  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm"
-  style={{ color:'#74C69D' }}>
-  <span style={{ color:'#52B788' }}><SignOutIcon /></span>
-  {!collapsed && <span>Sign out</span>}
-</button>
+  <Link to="/browse"
+    className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm"
+    style={{ color:'#74C69D' }}>
+    <span style={{ color:'#52B788' }}><BrowseIcon /></span>
+    {!collapsed && <span>Marketplace</span>}
+  </Link>
+  <button onClick={handleSignOut}
+    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm"
+    style={{ color:'#74C69D' }}>
+    <span style={{ color:'#52B788' }}><SignOutIcon /></span>
+    {!collapsed && <span>Sign out</span>}
+  </button>
 </div>
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 min-w-0 overflow-x-hidden">
+      <main className="flex-1 min-w-0 overflow-x-hidden"style={{ marginLeft: collapsed ? '64px' : '220px', transition:'margin 0.2s' }}>
         {/* Top bar */}
         <div className="h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100 sticky top-0 z-30">
   <div className="text-sm font-medium text-gray-500">
     {NAV.find(n => n.key === activeTab)?.label || 'Dashboard'}
   </div>
   <div className="flex items-center gap-3">
-    {!isJunk && (
-  <Link to="/browse"
-    className="text-sm px-4 py-1.5 rounded-xl font-medium border"
-    style={{ borderColor:'#1A4D35', color:'#1A4D35' }}>
-    Marketplace
-  </Link>
-)}
+
   </div>
 </div>
 

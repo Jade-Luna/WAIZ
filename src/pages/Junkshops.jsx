@@ -9,7 +9,7 @@ const BARANGAYS = [
   'Trancoville','Holy Ghost','Engineers Hill','Pacdal','Guisad',
 ]
 
-const MATERIALS = ['All','Metal','Paper','Plastic','E-waste','Glass','Secondhand']
+const MATERIALS = ['All','Metal','Paper','Plastic','E-waste','Glass','Secondhand','Others']
 
 const PRICE_FIELDS = [
   { key:'price_metal',      label:'Metal'      },
@@ -18,6 +18,7 @@ const PRICE_FIELDS = [
   { key:'price_ewaste',     label:'E-waste'    },
   { key:'price_glass',      label:'Glass'      },
   { key:'price_secondhand', label:'Secondhand' },
+  { key:'price_others',     label:'Others'     }
 ]
 
 function Stars({ rating }) {
