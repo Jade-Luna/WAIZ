@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabase/config'
+import TermsModal from '../components/TermsModal'
+import PrivacyModal from '../components/PrivacyModal'
 
 const BARANGAYS = [
   'Abanao-Zandueta-Kayong-Chugum-Otek','Andres Bonifacio','Aurora Hill Proper',
@@ -36,7 +38,11 @@ export default function Signup() {
   const [error, setError] = useState('')
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
-  // Barangay search state — separate from form so we can clear suggestions independently
+  // Modal state
+  const [showTerms,   setShowTerms]   = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
+
+  // Barangay search
   const [barangayInput,       setBarangayInput]       = useState('')
   const [barangaySuggestions, setBarangaySuggestions] = useState([])
   const [barangaySelected,    setBarangaySelected]    = useState(false)
@@ -62,7 +68,7 @@ export default function Signup() {
   const selectBarangay = (b) => {
     setBarangayInput(b)
     update('barangay', b)
-    setBarangaySuggestions([])  // ✅ hide suggestions immediately
+    setBarangaySuggestions([])
     setBarangaySelected(true)
   }
 
@@ -85,7 +91,7 @@ export default function Signup() {
     setLoading(true)
 
     const { data, error: signUpError } = await supabase.auth.signUp({
-      email: form.email,
+      email:    form.email,
       password: form.password,
     })
 
@@ -98,7 +104,7 @@ export default function Signup() {
     const userId = data.user?.id || data.session?.user?.id
     if (userId) {
       const { error: profileError } = await supabase.from('profiles').insert({
-        id: userId,
+        id:        userId,
         role,
         full_name: role === 'household'
           ? `${form.firstName} ${form.lastName}`
@@ -123,13 +129,23 @@ export default function Signup() {
     }
 
     setLoading(false)
-    navigate('/login')
+
+    // ✅ Go straight to dashboard, not login
+    if (role === 'junkshop') {
+      navigate('/dashboard/junkshop')
+    } else {
+      navigate('/dashboard/household')
+    }
   }
 
   const inputClass = "w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-600 transition"
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FEFDF8' }}>
+
+      {/* ✅ Modals */}
+      {showTerms   && <TermsModal   onClose={() => setShowTerms(false)}   />}
+      {showPrivacy && <PrivacyModal onClose={() => setShowPrivacy(false)} />}
 
       {/* Nav */}
       <nav className="w-full h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100">
@@ -257,7 +273,7 @@ export default function Signup() {
                   value={form.phone} onChange={e => update('phone', e.target.value)} />
               </div>
 
-              {/* Barangay with predictive search */}
+              {/* Barangay predictive search */}
               <div className="relative">
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">
                   Barangay in Baguio City
@@ -270,7 +286,6 @@ export default function Signup() {
                   autoComplete="off"
                   required
                 />
-                {/* ✅ Only show suggestions when typing and not yet selected */}
                 {barangaySuggestions.length > 0 && !barangaySelected && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
                     style={{ maxHeight:'180px', overflowY:'auto' }}>
@@ -335,6 +350,7 @@ export default function Signup() {
                 </div>
               )}
 
+              {/* ✅ Terms with modal buttons instead of external links */}
               <div className="flex items-start gap-3">
                 <input
                   type="checkbox"
@@ -346,9 +362,21 @@ export default function Signup() {
                 />
                 <label htmlFor="terms" className="text-xs text-gray-500 leading-relaxed cursor-pointer">
                   I have read and agree to WAIZ's{' '}
-                  <Link to="/how-it-works" className="underline" style={{ color:'#1A4D35' }}>Terms of Use</Link>{' '}
-                  and{' '}
-                  <Link to="/how-it-works" className="underline" style={{ color:'#1A4D35' }}>Privacy Policy</Link>
+                  <button
+                    type="button"
+                    onClick={() => setShowTerms(true)}
+                    className="underline font-medium"
+                    style={{ color:'#1A4D35' }}>
+                    Terms of Use
+                  </button>
+                  {' '}and{' '}
+                  <button
+                    type="button"
+                    onClick={() => setShowPrivacy(true)}
+                    className="underline font-medium"
+                    style={{ color:'#1A4D35' }}>
+                    Privacy Policy
+                  </button>
                 </label>
               </div>
 
