@@ -98,7 +98,7 @@ const fetchNotifications = async () => {
   }
 
   return (
-    <div className="flex min-h-screen w-full overflow-x-hidden" style={{ backgroundColor:'#FEFDF8' }}>
+    <div className="flex h-screen w-full overflow-hidden" style={{ backgroundColor:'#FEFDF8' }}>
 
       {/* SIDEBAR */}
       <style>{`
@@ -106,9 +106,16 @@ const fetchNotifications = async () => {
     0%, 100% { opacity: 1; transform: scale(1);   }
     50%       { opacity: 0.4; transform: scale(0.6); }
   }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 `}</style>
       <aside
-  className="flex flex-col sticky top-0 h-screen shrink-0 transition-all duration-200 z-30"
+  className="flex flex-col h-screen overflow-hidden shrink-0 transition-all duration-200 z-30"
   style={{ width: collapsed ? '64px' : '220px', minWidth: collapsed ? '64px' : '220px', backgroundColor:'#0D2B1F' }}>
 
 
@@ -116,7 +123,7 @@ const fetchNotifications = async () => {
         <div className="flex items-center justify-between px-4 h-14 border-b"
           style={{ borderColor:'#1A4D35' }}>
           {!collapsed && (
-            <Link to="/" className="text-lg font-medium tracking-widest" style={{ color:'#D8F3DC' }}>
+            <Link to="/" className="font-bold tracking-tighter text-lg" style={{ color:'#D8F3DC', letterSpacing: '-0.03em', fontSize: '18px', fontWeight: '800' }}>
               WA<span style={{ color:'#C97A3A' }}>I</span>Z
             </Link>
           )}
@@ -139,10 +146,10 @@ const fetchNotifications = async () => {
     : profile?.full_name?.slice(0,2).toUpperCase() || 'U'
   }
 </div>
-            <div className="text-sm font-medium truncate" style={{ color:'#D8F3DC' }}>
+            <div className="text-sm font-bold truncate" style={{ color:'#D8F3DC', fontWeight: '700' }}>
               {profile?.full_name || 'User'}
             </div>
-            <div className="text-xs mt-0.5" style={{ color:'#52B788' }}>
+            <div className="text-xs mt-1.5" style={{ color:'#52B788', fontWeight: '500', fontSize: '12px', letterSpacing: '0.02em' }}>
               {isJunk ? 'Junkshop' : 'Household'} · {profile?.barangay?.split('-')[0] || 'Baguio'}
             </div>
           </div>
@@ -159,10 +166,14 @@ const fetchNotifications = async () => {
       : 0
     return (
       <Link key={item.key} to={item.path}
-        className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm relative"
+        className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm relative"
         style={{
           backgroundColor: isActive ? '#C97A3A' : 'transparent',
           color:           isActive ? '#fff'    : '#74C69D',
+          fontWeight: isActive ? '700' : '600',
+          fontSize: '13px',
+          letterSpacing: isActive ? '-0.01em' : '0.015em',
+          transition: 'all 0.2s ease',
         }}>
         <span className="shrink-0 relative" style={{ color: isActive ? '#fff' : '#52B788' }}>
           {item.icon}
@@ -171,7 +182,7 @@ const fetchNotifications = async () => {
               style={{
                 backgroundColor: '#C97A3A',
                 fontSize: '8px',
-                fontWeight: 600,
+                fontWeight: 700,
                 animation: 'eco-spark-dot 1.5s ease-in-out infinite',
               }}>
               {dotCount > 9 ? '9+' : dotCount}
@@ -179,7 +190,7 @@ const fetchNotifications = async () => {
           )}
         </span>
         {!collapsed && (
-          <span className="truncate font-medium">{item.label}</span>
+          <span className="truncate" style={{ fontWeight: isActive ? '700' : '600' }}>{item.label}</span>
         )}
       </Link>
     )
@@ -189,14 +200,14 @@ const fetchNotifications = async () => {
         {/* Bottom links */}
 <div className="px-2 py-3 border-t space-y-0.5" style={{ borderColor:'#1A4D35' }}>
   <Link to="/browse"
-    className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm"
-    style={{ color:'#74C69D' }}>
+    className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm"
+    style={{ color:'#74C69D', fontWeight: '600', fontSize: '13px', letterSpacing: '0.015em' }}>
     <span style={{ color:'#52B788' }}><BrowseIcon /></span>
     {!collapsed && <span>Marketplace</span>}
   </Link>
   <button onClick={handleSignOut}
-    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm"
-    style={{ color:'#74C69D' }}>
+    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm"
+    style={{ color:'#74C69D', fontWeight: '600', fontSize: '13px', letterSpacing: '0.015em' }}>
     <span style={{ color:'#52B788' }}><SignOutIcon /></span>
     {!collapsed && <span>Sign out</span>}
   </button>
@@ -204,10 +215,10 @@ const fetchNotifications = async () => {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 min-w-0 overflow-x-hidden">
+      <main className="flex-1 min-w-0 flex flex-col">
         {/* Top bar */}
-        <div className="h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100 sticky top-0 z-30">
-  <div className="text-sm font-medium text-gray-500">
+        <div className="h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100 shrink-0 z-30">
+  <div className="text-base font-bold" style={{ color: '#1f2937', letterSpacing: '-0.02em', fontWeight: '800' }}>
     {NAV.find(n => n.key === activeTab)?.label || 'Dashboard'}
   </div>
   <div className="flex items-center gap-3">
@@ -216,7 +227,9 @@ const fetchNotifications = async () => {
 </div>
 
         {/* Page content */}
-        <div className="p-4 md:p-8 pb-20 md:pb-8">{children}</div>
+        <div className="flex-1 overflow-y-auto hide-scrollbar">
+          <div className="p-4 md:p-8 pb-20 md:pb-8">{children}</div>
+        </div>
 
         {/* Mobile bottom nav */}
 <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex md:hidden z-50 safe-area-inset-bottom">
@@ -224,10 +237,10 @@ const fetchNotifications = async () => {
     const isActive = activeTab === item.key
     return (
       <Link key={item.key} to={item.path}
-        className="flex-1 flex flex-col items-center justify-center py-3 gap-0.5"
-        style={{ color: isActive ? '#1A4D35' : '#9CA3AF' }}>
+        className="flex-1 flex flex-col items-center justify-center py-3 gap-1"
+        style={{ color: isActive ? '#1A4D35' : '#9CA3AF', fontWeight: isActive ? '700' : '500', fontSize: '11px' }}>
         <span style={{ color: isActive ? '#1A4D35' : '#9CA3AF' }}>{item.icon}</span>
-        <span className="text-xs">{item.label.split(' ')[0]}</span>
+        <span style={{ fontWeight: isActive ? '700' : '600', letterSpacing: '0.01em' }}>{item.label.split(' ')[0]}</span>
       </Link>
     )
   })}

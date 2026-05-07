@@ -1,14 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+
+/* Professional premium font stack */
+* {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography hierarchy */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
 
 /* Global input improvements for readability */
 input, select, textarea {
-  font-size: 15px !important;
+  font-size: 16px !important;
   color: #1a2e22 !important;
+  font-family: inherit !important;
+  font-weight: 500 !important;
 }
 
 input::placeholder, textarea::placeholder {
   color: #9CA3AF !important;
   opacity: 1 !important;
+  font-weight: 400 !important;
 }
 
 /* Stronger input borders */
@@ -23,12 +43,26 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(26,77,53,0.1) !important;
 }
 
-/* Larger body text for older users */
+/* Enhanced body text */
 body {
   font-size: 15px;
-  line-height: 1.7;
+  line-height: 1.65;
+  font-weight: 400;
+  color: #1f2937;
 }
 
-p, span, div, label {
-  letter-spacing: 0.01em;
+p, span, label {
+  letter-spacing: 0.015em;
+  line-height: 1.65;
+}
+
+/* Text improvements */
+strong, b {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+small {
+  font-size: 0.875rem;
+  font-weight: 500;
 }
