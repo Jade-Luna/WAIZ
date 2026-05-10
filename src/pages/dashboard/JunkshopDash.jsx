@@ -176,11 +176,18 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
             )}
           </div>
         </div>
-        <Link to="/browse"
-          className="px-5 py-2.5 rounded-xl text-sm font-medium shrink-0"
-          style={{ backgroundColor:'#C97A3A', color:'#fff' }}>
-          Browse listings
-        </Link>
+        <div className="flex gap-2 shrink-0">
+  <Link to="/browse"
+    className="px-5 py-2.5 rounded-xl text-sm font-medium"
+    style={{ backgroundColor:'rgba(255,255,255,0.15)', color:'#fff' }}>
+    Marketplace
+  </Link>
+  <Link to="/junkshops"
+    className="px-5 py-2.5 rounded-xl text-sm font-medium"
+    style={{ backgroundColor:'#C97A3A', color:'#fff' }}>
+    Junkshops
+  </Link>
+</div>
       </div>
       )}
 
@@ -202,7 +209,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
         ))}
       </div>
       )}
-      
+
       {/* PICKUP REQUESTS */}
       {activeTab === 'requests' && (
         <div>

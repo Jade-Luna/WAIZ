@@ -137,11 +137,18 @@ setRequests(enrichedPickups.filter(p => p.status === 'requested'))
         {profile?.barangay || 'Baguio City'} · {listings.length} listing{listings.length !== 1 ? 's' : ''} posted
       </p>
     </div>
-    <Link to="/post-item"
-      className="px-5 py-2.5 rounded-xl text-sm font-medium shrink-0"
-      style={{ backgroundColor:'#C97A3A', color:'#fff' }}>
-      + Post an item
-    </Link>
+    <div className="flex gap-2 shrink-0">
+  <Link to="/browse"
+    className="px-5 py-2.5 rounded-xl text-sm font-medium"
+    style={{ backgroundColor:'rgba(255,255,255,0.15)', color:'#fff' }}>
+    Marketplace
+  </Link>
+  <Link to="/junkshops"
+    className="px-5 py-2.5 rounded-xl text-sm font-medium"
+    style={{ backgroundColor:'#C97A3A', color:'#fff' }}>
+    Junkshops
+  </Link>
+</div>
   </div>
 )}
 
