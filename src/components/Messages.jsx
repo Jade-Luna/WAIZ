@@ -10,6 +10,7 @@ function formatTime(dateStr) {
 }
 
 export default function Messages() {
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const { user, profile } = useAuth()
   const [conversations, setConversations] = useState([])
 const [userSearch,        setUserSearch]        = useState('')
@@ -232,251 +233,257 @@ const startNewConversation = (otherUser) => {
   )
 
   return (
-    <div>
-      <div className="mb-5">
-        <h2 className="text-base font-medium text-gray-700">Messages</h2>
-        <p className="text-sm text-gray-400 mt-0.5">
-          Chat directly with {profile?.role === 'junkshop' ? 'households' : 'junkshops'}
-        </p>
-      </div>
+  <div>
+    <div className="mb-5">
+      <h2 className="text-base font-medium text-gray-700">Messages</h2>
+      <p className="text-sm text-gray-400 mt-0.5">
+        Chat directly with {profile?.role === 'junkshop' ? 'households' : 'junkshops'}
+      </p>
+    </div>
 
-      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden"
-        style={{ height:'560px', display:'flex' }}>
+    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden"
+  style={{ height:'560px', display:'flex', position:'relative' }}>      
 
-        {/* Conversation list */}
-        <div className="w-72 shrink-0 border-r border-gray-100 flex flex-col">
-          {/* Search / New conversation */}
-<div className="p-4 border-b border-gray-50 space-y-2">
-  <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <circle cx="7" cy="7" r="5" stroke="#9CA3AF" strokeWidth="1.3"/>
-      <path d="M11 11l2.5 2.5" stroke="#9CA3AF" strokeWidth="1.3" strokeLinecap="round"/>
-    </svg>
-    <input
-      className="flex-1 text-sm outline-none bg-transparent placeholder-gray-300"
-      placeholder="  Search or start new chat..."
-      value={userSearch}
-      onChange={e => {
-        setUserSearch(e.target.value)
-        handleUserSearch(e.target.value)
-      }}
-    />
-  </div>
-  {/* Search results dropdown */}
-  {userSearchResults.length > 0 && (
-    <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
-      {userSearchResults.map(u => (
-        <div key={u.id}
-          onClick={() => startNewConversation(u)}
-          className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-green-50 transition">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium shrink-0"
-            style={{ backgroundColor:'#D8F3DC', color:'#1A4D35' }}>
-            {(u.full_name || 'U').slice(0,2).toUpperCase()}
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-700">{u.full_name}</p>
-            <p className="text-xs text-gray-400">{u.role} · {u.barangay}</p>
-          </div>
+      {/* Sidebar */}
+     <div className="border-r border-gray-100 flex flex-col transition-all duration-150"
+  style={{ width: sidebarOpen ? '288px' : '52px', minWidth: sidebarOpen ? '288px' : '52px', overflow: 'hidden' }}>
+
+  <div className="flex items-center border-b border-gray-50"
+    style={{ minHeight:'52px', padding:'8px' }}>
+    {sidebarOpen && (
+      <div className="flex-1 space-y-2 mr-2">
+        <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <circle cx="7" cy="7" r="5" stroke="#9CA3AF" strokeWidth="1.3"/>
+            <path d="M11 11l2.5 2.5" stroke="#9CA3AF" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+          <input
+            className="flex-1 text-sm outline-none bg-transparent placeholder-gray-300"
+            placeholder="Search or start new chat..."
+            value={userSearch}
+            onChange={e => {
+              setUserSearch(e.target.value)
+              handleUserSearch(e.target.value)
+            }}
+          />
         </div>
-      ))}
+        {userSearchResults.length > 0 && (
+          <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
+            {userSearchResults.map(u => (
+              <div key={u.id}
+                onClick={() => startNewConversation(u)}
+                className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-green-50 transition">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium shrink-0"
+                  style={{ backgroundColor:'#D8F3DC', color:'#1A4D35' }}>
+                  {(u.full_name || 'U').slice(0,2).toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{u.full_name}</p>
+                  <p className="text-xs text-gray-400">{u.role} · {u.barangay}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )}
+
+  </div>
+
+  {sidebarOpen && (
+    <div className="flex-1 overflow-y-auto">
+      {conversations.length === 0 ? (
+        <div className="text-center py-12 px-4">
+          <div className="text-3xl mb-2">💬</div>
+          <p className="text-xs text-gray-400">No conversations yet</p>
+        </div>
+      ) : (
+        conversations.map(conv => (
+          <div key={conv.id}
+            onClick={() => setActiveConv(conv.other_id || conv.id)}
+            className="flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-50 transition"
+            style={{
+              backgroundColor: activeConv === conv.other_id || activeConv === conv.id
+                ? '#F0FDF4' : 'transparent'
+            }}>
+            <div className="relative shrink-0">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium"
+                style={{ backgroundColor: conv.avatarBg, color: conv.avatarColor }}>
+                {conv.other_initials}
+              </div>
+              {conv.unread > 0 && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-white text-xs font-medium"
+                  style={{ backgroundColor:'#C97A3A', fontSize:'9px' }}>
+                  {conv.unread}
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-sm font-medium text-gray-700 truncate">
+                  {conv.other_name}
+                </span>
+                <span className="text-xs text-gray-300 shrink-0 ml-2">
+                  {conv.last_time}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 truncate">
+                {(() => {
+                  try {
+                    const parsed = JSON.parse(conv.last_message)
+                    if (parsed.type === 'listing_card') return `📦 ${parsed.title}`
+                  } catch {}
+                  return conv.last_message
+                })()}
+              </p>
+            </div>
+          </div>
+        ))
+      )}
     </div>
   )}
 </div>
 
-          <div className="flex-1 overflow-y-auto">
-            {conversations.length === 0 ? (
-              <div className="text-center py-12 px-4">
-                <div className="text-3xl mb-2">💬</div>
-                <p className="text-xs text-gray-400">No conversations yet</p>
-              </div>
-            ) : (
-              conversations.map(conv => (
-                <div key={conv.id}
-                  onClick={() => setActiveConv(conv.other_id || conv.id)}
-                  className="flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-50 transition"
-                  style={{
-                    backgroundColor: activeConv === conv.other_id || activeConv === conv.id
-                      ? '#F0FDF4' : 'transparent'
-                  }}>
-                  <div className="relative shrink-0">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium"
-                      style={{ backgroundColor: conv.avatarBg, color: conv.avatarColor }}>
-                      {conv.other_initials}
-                    </div>
-                    {conv.unread > 0 && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-white text-xs font-medium"
-                        style={{ backgroundColor:'#C97A3A', fontSize:'9px' }}>
-                        {conv.unread}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-sm font-medium text-gray-700 truncate">
-                        {conv.other_name}
-                      </span>
-                      <span className="text-xs text-gray-300 shrink-0 ml-2">
-                        {conv.last_time}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-400 truncate">{conv.last_message}</p>
-                    {conv.listing_title && (
-                      <p className="text-xs truncate mt-0.5" style={{ color:'#2D6A4F' }}>
-                        Re: {conv.listing_title}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Chat window */}
-        {activeConv ? (
-          <div className="flex-1 flex flex-col min-w-0">
-
-            {/* Chat header */}
-            <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
-                style={{ backgroundColor: activeConvData?.avatarBg || '#D8F3DC', color: activeConvData?.avatarColor || '#0D2B1F' }}>
-                {activeConvData?.other_initials || '??'}
-              </div>
-              <div>
-                <div className="text-sm font-medium text-gray-700">
-                  {activeConvData?.other_name || 'Conversation'}
-                </div>
-                {activeConvData?.listing_title && (
-                  <div className="text-xs" style={{ color:'#2D6A4F' }}>
-                    Re: {activeConvData.listing_title}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3"
-              style={{ backgroundColor:'#F9FDF7' }}>
-              {loading ? (
-                <div className="text-center text-xs text-gray-300 py-8">Loading messages...</div>
-              ) : (
-                messages.map((msg, i) => {
-                  const isMe = msg.sender_id === user.id || msg.sender_id === 'me'
-                  return (
-                    <div key={msg.id || i}
-                      className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                      <div className="max-w-xs">
-                        <div className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
-                          style={{
-                            backgroundColor: isMe ? '#1A4D35'  : '#fff',
-                            color:           isMe ? '#fff'     : '#374151',
-                            borderRadius:    isMe
-                              ? '16px 16px 4px 16px'
-                              : '16px 16px 16px 4px',
-                            border: isMe ? 'none' : '1px solid #F3F4F6',
-                          }}>
-                          
-{(() => {
-  try {
-    const parsed = JSON.parse(msg.content)
-    if (parsed.type === 'listing_card') {
-      return (
-        <div style={{
-          borderRadius: '12px',
-          overflow: 'hidden',
-          border: isMe ? '1px solid rgba(255,255,255,0.2)' : '1px solid #E5E7EB',
-          minWidth: '200px',
-          maxWidth: '240px',
+      {/* Toggle button */}
+      <button
+        onClick={() => setSidebarOpen(p => !p)}
+        style={{
+          position:'absolute',
+          left: sidebarOpen ? '276px' : '40px',
+          top:'8px',
+          width:'24px', height:'24px',
+          borderRadius:'50%',
+          border:'none', cursor:'pointer',
+          backgroundColor:'#1A4D35', color:'#fff',
+          fontSize:'10px', zIndex:10,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          transition:'left 0.15s',
+          boxShadow:'0 2px 6px rgba(0,0,0,0.2)'
         }}>
-          {/* Image */}
-          {parsed.image && (
-            <img src={parsed.image} alt={parsed.title}
-              style={{ width:'100%', height:'120px', objectFit:'cover', display:'block' }} />
-          )}
-          {/* Info */}
-          <div style={{ padding:'8px 10px', backgroundColor: isMe ? 'rgba(255,255,255,0.08)' : '#F9FAFB' }}>
-            <p style={{ fontSize:'12px', fontWeight:600, margin:'0 0 2px',
-              color: isMe ? '#fff' : '#111827' }}>
-              {parsed.title}
-            </p>
-            <p style={{ fontSize:'11px', margin:'0 0 6px',
-              color: isMe ? 'rgba(255,255,255,0.7)' : '#6B7280' }}>
-              {parsed.category}{parsed.weight ? ` · ${parsed.weight}kg` : ''}
-            </p>
-            <p style={{ fontSize:'11px', margin:'0 0 8px',
-              color: isMe ? 'rgba(255,255,255,0.85)' : '#374151' }}>
-              {parsed.text}
-            </p>
-            <a href={parsed.url} target="_blank" rel="noreferrer"
-              style={{
-                display: 'block', textAlign: 'center', fontSize: '11px',
-                padding: '5px 10px', borderRadius: '8px', textDecoration: 'none',
-                backgroundColor: isMe ? 'rgba(255,255,255,0.15)' : '#1A4D35',
-                color: '#fff',
-              }}>
-              View listing →
-            </a>
+        {sidebarOpen ? '◀' : '▶'}
+      </button>
+
+
+      {/* Chat window */}
+      {activeConv ? (
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
+              style={{ backgroundColor: activeConvData?.avatarBg || '#D8F3DC', color: activeConvData?.avatarColor || '#0D2B1F' }}>
+              {activeConvData?.other_initials || '??'}
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-700">
+                {activeConvData?.other_name || 'Conversation'}
+              </div>
+            </div>
           </div>
-        </div>
-      )
-    }
-  } catch {}
-  // Regular text message (with clickable links)
-  return msg.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
-    /^https?:\/\//.test(part)
-      ? <a key={i} href={part} target="_blank" rel="noreferrer"
-          style={{ color: isMe ? '#86EFAC' : '#1A4D35', textDecoration:'underline', wordBreak:'break-all' }}>
-          {part}
-        </a>
-      : part
-  )
-})()}
-                        </div>
-                        <div className={`text-xs text-gray-300 mt-1 ${isMe ? 'text-right' : 'text-left'}`}>
-                          {formatTime(msg.created_at)}
-                        </div>
+
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3"
+            style={{ backgroundColor:'#F9FDF7' }}>
+            {loading ? (
+              <div className="text-center text-xs text-gray-300 py-8">Loading messages...</div>
+            ) : (
+              messages.map((msg, i) => {
+                const isMe = msg.sender_id === user.id || msg.sender_id === 'me'
+                return (
+                  <div key={msg.id || i}
+                    className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <div className="max-w-xs">
+                      <div className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
+                        style={{
+                          backgroundColor: isMe ? '#1A4D35' : '#fff',
+                          color:           isMe ? '#fff'    : '#374151',
+                          borderRadius:    isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                          border: isMe ? 'none' : '1px solid #F3F4F6',
+                        }}>
+                        {(() => {
+                          try {
+                            const parsed = JSON.parse(msg.content)
+                            if (parsed.type === 'listing_card') {
+                              return (
+                                <div style={{
+                                  borderRadius: '12px', overflow: 'hidden',
+                                  border: isMe ? '1px solid rgba(255,255,255,0.2)' : '1px solid #E5E7EB',
+                                  minWidth: '200px', maxWidth: '240px',
+                                }}>
+                                  {parsed.image && (
+                                    <img src={parsed.image} alt={parsed.title}
+                                      style={{ width:'100%', height:'120px', objectFit:'cover', display:'block' }} />
+                                  )}
+                                  <div style={{ padding:'8px 10px', backgroundColor: isMe ? 'rgba(255,255,255,0.08)' : '#F9FAFB' }}>
+                                    <p style={{ fontSize:'12px', fontWeight:600, margin:'0 0 2px', color: isMe ? '#fff' : '#111827' }}>
+                                      {parsed.title}
+                                    </p>
+                                    <p style={{ fontSize:'11px', margin:'0 0 6px', color: isMe ? 'rgba(255,255,255,0.7)' : '#6B7280' }}>
+                                      {parsed.category}{parsed.weight ? ` · ${parsed.weight}kg` : ''}
+                                    </p>
+                                    <p style={{ fontSize:'11px', margin:'0 0 8px', color: isMe ? 'rgba(255,255,255,0.85)' : '#374151' }}>
+                                      {parsed.text}
+                                    </p>
+                                    <a href={parsed.url} target="_blank" rel="noreferrer"
+                                      style={{
+                                        display:'block', textAlign:'center', fontSize:'11px',
+                                        padding:'5px 10px', borderRadius:'8px', textDecoration:'none',
+                                        backgroundColor: isMe ? 'rgba(255,255,255,0.15)' : '#1A4D35',
+                                        color:'#fff',
+                                      }}>
+                                      View listing →
+                                    </a>
+                                  </div>
+                                </div>
+                              )
+                            }
+                          } catch {}
+                          return msg.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                            /^https?:\/\//.test(part)
+                              ? <a key={i} href={part} target="_blank" rel="noreferrer"
+                                  style={{ color: isMe ? '#86EFAC' : '#1A4D35', textDecoration:'underline', wordBreak:'break-all' }}>
+                                  {part}
+                                </a>
+                              : part
+                          )
+                        })()}
+                      </div>
+                      <div className={`text-xs text-gray-300 mt-1 ${isMe ? 'text-right' : 'text-left'}`}>
+                        {formatTime(msg.created_at)}
                       </div>
                     </div>
-                  )
-                })
-              )}
-              <div ref={bottomRef} />
-            </div>
+                  </div>
+                )
+              })
+            )}
+            <div ref={bottomRef} />
+          </div>
 
-            {/* Input */}
-            <div className="px-4 py-3 border-t border-gray-100 flex items-center gap-3 bg-white">
-              <input
-                className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700 transition"
-                placeholder="Type a message..."
-                value={newMsg}
-                onChange={e => setNewMsg(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSend()}
-              />
-              <button
-                onClick={handleSend}
-                disabled={!newMsg.trim() || sending}
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 transition"
-                style={{ backgroundColor: newMsg.trim() ? '#1A4D35' : '#D1FAE5' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="22" y1="2" x2="11" y2="13"/>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                </svg>
-              </button>
-            </div>
+          <div className="px-4 py-3 border-t border-gray-100 flex items-center gap-3 bg-white">
+            <input
+              className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700 transition"
+              placeholder="Type a message..."
+              value={newMsg}
+              onChange={e => setNewMsg(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSend()}
+            />
+            <button onClick={handleSend} disabled={!newMsg.trim() || sending}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 transition"
+              style={{ backgroundColor: newMsg.trim() ? '#1A4D35' : '#D1FAE5' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
           </div>
-        ) : (
-          /* Empty state */
-          <div className="flex-1 flex items-center justify-center flex-col gap-3"
-            style={{ backgroundColor:'#F9FDF7' }}>
-            <div className="text-4xl">💬</div>
-            <p className="text-sm font-medium text-gray-500">Select a conversation</p>
-            <p className="text-xs text-gray-400">
-              Choose a conversation from the left to start chatting
-            </p>
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center flex-col gap-3"
+          style={{ backgroundColor:'#F9FDF7' }}>
+          <div className="text-4xl">💬</div>
+          <p className="text-sm font-medium text-gray-500">Select a conversation</p>
+          <p className="text-xs text-gray-400">Choose a conversation from the left to start chatting</p>
+        </div>
+      )}
     </div>
-  )
+  </div>
+)
 }

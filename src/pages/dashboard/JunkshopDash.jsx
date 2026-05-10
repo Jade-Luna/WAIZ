@@ -150,6 +150,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
     <DashboardLayout activeTab={activeTab}>
 
       {/* HEADER CARD */}
+      {!['messages', 'priceboard', 'profile'].includes(activeTab) && (
       <div className="rounded-2xl p-6 mb-6 flex items-center justify-between"
         style={{ background:'linear-gradient(135deg, #1A4D35 0%, #0D2B1F 100%)' }}>
         <div>
@@ -181,8 +182,10 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
           Browse listings
         </Link>
       </div>
+      )}
 
       {/* STAT CARDS */}
+      {!['messages', 'priceboard', 'profile'].includes(activeTab) && (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
           { label:'Pending requests', value: pendingCount,           bg:'#FAEEDA', color:'#7A3F08', sub:'awaiting action'   },
@@ -198,7 +201,8 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
           </div>
         ))}
       </div>
-
+      )}
+      
       {/* PICKUP REQUESTS */}
       {activeTab === 'requests' && (
         <div>
@@ -594,10 +598,11 @@ function JunkshopProfileEditor({ shop, user }) {
   <div className="rounded-xl overflow-hidden border border-gray-200"
     style={{ height:'220px' }}>
     <LocationPicker
-      lat={form.latitude}
-      lng={form.longitude}
-      onChange={(lat, lng) => setForm(p => ({ ...p, latitude: lat, longitude: lng }))}
-    />
+  lat={form.latitude}
+  lng={form.longitude}
+  onChange={(lat, lng) => setForm(p => ({ ...p, latitude: lat, longitude: lng }))}
+  key="location-picker-stable"
+/>
   </div>
   {form.latitude && (
     <p className="text-xs mt-1.5" style={{ color:'#1A4D35' }}>
@@ -640,92 +645,99 @@ function JunkshopProfileEditor({ shop, user }) {
 
 function LocationPicker({ lat, lng, onChange }) {
   const defaultCenter = [16.4023, 120.5960]
-  const [searchInput, setSearchInput] = useState('')
-  const [searching,   setSearching]   = useState(false)
+  const [searchInput,  setSearchInput]  = useState('')
+  const [searching,    setSearching]    = useState(false)
+  const [searchCoords, setSearchCoords] = useState(null)
+  const [pendingPin,   setPendingPin]   = useState(null)
 
   const pinIcon = new L.DivIcon({
     className: '',
     html: `<div style="background:#C97A3A;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3)"><div style="transform:rotate(45deg);color:#fff;font-size:11px;text-align:center;line-height:24px">♻</div></div>`,
-    iconSize:   [28,28], iconAnchor:[14,28],
+    iconSize:  [28,28], iconAnchor:[14,28],
   })
 
-const [searchCoords, setSearchCoords] = useState(null)
-
-const handleSearch = async () => {
-  if (!searchInput.trim()) return
-  setSearching(true)
-  try {
-    const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchInput + ', Baguio City, Philippines')}&format=json&limit=1`)
-    const data = await res.json()
-    if (data.length > 0) {
-      const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)]
-      setSearchCoords(coords)
-      onChange(coords[0], coords[1]) // keep your existing onChange
+  useEffect(() => {
+    if (pendingPin) {
+      onChange(pendingPin[0], pendingPin[1])
     }
-  } catch (e) { console.error(e) }
-  setSearching(false)
-}
-  
-  function ClickHandler() {
-    useMapEvents({ click(e) { onChange(e.latlng.lat, e.latlng.lng) } })
-    return null
+  }, [pendingPin])
+
+  const handleSearch = async () => {
+    if (!searchInput.trim()) return
+    setSearching(true)
+    try {
+      const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchInput + ', Baguio City, Philippines')}&format=json&limit=1`)
+      const data = await res.json()
+      if (data.length > 0) {
+        const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)]
+        setSearchCoords(coords)
+      }
+    } catch (e) { console.error(e) }
+    setSearching(false)
   }
 
   function FlyToLocation({ coords }) {
-  const map = useMap()
-  useEffect(() => {
-    if (coords) map.flyTo(coords, 16)
-  }, [coords])
-  return null
-}
+    const map = useMap()
+    useEffect(() => {
+      if (coords) map.flyTo(coords, 99)
+    }, [coords])
+    return null
+  }
+
+  function ClickHandler() {
+    useMapEvents({
+      click(e) { setPendingPin([e.latlng.lat, e.latlng.lng]) }
+    })
+    return null
+  }
 
   return (
-  <div>
-    <div className="flex gap-2 mb-2">
-      <input
-        className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
-        placeholder="Search your street or landmark in Baguio..."
-        value={searchInput}
-        onChange={e => setSearchInput(e.target.value)}
-        onKeyDown={e => e.key === 'Enter' && handleSearch()}
-      />
-      <button onClick={handleSearch} disabled={searching}
-        className="px-4 py-2 rounded-xl text-sm font-medium text-white shrink-0"
-        style={{ backgroundColor:'#1A4D35' }}>
-        {searching ? '...' : 'Search'}
-      </button>
-      <button
-    onClick={() => {
-      if (!navigator.geolocation) return
-      navigator.geolocation.getCurrentPosition(pos => {
-        const coords = [pos.coords.latitude, pos.coords.longitude]
-        setSearchCoords(coords)
-        onChange(coords[0], coords[1])
-      })
-    }}
-    className="px-3 py-2 rounded-xl text-sm border border-gray-200 text-gray-500 hover:bg-gray-50 shrink-0"
-    title="Use my current location">
-    📍
-  </button>
-    </div>
-    <div className="rounded-xl overflow-hidden border border-gray-200" style={{ height:'240px' }}>
-      <MapContainer
-        center={lat && lng ? [lat, lng] : defaultCenter}
-        zoom={15}
-        style={{ height:'100%', width:'100%' }}
-        scrollWheelZoom={true}>
-        <TileLayer
-          attribution='© OpenStreetMap'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    <div>
+      <div className="flex gap-2 mb-2">
+        <input
+          className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
+          placeholder="Search your street or landmark in Baguio..."
+          value={searchInput}
+          onChange={e => setSearchInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleSearch()}
         />
-        <FlyToLocation coords={searchCoords} />
-        <ClickHandler />
-        {lat && lng && <Marker position={[lat, lng]} icon={pinIcon} />}
-      </MapContainer>
+        <button onClick={handleSearch} disabled={searching}
+          className="px-4 py-2 rounded-xl text-sm font-medium text-white shrink-0"
+          style={{ backgroundColor:'#1A4D35' }}>
+          {searching ? '...' : 'Search'}
+        </button>
+        <button
+          onClick={() => {
+            if (!navigator.geolocation) return
+            navigator.geolocation.getCurrentPosition(pos => {
+              const coords = [pos.coords.latitude, pos.coords.longitude]
+              setSearchCoords(coords)
+              setPendingPin(coords)
+            })
+          }}
+          className="px-3 py-2 rounded-xl text-sm border border-gray-200 text-gray-500 hover:bg-gray-50 shrink-0"
+          title="Use my current location">
+          📍
+        </button>
+      </div>
+      <div className="rounded-xl overflow-hidden border border-gray-200" style={{ height:'240px' }}>
+        <MapContainer
+          center={lat && lng ? [lat, lng] : defaultCenter}
+          zoom={15}
+          style={{ height:'100%', width:'100%' }}
+          scrollWheelZoom={true}>
+          <TileLayer
+            attribution='© OpenStreetMap'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <FlyToLocation coords={searchCoords} />
+          <ClickHandler />
+          {lat && lng && <Marker position={[lat, lng]} icon={pinIcon} />}
+        </MapContainer>
+      </div>
+      <p className="text-xs text-gray-400 mt-1.5">
+        Search your street above, or click directly on the map to drop your pin
+      </p>
     </div>
-    <p className="text-xs text-gray-400 mt-1.5">
-      Search your street above, or click directly on the map to drop your pin
-    </p>
-  </div>
-)
+  )
 }
