@@ -238,34 +238,35 @@ Keep responses short, punchy, and HIGH ENERGY — like an enthusiastic friend, n
 
   const mascotStyle = {
     position:  'fixed',
-    width:     '60px',
-    height:    '68px',
+    width:     '50px',
+    height:    '60px',
     cursor:    dragging ? 'grabbing' : 'grab',
     userSelect:'none',
-    zIndex:    9998,
+    zIndex:    95,
     ...(pos.x !== null
       ? { left: pos.x, top: pos.y, right:'auto', bottom:'auto' }
-      : { bottom:'20px', right:'24px' }
+      : { bottom:'max(20px, calc(env(safe-area-inset-bottom) + 20px))', right:'24px' }
     )
   }
 
   const popupStyle = {
     position:   'fixed',
-    width:      '300px',
+    width:      'calc(100vw - 32px)',
+    maxWidth:   '320px',
     background: '#ffffff',
     border:     '1px solid #B7E4C7',
-    borderRadius:'18px',
+    borderRadius:'16px',
     overflow:   'hidden',
-    zIndex:     9999,
+    zIndex:     95,
     boxShadow:  '0 10px 36px rgba(13,43,31,0.18)',
     ...(pos.x !== null
       ? {
-          left:   Math.min(pos.x + 100, window.innerWidth  - 310),
-          top:    Math.max(pos.y  - 420, 8),
+          left:   Math.min(pos.x + 80, window.innerWidth  - 340),
+          top:    Math.max(pos.y  - 380, 12),
           right:  'auto',
           bottom: 'auto',
         }
-      : { bottom:'130px', right:'24px' }
+      : { bottom: 'max(130px, calc(env(safe-area-inset-bottom) + 130px))', right:'24px' }
     )
   }
 
@@ -276,11 +277,11 @@ Keep responses short, punchy, and HIGH ENERGY — like an enthusiastic friend, n
         <div style={popupStyle}>
 
           {/* Header */}
-          <div style={{ background:'#0D2B1F', padding:'12px 14px', display:'flex', alignItems:'center', gap:'10px' }}>
+          <div style={{ background:'#0D2B1F', padding:'10px 12px', display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' }}>
             <EcoMiniIcon />
-            <div style={{ flex:1 }}>
-              <p style={{ fontSize:'14px', fontWeight:600, color:'#D8F3DC' }}>ECO</p>
-              <span style={{ fontSize:'11px', color:'#52B788' }}>WAIZ AI Assistant</span>
+            <div style={{ flex:1, minWidth:'120px' }}>
+              <p style={{ fontSize:'13px', fontWeight:600, color:'#D8F3DC', margin:'0' }}>ECO</p>
+              <span style={{ fontSize:'10px', color:'#52B788' }}>WAIZ AI Assistant</span>
             </div>
 
             {/* Clear button */}
@@ -292,30 +293,30 @@ Keep responses short, punchy, and HIGH ENERGY — like an enthusiastic friend, n
                 }])}
                 style={{
                   background:'none', border:'none', cursor:'pointer',
-                  color:'rgba(255,255,255,0.45)', fontSize:'11px',
-                  padding:'2px 8px', borderRadius:'6px',
+                  color:'rgba(255,255,255,0.45)', fontSize:'10px',
+                  padding:'2px 6px', borderRadius:'4px', whiteSpace:'nowrap'
                 }}>
-                Clear chat
+                Clear
               </button>
             )}
 
             <button
               onClick={() => setOpen(false)}
-              style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.5)', fontSize:'18px', lineHeight:1, padding:'2px 5px' }}>
+              style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.5)', fontSize:'16px', lineHeight:1, padding:'0', width:'24px', height:'24px', display:'flex', alignItems:'center', justifyContent:'center' }}>
               ✕
             </button>
           </div>
 
           {/* Messages */}
-          <div style={{ padding:'12px', display:'flex', flexDirection:'column', gap:'8px', minHeight:'140px', maxHeight:'220px', overflowY:'auto', background:'#F9FDF7' }}>
+          <div style={{ padding:'10px', display:'flex', flexDirection:'column', gap:'6px', minHeight:'120px', maxHeight:'200px', overflowY:'auto', background:'#F9FDF7' }}>
             {messages.map((m, i) => (
               <div key={i} style={{
                 background:    m.role === 'user' ? '#1A4D35' : '#E8F5E2',
                 color:         m.role === 'user' ? '#fff'    : '#1A4D35',
-                borderRadius:  m.role === 'user' ? '12px 12px 3px 12px' : '12px 12px 12px 3px',
-                padding:       '8px 12px',
-                fontSize:      '13px',
-                lineHeight:    1.5,
+                borderRadius:  m.role === 'user' ? '10px 10px 2px 10px' : '10px 10px 10px 2px',
+                padding:       '7px 10px',
+                fontSize:      '12px',
+                lineHeight:    1.4,
                 maxWidth:      '90%',
                 alignSelf:     m.role === 'user' ? 'flex-end' : 'flex-start',
               }}>
@@ -323,7 +324,7 @@ Keep responses short, punchy, and HIGH ENERGY — like an enthusiastic friend, n
               </div>
             ))}
             {loading && (
-              <div style={{ background:'#E8F5E2', color:'#1A4D35', borderRadius:'12px 12px 12px 3px', padding:'8px 12px', fontSize:'13px', alignSelf:'flex-start', opacity:0.6, fontStyle:'italic' }}>
+              <div style={{ background:'#E8F5E2', color:'#1A4D35', borderRadius:'10px 10px 10px 2px', padding:'7px 10px', fontSize:'12px', alignSelf:'flex-start', opacity:0.6, fontStyle:'italic' }}>
                 ECO is thinking...
               </div>
             )}
@@ -332,10 +333,10 @@ Keep responses short, punchy, and HIGH ENERGY — like an enthusiastic friend, n
 
           {/* Suggestions */}
           {messages.length <= 1 && (
-            <div style={{ padding:'0 12px 8px', display:'flex', flexWrap:'wrap', gap:'5px' }}>
+            <div style={{ padding:'0 10px 6px', display:'flex', flexWrap:'wrap', gap:'4px' }}>
               {SUGGESTED.map(s => (
                 <button key={s} onClick={() => sendMessage(s)}
-                  style={{ fontSize:'11px', padding:'4px 10px', borderRadius:'12px', border:'1px solid #B7E4C7', background:'#F0FDF4', color:'#1A4D35', cursor:'pointer' }}>
+                  style={{ fontSize:'10px', padding:'4px 8px', borderRadius:'10px', border:'1px solid #B7E4C7', background:'#F0FDF4', color:'#1A4D35', cursor:'pointer', whiteSpace:'nowrap' }}>
                   {s}
                 </button>
               ))}
@@ -343,18 +344,18 @@ Keep responses short, punchy, and HIGH ENERGY — like an enthusiastic friend, n
           )}
 
           {/* Input */}
-          <div style={{ display:'flex', borderTop:'1px solid #E0EED8', padding:'8px', gap:'6px', background:'#fff' }}>
+          <div style={{ display:'flex', borderTop:'1px solid #E0EED8', padding:'6px', gap:'4px', background:'#fff' }}>
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
               placeholder="Ask ECO..."
-              style={{ flex:1, border:'1px solid #B7E4C7', borderRadius:'9px', padding:'7px 12px', fontSize:'13px', outline:'none', background:'#F9FDF7', color:'#1A4D35' }}
+              style={{ flex:1, border:'1px solid #B7E4C7', borderRadius:'8px', padding:'6px 10px', fontSize:'12px', outline:'none', background:'#F9FDF7', color:'#1A4D35' }}
             />
             <button
               onClick={() => sendMessage()}
               disabled={!input.trim() || loading}
-              style={{ background: input.trim() ? '#1A4D35' : '#B7E4C7', border:'none', borderRadius:'9px', color:'#fff', width:'34px', height:'34px', cursor: input.trim() ? 'pointer' : 'default', fontSize:'16px', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              style={{ background: input.trim() ? '#1A4D35' : '#B7E4C7', border:'none', borderRadius:'8px', color:'#fff', width:'30px', height:'30px', cursor: input.trim() ? 'pointer' : 'default', fontSize:'14px', display:'flex', alignItems:'center', justifyContent:'center' }}>
               →
             </button>
           </div>
