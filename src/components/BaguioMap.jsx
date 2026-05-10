@@ -153,6 +153,13 @@ export default function BaguioMap({
   style={{ fontSize:'11px', background:'#F0FDF4', color:'#1A4D35', border:'1px solid #B7E4C7', borderRadius:'8px', padding:'5px 10px', cursor:'pointer', width:'100%', marginTop:'4px', textDecoration:'none', display:'block', textAlign:'center', boxSizing:'border-box' }}>
   View profile
 </Link>
+                  <a
+                    href={`https://www.google.com/maps?q=&layer=c&cbll=${shop.latitude},${shop.longitude}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ fontSize:'11px', background:'#EFF6FF', color:'#1D4ED8', border:'1px solid #BFDBFE', borderRadius:'8px', padding:'5px 10px', cursor:'pointer', width:'100%', marginTop:'4px', textDecoration:'none', display:'block', textAlign:'center', boxSizing:'border-box' }}>
+                    🔵 Street View
+                  </a>
                   <button
                     onClick={() => handleGetDirections(shop)}
                     style={{ fontSize: '11px', background: '#1A4D35', color: '#fff', border: 'none', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', width: '100%', marginTop: '4px' }}>

@@ -45,51 +45,83 @@ const [searchLoading,     setSearchLoading]     = useState(false)
   }, [messages])
 
   const fetchConversations = async () => {
-    const contactId    = searchParams.get('contact')
-const listingTitle = searchParams.get('title')
-const listingId    = searchParams.get('listing')
+  const contactId    = searchParams.get('contact')
+  const listingTitle = searchParams.get('title')
+  const listingId    = searchParams.get('listing')
+  const listingImage = searchParams.get('image')
+  const listingWeight = searchParams.get('weight')
+  const listingCategory = searchParams.get('category')
 
-if (contactId) {
-  setActiveConv(contactId)
-  if (listingTitle) {
-    setNewMsg(`Hi! I'm interested in your listing: "${decodeURIComponent(listingTitle)}"`)
-  }
-}
-    const { data } = await supabase
-      .from('messages')
-      .select('*, sender:profiles!sender_id(full_name, role), receiver:profiles!receiver_id(full_name, role)')
-      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-      .order('created_at', { ascending: false })
+  if (contactId) {
+    setActiveConv(contactId)
+    if (listingTitle && listingId) {
+      const listingUrl = `${window.location.origin}/listing/${listingId}`
+      const cardContent = JSON.stringify({
+        type:     'listing_card',
+        title:    decodeURIComponent(listingTitle),
+        image:    listingImage ? decodeURIComponent(listingImage) : null,
+        weight: listingWeight ? `${listingWeight}` : null,
+        category: listingCategory || null,
+        url:      listingUrl,
+        text:     "Hi! I'm interested in this listing.",
+      })
 
-    if (!data || data.length === 0) {
-  setConversations([])
-  return
-}
+      // Check if this card was already sent to avoid duplicates on re-render
+      const { data: existing } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('sender_id', user.id)
+        .eq('receiver_id', contactId)
+        .eq('content', cardContent)
+        .limit(1)
 
-
-    // Group by conversation partner
-    const convMap = {}
-    data.forEach(msg => {
-      const otherId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id
-      const other   = msg.sender_id === user.id ? msg.receiver   : msg.sender
-      if (!convMap[otherId]) {
-        convMap[otherId] = {
-          id:           otherId,
-          other_id:     otherId,
-          other_name:   other?.full_name || 'Unknown',
-          other_initials: (other?.full_name || 'UN').slice(0,2).toUpperCase(),
-          other_role:   other?.role,
-          last_message: msg.content,
-          last_time:    formatTime(msg.created_at),
-          unread:       (!msg.is_read && msg.receiver_id === user.id) ? 1 : 0,
-          avatarBg:     '#D8F3DC',
-          avatarColor:  '#0D2B1F',
+      if (!existing || existing.length === 0) {
+        const msgObj = {
+          sender_id:   user.id,
+          receiver_id: contactId,
+          content:     cardContent,
+          is_read:     false,
         }
+        setMessages(prev => [...prev, {
+          ...msgObj,
+          id:         Date.now(),
+          created_at: new Date().toISOString(),
+        }])
+        await supabase.from('messages').insert(msgObj)
       }
-    })
-    const convList = Object.values(convMap)
-    if (convList.length > 0) setConversations(convList)
+    }
   }
+
+  const { data } = await supabase
+    .from('messages')
+    .select('*, sender:profiles!sender_id(full_name, role), receiver:profiles!receiver_id(full_name, role)')
+    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+    .order('created_at', { ascending: false })
+
+  if (!data || data.length === 0) { setConversations([]); return }
+
+  const convMap = {}
+  data.forEach(msg => {
+    const otherId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id
+    const other   = msg.sender_id === user.id ? msg.receiver   : msg.sender
+    if (!convMap[otherId]) {
+      convMap[otherId] = {
+        id:             otherId,
+        other_id:       otherId,
+        other_name:     other?.full_name || 'Unknown',
+        other_initials: (other?.full_name || 'UN').slice(0,2).toUpperCase(),
+        other_role:     other?.role,
+        last_message:   msg.content,
+        last_time:      formatTime(msg.created_at),
+        unread:         (!msg.is_read && msg.receiver_id === user.id) ? 1 : 0,
+        avatarBg:       '#D8F3DC',
+        avatarColor:    '#0D2B1F',
+      }
+    }
+  })
+  const convList = Object.values(convMap)
+  if (convList.length > 0) setConversations(convList)
+}
 
 const handleUserSearch = async (query) => {
   if (query.length < 1) { setUserSearchResults([]); return }
@@ -343,7 +375,62 @@ const startNewConversation = (otherUser) => {
                               : '16px 16px 16px 4px',
                             border: isMe ? 'none' : '1px solid #F3F4F6',
                           }}>
-                          {msg.content}
+                          
+{(() => {
+  try {
+    const parsed = JSON.parse(msg.content)
+    if (parsed.type === 'listing_card') {
+      return (
+        <div style={{
+          borderRadius: '12px',
+          overflow: 'hidden',
+          border: isMe ? '1px solid rgba(255,255,255,0.2)' : '1px solid #E5E7EB',
+          minWidth: '200px',
+          maxWidth: '240px',
+        }}>
+          {/* Image */}
+          {parsed.image && (
+            <img src={parsed.image} alt={parsed.title}
+              style={{ width:'100%', height:'120px', objectFit:'cover', display:'block' }} />
+          )}
+          {/* Info */}
+          <div style={{ padding:'8px 10px', backgroundColor: isMe ? 'rgba(255,255,255,0.08)' : '#F9FAFB' }}>
+            <p style={{ fontSize:'12px', fontWeight:600, margin:'0 0 2px',
+              color: isMe ? '#fff' : '#111827' }}>
+              {parsed.title}
+            </p>
+            <p style={{ fontSize:'11px', margin:'0 0 6px',
+              color: isMe ? 'rgba(255,255,255,0.7)' : '#6B7280' }}>
+              {parsed.category}{parsed.weight ? ` · ${parsed.weight}kg` : ''}
+            </p>
+            <p style={{ fontSize:'11px', margin:'0 0 8px',
+              color: isMe ? 'rgba(255,255,255,0.85)' : '#374151' }}>
+              {parsed.text}
+            </p>
+            <a href={parsed.url} target="_blank" rel="noreferrer"
+              style={{
+                display: 'block', textAlign: 'center', fontSize: '11px',
+                padding: '5px 10px', borderRadius: '8px', textDecoration: 'none',
+                backgroundColor: isMe ? 'rgba(255,255,255,0.15)' : '#1A4D35',
+                color: '#fff',
+              }}>
+              View listing →
+            </a>
+          </div>
+        </div>
+      )
+    }
+  } catch {}
+  // Regular text message (with clickable links)
+  return msg.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+    /^https?:\/\//.test(part)
+      ? <a key={i} href={part} target="_blank" rel="noreferrer"
+          style={{ color: isMe ? '#86EFAC' : '#1A4D35', textDecoration:'underline', wordBreak:'break-all' }}>
+          {part}
+        </a>
+      : part
+  )
+})()}
                         </div>
                         <div className={`text-xs text-gray-300 mt-1 ${isMe ? 'text-right' : 'text-left'}`}>
                           {formatTime(msg.created_at)}

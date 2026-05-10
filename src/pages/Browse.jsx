@@ -72,6 +72,7 @@ export default function Browse() {
   if (sortBy === 'heaviest') query = query.order('weight_estimate',  { ascending: false })
 
   const { data } = await query
+   console.log('sample listing:', data?.[0])  
   if (!data) { setListings([]); setLoading(false); return }
 
  // Put current user's listings first
@@ -307,19 +308,27 @@ const statusLabel = {
             {/* Message button for junkshops */}
             {user && profile?.role === 'junkshop' && !isOwner && (
               <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  navigate(`/dashboard/junkshop?tab=messages&contact=${listing.posted_by}&listing=${listing.id}&title=${encodeURIComponent(listing.title)}`)
-                }}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
-                style={{ backgroundColor:'#1A4D35' }}
-                title="Message household">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                  stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="22" y1="2" x2="11" y2="13"/>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                </svg>
-              </button>
+  onClick={(e) => {
+    e.stopPropagation()
+    navigate(
+      `/dashboard/junkshop?tab=messages` +
+      `&contact=${listing.posted_by}` +
+      `&listing=${listing.id}` +
+      `&title=${encodeURIComponent(listing.title)}` +
+      `&image=${encodeURIComponent(listing.photos?.[0] || '')}` +
+      `&weight=${listing.weight_estimate || ''}` +
+      `&category=${encodeURIComponent(listing.category || '')}`
+    )
+  }}
+  className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
+  style={{ backgroundColor:'#1A4D35' }}
+  title="Message household">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="22" y1="2" x2="11" y2="13"/>
+    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+  </svg>
+</button>
             )}
           </div>
         </div>
