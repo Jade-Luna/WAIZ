@@ -10,9 +10,9 @@ const NAV = [
   { key:'junkshops',     label:'Junkshops',      icon:<ShopIcon />    },
   { key:'pickups',       label:'Pickups',        icon:<TruckIcon />   },
   { key:'reports',       label:'Reports',        icon:<FlagIcon />    },
+  { key:'ratings',       label:'Ratings',        icon:<StarIcon />    },
   { key:'announcements', label:'Announcements',  icon:<MegaIcon />    },
   { key:'analytics',     label:'Analytics',      icon:<ChartIcon />   },
-  { key:'ratings', label:'Ratings', icon:<StarIcon /> },
 ]
 
 const DUMMY_STATS = {
@@ -1084,13 +1084,18 @@ const handleDeleteRating = async (id, junkshopId) => {
   
 )}
 
-        </div>
         {/* REPORTS */}
-{activeTab === 'reports' && (
+        {activeTab === 'reports' && (
   <div>
-    <div className="mb-6">
-      <h2 className="text-xl font-medium text-gray-800">Reports Queue</h2>
-      <p className="text-sm text-gray-400 mt-0.5">{reports.length} pending reports</p>
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h2 className="text-xl font-medium text-gray-800">Reports queue</h2>
+        <p className="text-sm text-gray-400 mt-0.5">{reports.length} pending reports</p>
+      </div>
+      <span className="text-xs px-3 py-1.5 rounded-full font-medium"
+        style={{ backgroundColor:'#FAECE7', color:'#993C1D' }}>
+        {reports.length} flagged
+      </span>
     </div>
     {reports.length === 0 ? (
       <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
@@ -1103,7 +1108,7 @@ const handleDeleteRating = async (id, junkshopId) => {
         {reports.map(r => {
           const cat = CAT_COLORS[r.listings?.category] || CAT_COLORS.metal
           return (
-            <div key={r.id} className="bg-white border border-gray-100 rounded-2xl p-5 flex items-center gap-4">
+            <div key={r.id} className="bg-white border border-gray-100 rounded-2xl p-5 flex items-center gap-4 hover:border-gray-200 transition">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
                 style={{ backgroundColor: cat.bg, color: cat.color }}>
                 {r.listings?.category?.slice(0,2).toUpperCase() || '??'}
@@ -1146,9 +1151,15 @@ const handleDeleteRating = async (id, junkshopId) => {
 {/* RATINGS */}
 {activeTab === 'ratings' && (
   <div>
-    <div className="mb-6">
-      <h2 className="text-xl font-medium text-gray-800">Ratings Management</h2>
-      <p className="text-sm text-gray-400 mt-0.5">{ratings.length} total ratings</p>
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h2 className="text-xl font-medium text-gray-800">Ratings management</h2>
+        <p className="text-sm text-gray-400 mt-0.5">{ratings.length} total ratings</p>
+      </div>
+      <span className="text-xs px-3 py-1.5 rounded-full font-medium"
+        style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
+        ★ {ratings.length > 0 ? (ratings.reduce((s,r) => s + r.score, 0) / ratings.length).toFixed(1) : '—'} avg
+      </span>
     </div>
     {ratings.length === 0 ? (
       <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
@@ -1158,13 +1169,12 @@ const handleDeleteRating = async (id, junkshopId) => {
       </div>
     ) : (
       <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-        <div className="grid text-xs font-medium text-gray-400 px-5 py-3 border-b border-gray-50"
+        <div className="grid px-5 py-3 border-b border-gray-100"
           style={{ gridTemplateColumns:'2fr 2fr 1fr 1fr auto' }}>
-          <span>Household</span>
-          <span>Junkshop</span>
-          <span>Score</span>
-          <span>Date</span>
-          <span>Actions</span>
+          {['Household','Junkshop','Score','Date','Action'].map(h => (
+            <span key={h} className="text-xs font-medium uppercase tracking-wide"
+              style={{ color:'#9CA3AF', letterSpacing:'0.05em' }}>{h}</span>
+          ))}
         </div>
         {ratings.map(r => (
           <div key={r.id}
@@ -1197,41 +1207,58 @@ const handleDeleteRating = async (id, junkshopId) => {
 
 {/* ANNOUNCEMENTS */}
 {activeTab === 'announcements' && (
-  <div className="max-w-2xl">
-    <div className="mb-6">
-      <h2 className="text-xl font-medium text-gray-800">Announcements</h2>
-      <p className="text-sm text-gray-400 mt-0.5">Send a message to all WAIZ users via their inbox</p>
+  <div>
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h2 className="text-xl font-medium text-gray-800">Announcements</h2>
+        <p className="text-sm text-gray-400 mt-0.5">Send a message to all WAIZ users via their inbox</p>
+      </div>
+      <span className="text-xs px-3 py-1.5 rounded-full font-medium"
+        style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
+        {users.length} recipients
+      </span>
     </div>
     <div className="bg-white border border-gray-100 rounded-2xl p-6">
-      <label className="block text-xs font-medium text-gray-500 mb-2">
-        Announcement message
+      <label className="block text-xs font-medium mb-2" style={{ color:'#6B7280' }}>
+        Message
       </label>
       <textarea
-        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700 resize-none transition"
+        className="w-full px-3 py-2.5 text-sm border rounded-xl outline-none resize-none transition"
+        style={{ borderColor:'#E5E7EB', backgroundColor:'#FAFAFA' }}
+        onFocus={e => { e.target.style.borderColor='#1A4D35'; e.target.style.backgroundColor='#fff' }}
+        onBlur={e => { e.target.style.borderColor='#E5E7EB'; e.target.style.backgroundColor='#FAFAFA' }}
         rows={5}
-        placeholder="Type your announcement here... e.g. WAIZ will be down for maintenance on May 20 from 12am-2am."
+        placeholder="Type your announcement here... e.g. WAIZ will be down for maintenance on May 20 from 12am–2am."
         value={announcement}
         onChange={e => setAnnouncement(e.target.value)}
       />
-      <p className="text-xs text-gray-400 mt-2 mb-4">
-        This will be sent as a message to all {users.length} registered users.
-      </p>
+      <div className="flex items-center justify-between mt-2 mb-4">
+        <p className="text-xs text-gray-400">
+          Sends to all {users.length} registered users as an inbox message.
+        </p>
+        <span className="text-xs text-gray-400">{announcement.length} chars</span>
+      </div>
       {announceSent && (
-        <div className="px-4 py-3 rounded-xl text-sm mb-4"
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm mb-4"
           style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
-          ✓ Announcement sent to all users!
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Announcement sent to all users!
         </div>
       )}
-      <button
-        onClick={handleAnnouncement}
-        disabled={sending || !announcement.trim()}
-        className="px-6 py-2.5 rounded-xl text-sm font-medium text-white transition"
-        style={{ backgroundColor: announcement.trim() ? '#1A4D35' : '#9CA3AF' }}>
-        {sending ? 'Sending...' : 'Send to all users'}
-      </button>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-gray-400">📢 Will appear as a WAIZ inbox message</p>
+        <button
+          onClick={handleAnnouncement}
+          disabled={sending || !announcement.trim()}
+          className="px-6 py-2.5 rounded-xl text-sm font-medium text-white transition"
+          style={{ backgroundColor: announcement.trim() ? '#1A4D35' : '#D1D5DB', cursor: announcement.trim() ? 'pointer' : 'default' }}>
+          {sending ? 'Sending...' : 'Send to all users'}
+        </button>
+      </div>
     </div>
   </div>
 )}
+</div>
       </main>
     </div>
     
