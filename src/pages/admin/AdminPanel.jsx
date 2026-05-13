@@ -4,12 +4,15 @@ import { supabase } from '../../supabase/config'
 import { useAuth } from "../../context/AuthContext";
 
 const NAV = [
-  { key:'overview',     label:'Overview',       icon:<DashIcon />   },
-  { key:'users',        label:'Users',          icon:<UsersIcon />  },
-  { key:'listings',     label:'Listings',       icon:<ListIcon />   },
-  { key:'junkshops',    label:'Junkshops',      icon:<ShopIcon />   },
-  { key:'pickups',      label:'Pickups',        icon:<TruckIcon />  },
-  { key:'analytics',    label:'Analytics',      icon:<ChartIcon />  },
+  { key:'overview',      label:'Overview',       icon:<DashIcon />    },
+  { key:'users',         label:'Users',          icon:<UsersIcon />   },
+  { key:'listings',      label:'Listings',       icon:<ListIcon />    },
+  { key:'junkshops',     label:'Junkshops',      icon:<ShopIcon />    },
+  { key:'pickups',       label:'Pickups',        icon:<TruckIcon />   },
+  { key:'reports',       label:'Reports',        icon:<FlagIcon />    },
+  { key:'announcements', label:'Announcements',  icon:<MegaIcon />    },
+  { key:'analytics',     label:'Analytics',      icon:<ChartIcon />   },
+  { key:'ratings', label:'Ratings', icon:<StarIcon /> },
 ]
 
 const DUMMY_STATS = {
@@ -73,13 +76,47 @@ const [junkshops, setJunkshops] = useState([])
 const [pickups,   setPickups]   = useState([])
   const [search,    setSearch]    = useState('')
   const [userRoleFilter, setUserRoleFilter] = useState('all')
+  const [userBarangayFilter, setUserBarangayFilter] = useState('all')
   const [loading,   setLoading]   = useState(false)
+  const [reports,       setReports]       = useState([])
+const [announcement,  setAnnouncement]  = useState('')
+const [sending,       setSending]       = useState(false)
+const [announceSent,  setAnnounceSent]  = useState(false)
+const [ratings, setRatings] = useState([])
 
-  useEffect(() => { if (user) fetchData() }, [user])
+  useEffect(() => {
+  if (!user) return
+  fetchData()
+
+  const channel = supabase
+    .channel('admin-realtime')
+    .on('postgres_changes', { event:'*', schema:'public', table:'listings' }, () => fetchData())
+    .on('postgres_changes', { event:'*', schema:'public', table:'pickups' }, () => fetchData())
+    .on('postgres_changes', { event:'*', schema:'public', table:'profiles' }, () => fetchData())
+    .on('postgres_changes', { event:'*', schema:'public', table:'reports' }, () => fetchData())
+    .subscribe()
+
+  return () => supabase.removeChannel(channel)
+}, [user])
+
+  
 
   const fetchData = async () => {
     setLoading(true)
 
+    const { data: reportData } = await supabase
+  .from('reports')
+  .select('*, listings(title, category, barangay), reporter:profiles!reported_by(full_name)')
+  .order('created_at', { ascending: false })
+
+if (reportData?.length > 0) setReports(reportData)
+
+  const { data: ratingsData } = await supabase
+  .from('ratings')
+  .select('*, household:profiles!household_id(full_name), junkshops!junkshop_id(shop_name)')
+  .order('created_at', { ascending: false })
+
+if (ratingsData?.length > 0) setRatings(ratingsData)
 
     const { data: usersData } = await supabase
       .from('profiles').select('*').order('created_at', { ascending: false })
@@ -93,7 +130,7 @@ const [pickups,   setPickups]   = useState([])
 
     const { data: pickupData } = await supabase
   .from('pickups')
-  .select('*, listings(title), profiles!household_id(full_name), junkshops!junkshop_id(shop_name)')
+  .select('*, listings(title), profiles!household_id(full_name)')
   .order('created_at', { ascending: false })
 
     if (usersData)              setUsers(usersData.length     > 0 ? usersData    : [])
@@ -191,14 +228,71 @@ const handleRemoveListing = async (id) => {
   if (!error) setListings(prev => prev.filter(l => l.id !== id))
 }
 
+const handleDismissReport = async (id) => {
+  await supabase.from('reports').delete().eq('id', id)
+  setReports(prev => prev.filter(r => r.id !== id))
+}
+
+const handleRemoveReportedListing = async (report) => {
+  await supabase.from('listings').delete().eq('id', report.listing_id)
+  await supabase.from('reports').delete().eq('listing_id', report.listing_id)
+  setReports(prev => prev.filter(r => r.listing_id !== report.listing_id))
+  setListings(prev => prev.filter(l => l.id !== report.listing_id))
+}
+
+const handleAnnouncement = async () => {
+  if (!announcement.trim()) return
+  setSending(true)
+
+  // Insert a message to all users from admin
+  const { data: allUsers } = await supabase
+    .from('profiles')
+    .select('id')
+    .neq('id', user.id)
+
+  if (allUsers) {
+    const messages = allUsers.map(u => ({
+      sender_id:   user.id,
+      receiver_id: u.id,
+      content:     `📢 WAIZ Announcement: ${announcement}`,
+      is_read:     false,
+    }))
+    await supabase.from('messages').insert(messages)
+  }
+
+  setSending(false)
+  setAnnounceSent(true)
+  setAnnouncement('')
+  setTimeout(() => setAnnounceSent(false), 3000)
+}
+
+const handleDeleteRating = async (id, junkshopId) => {
+  await supabase.from('ratings').delete().eq('id', id)
+  setRatings(prev => prev.filter(r => r.id !== id))
+
+  // Recalculate average
+  const { data: remaining } = await supabase
+    .from('ratings')
+    .select('score')
+    .eq('junkshop_id', junkshopId)
+
+  const avg = remaining?.length > 0
+    ? remaining.reduce((s, r) => s + r.score, 0) / remaining.length
+    : 0
+  await supabase.from('junkshops')
+    .update({ rating: parseFloat(avg.toFixed(1)) })
+    .eq('id', junkshopId)
+}
+
   const handleSignOut = async () => { await signOut(); navigate('/') }
 
   const filteredUsers = users
   .filter(u => {
-    const matchSearch = u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+    const matchSearch   = u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
       u.barangay?.toLowerCase().includes(search.toLowerCase())
-    const matchRole = userRoleFilter === 'all' || u.role === userRoleFilter
-    return matchSearch && matchRole
+    const matchRole     = userRoleFilter === 'all' || u.role === userRoleFilter
+    const matchBarangay = userBarangayFilter === 'all' || u.barangay === userBarangayFilter
+    return matchSearch && matchRole && matchBarangay
   })
   .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''))
 
@@ -428,19 +522,29 @@ const handleRemoveListing = async (id) => {
                   <h2 className="text-xl font-medium text-gray-800">User Management</h2>
                   <p className="text-sm text-gray-400 mt-0.5">{filteredUsers.length} registered users</p>
                 </div>
-                <div className="flex gap-2">
-    {['all','household','junkshop'].map(r => (
-      <button key={r}
-        onClick={() => setUserRoleFilter(r)}
-        className="px-4 py-1.5 rounded-full text-xs font-medium transition"
-        style={{
-          backgroundColor: userRoleFilter === r ? '#1A4D35' : '#F3F4F6',
-          color:           userRoleFilter === r ? '#fff'    : '#6B7280',
-        }}>
-        {r === 'all' ? 'All users' : r === 'household' ? 'Households' : 'Junkshops'}
-      </button>
+                <div className="flex gap-2 flex-wrap">
+  {['all','household','junkshop'].map(r => (
+    <button key={r}
+      onClick={() => setUserRoleFilter(r)}
+      className="px-4 py-1.5 rounded-full text-xs font-medium transition"
+      style={{
+        backgroundColor: userRoleFilter === r ? '#1A4D35' : '#F3F4F6',
+        color:           userRoleFilter === r ? '#fff'    : '#6B7280',
+      }}>
+      {r === 'all' ? 'All users' : r === 'household' ? 'Households' : 'Junkshops'}
+    </button>
+  ))}
+  <div className="w-px bg-gray-200 mx-1" />
+  <select
+    className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-600 outline-none"
+    value={userBarangayFilter}
+    onChange={e => setUserBarangayFilter(e.target.value)}>
+    <option value="all">All barangays</option>
+    {[...new Set(users.map(u => u.barangay).filter(Boolean))].sort().map(b => (
+      <option key={b} value={b}>{b}</option>
     ))}
-  </div>
+  </select>
+</div>
               </div>
               <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
                 <div className="grid text-xs font-medium text-gray-400 px-5 py-3 border-b border-gray-50"
@@ -561,13 +665,21 @@ const handleRemoveListing = async (id) => {
                             style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>Featured</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-gray-400">
-                        <span>{shop.barangay}</span>
-                        <span>·</span>
-                        <span>★ {shop.rating}</span>
-                        <span>·</span>
-                        <span>{shop.total_pickups} pickups</span>
-                      </div>
+                      <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
+  <span>{shop.barangay}</span>
+  <span>·</span>
+  <span>★ {shop.rating || 'No ratings'}</span>
+  <span>·</span>
+  <span>{shop.total_pickups || 0} pickups</span>
+  {shop.dti_number && (
+    <>
+      <span>·</span>
+      <span className="font-medium" style={{ color:'#1A4D35' }}>
+        DTI: {shop.dti_number}
+      </span>
+    </>
+  )}
+</div>
                     </div>
                     <div className="flex gap-2 shrink-0">
                       <button
@@ -606,35 +718,50 @@ const handleRemoveListing = async (id) => {
               </div>
               <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
                 <div className="grid text-xs font-medium text-gray-400 px-5 py-3 border-b border-gray-50"
-                  style={{ gridTemplateColumns:'2fr 1.5fr 1.5fr 1fr 1fr' }}>
-                  <span>Listing</span><span>Household</span><span>Junkshop</span>
-                  <span>Amount</span><span>Status</span>
-                </div>
+  style={{ gridTemplateColumns:'2fr 1.5fr 1fr 1fr 1fr' }}>
+  <span>Listing / Materials</span><span>Household</span>
+  <span>Weight</span><span>Amount</span><span>Status</span>
+</div>
                 {pickups.map(p => {
-                  const s = STATUS_STYLE[p.status] || STATUS_STYLE.pending
-                  return (
-                    <div key={p.id}
-                      className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50"
-                      style={{ gridTemplateColumns:'2fr 1.5fr 1.5fr 1fr 1fr' }}>
-                      <span className="text-sm font-medium text-gray-700 truncate pr-3">
-                        {p.listings?.title || p.listing}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        {p.profiles?.full_name || p.household}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        {p.junkshops?.shop_name || p.junkshop}
-                      </span>
-                      <span className="text-sm font-medium" style={{ color:'#1A4D35' }}>
-                        {p.amount || `₱${p.offered_price || 0}`}
-                      </span>
-                      <span className="text-xs px-2.5 py-1 rounded-full font-medium w-fit"
-                        style={{ backgroundColor: s.bg, color: s.color }}>
-                        {p.status}
-                      </span>
-                    </div>
-                  )
-                })}
+  const s = STATUS_STYLE[p.status] || STATUS_STYLE.pending
+  return (
+    <div key={p.id}
+      className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50"
+      style={{ gridTemplateColumns:'2fr 1.5fr 1fr 1fr 1fr' }}>
+      <div className="min-w-0 pr-3">
+        <div className="text-sm font-medium text-gray-700 truncate">
+          {p.listings?.title || 'Direct request'}
+        </div>
+        {p.material_types?.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {p.material_types.slice(0,3).map(m => (
+              <span key={m} className="text-xs px-1.5 py-0.5 rounded-full"
+                style={{ backgroundColor:'#D8F3DC', color:'#1A4D35' }}>
+                {m}
+              </span>
+            ))}
+          </div>
+        )}
+        {p.note && (
+          <div className="text-xs text-gray-400 mt-0.5 truncate">📝 {p.note}</div>
+        )}
+      </div>
+      <span className="text-sm text-gray-500">
+        {p.profiles?.full_name || '—'}
+      </span>
+      <span className="text-sm text-gray-500">
+        {p.est_weight_kg ? `~${p.est_weight_kg} kg` : '—'}
+      </span>
+      <span className="text-sm font-medium" style={{ color:'#1A4D35' }}>
+        {p.offered_price ? `₱${p.offered_price}` : '—'}
+      </span>
+      <span className="text-xs px-2.5 py-1 rounded-full font-medium w-fit"
+        style={{ backgroundColor: s.bg, color: s.color }}>
+        {p.status}
+      </span>
+    </div>
+  )
+})}
               </div>
             </div>
           )}
@@ -954,11 +1081,160 @@ const handleRemoveListing = async (id) => {
     </div>
 
   </div>
+  
 )}
 
         </div>
+        {/* REPORTS */}
+{activeTab === 'reports' && (
+  <div>
+    <div className="mb-6">
+      <h2 className="text-xl font-medium text-gray-800">Reports Queue</h2>
+      <p className="text-sm text-gray-400 mt-0.5">{reports.length} pending reports</p>
+    </div>
+    {reports.length === 0 ? (
+      <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
+        <div className="text-4xl mb-3">🚩</div>
+        <p className="text-sm font-medium text-gray-500">No reports</p>
+        <p className="text-xs text-gray-400 mt-1">All clear — no listings have been reported</p>
+      </div>
+    ) : (
+      <div className="space-y-3">
+        {reports.map(r => {
+          const cat = CAT_COLORS[r.listings?.category] || CAT_COLORS.metal
+          return (
+            <div key={r.id} className="bg-white border border-gray-100 rounded-2xl p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
+                style={{ backgroundColor: cat.bg, color: cat.color }}>
+                {r.listings?.category?.slice(0,2).toUpperCase() || '??'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-medium text-gray-700 truncate">
+                    {r.listings?.title || 'Deleted listing'}
+                  </span>
+                  <span className="text-xs px-2 py-0.5 rounded-full shrink-0"
+                    style={{ backgroundColor:'#FAECE7', color:'#993C1D' }}>
+                    {r.reason}
+                  </span>
+                </div>
+                <div className="text-xs text-gray-400">
+                  Reported by {r.reporter?.full_name || 'Unknown'} · {r.listings?.barangay || '—'}
+                </div>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => handleDismissReport(r.id)}
+                  className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:bg-gray-50 transition">
+                  Dismiss
+                </button>
+                <button
+                  onClick={() => handleRemoveReportedListing(r)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+                  style={{ backgroundColor:'#DC2626' }}>
+                  Remove listing
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )}
+  </div>
+)}
+
+{/* RATINGS */}
+{activeTab === 'ratings' && (
+  <div>
+    <div className="mb-6">
+      <h2 className="text-xl font-medium text-gray-800">Ratings Management</h2>
+      <p className="text-sm text-gray-400 mt-0.5">{ratings.length} total ratings</p>
+    </div>
+    {ratings.length === 0 ? (
+      <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
+        <div className="text-4xl mb-3">⭐</div>
+        <p className="text-sm font-medium text-gray-500">No ratings yet</p>
+        <p className="text-xs text-gray-400 mt-1">Ratings will appear here after households rate pickups</p>
+      </div>
+    ) : (
+      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+        <div className="grid text-xs font-medium text-gray-400 px-5 py-3 border-b border-gray-50"
+          style={{ gridTemplateColumns:'2fr 2fr 1fr 1fr auto' }}>
+          <span>Household</span>
+          <span>Junkshop</span>
+          <span>Score</span>
+          <span>Date</span>
+          <span>Actions</span>
+        </div>
+        {ratings.map(r => (
+          <div key={r.id}
+            className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50"
+            style={{ gridTemplateColumns:'2fr 2fr 1fr 1fr auto' }}>
+            <span className="text-sm text-gray-700">
+              {r.household?.full_name || '—'}
+            </span>
+            <span className="text-sm text-gray-500">
+              {r.junkshops?.shop_name || '—'}
+            </span>
+            <span style={{ color:'#C97A3A', fontSize:'14px' }}>
+              {'★'.repeat(r.score)}{'☆'.repeat(5 - r.score)}
+              <span className="text-xs text-gray-400 ml-1">{r.score}/5</span>
+            </span>
+            <span className="text-xs text-gray-400">
+              {new Date(r.created_at).toLocaleDateString('en-PH')}
+            </span>
+            <button
+              onClick={() => handleDeleteRating(r.id, r.junkshop_id)}
+              className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition">
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
+
+{/* ANNOUNCEMENTS */}
+{activeTab === 'announcements' && (
+  <div className="max-w-2xl">
+    <div className="mb-6">
+      <h2 className="text-xl font-medium text-gray-800">Announcements</h2>
+      <p className="text-sm text-gray-400 mt-0.5">Send a message to all WAIZ users via their inbox</p>
+    </div>
+    <div className="bg-white border border-gray-100 rounded-2xl p-6">
+      <label className="block text-xs font-medium text-gray-500 mb-2">
+        Announcement message
+      </label>
+      <textarea
+        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700 resize-none transition"
+        rows={5}
+        placeholder="Type your announcement here... e.g. WAIZ will be down for maintenance on May 20 from 12am-2am."
+        value={announcement}
+        onChange={e => setAnnouncement(e.target.value)}
+      />
+      <p className="text-xs text-gray-400 mt-2 mb-4">
+        This will be sent as a message to all {users.length} registered users.
+      </p>
+      {announceSent && (
+        <div className="px-4 py-3 rounded-xl text-sm mb-4"
+          style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
+          ✓ Announcement sent to all users!
+        </div>
+      )}
+      <button
+        onClick={handleAnnouncement}
+        disabled={sending || !announcement.trim()}
+        className="px-6 py-2.5 rounded-xl text-sm font-medium text-white transition"
+        style={{ backgroundColor: announcement.trim() ? '#1A4D35' : '#9CA3AF' }}>
+        {sending ? 'Sending...' : 'Send to all users'}
+      </button>
+    </div>
+  </div>
+)}
       </main>
     </div>
+    
   )
 }
 
@@ -969,3 +1245,6 @@ function ListIcon()  { return <svg width="16" height="16" viewBox="0 0 24 24" fi
 function ShopIcon()  { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> }
 function TruckIcon() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> }
 function ChartIcon() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> }
+function FlagIcon() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> }
+function MegaIcon() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> }
+function StarIcon() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> }
