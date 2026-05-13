@@ -17,19 +17,30 @@ export const AuthProvider = ({ children }) => {
       .eq('id', userId)
       .maybeSingle()
 
-    // New Google user — no profile yet, create one
     if (!data) {
       const { data: { user: currentUser } } = await supabase.auth.getUser()
-     const { data: newProfile } = await supabase
-  .from('profiles')
-  .upsert({
-    id:        userId,
-    full_name: currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0],
-    role:      null,
-  }, { onConflict: 'id', ignoreDuplicates: true })
-  .select()
-  .single()
+      const { data: newProfile } = await supabase
+        .from('profiles')
+        .upsert({
+          id:        userId,
+          full_name: currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0],
+          role:      null,
+        }, { onConflict: 'id', ignoreDuplicates: true })
+        .select()
+        .single()
       data = newProfile
+    }
+
+    // If junkshop, also fetch photo_url from junkshops table
+    if (data?.role === 'junkshop') {
+      const { data: shopData } = await supabase
+        .from('junkshops')
+        .select('photo_url, shop_name')
+        .eq('id', userId)
+        .single()
+      if (shopData?.photo_url) {
+        data.photo_url = shopData.photo_url
+      }
     }
 
     setProfile(data || null)
