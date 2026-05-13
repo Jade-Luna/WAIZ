@@ -98,9 +98,18 @@ export default function BaguioMap({
 
   return (
     <div style={{ position: 'relative' }}>
+      <style>{`
+        .leaflet-pane { z-index: 1 !important; }
+        .leaflet-tile-pane { z-index: 1 !important; }
+        .leaflet-overlay-pane { z-index: 2 !important; }
+        .leaflet-shadow-pane { z-index: 2 !important; }
+        .leaflet-marker-pane { z-index: 3 !important; }
+        .leaflet-tooltip-pane { z-index: 4 !important; }
+        .leaflet-popup-pane { z-index: 5 !important; }
+      `}</style>
 
       {/* Map */}
-      <div style={{ height, width: '100%', borderRadius: '16px', overflow: 'hidden', zIndex: 1 }}>
+      <div style={{ height, width: '100%', borderRadius: '16px', overflow: 'hidden', zIndex: 0 }}>
         <MapContainer
           center={[16.4023, 120.5960]}
           zoom={13}
