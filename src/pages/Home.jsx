@@ -174,6 +174,7 @@ export default function Home() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
             <Link to="/how-it-works" style={{ fontSize: 13, color: '#74a86a', textDecoration: 'none' }}>How It Works</Link>
+            <Link to="/about"        style={{ fontSize: 13, color: '#74a86a', textDecoration: 'none' }}>About</Link>
             <Link to="/junkshops"    style={{ fontSize: 13, color: '#74a86a', textDecoration: 'none' }}>Junkshops</Link>
             <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.12)' }} />
             {user ? (
