@@ -368,7 +368,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
   <div className="grid grid-cols-2 gap-5">
 
     {/* Editable shop details */}
-    <JunkshopProfileEditor shop={shop} user={user} />
+    <JunkshopProfileEditor shop={shop} user={user} profile={profile} />
 
       {/* Right column */}
       <div className="space-y-5">
@@ -626,7 +626,7 @@ function Empty({ icon, text, sub, children }) {
   )
 }
 
-function JunkshopProfileEditor({ shop, user }) {
+function JunkshopProfileEditor({ shop, user, profile }) {
   const [form, setForm] = useState({
     shop_name:  '',
     phone:      '',
@@ -641,18 +641,18 @@ function JunkshopProfileEditor({ shop, user }) {
   const [saved,        setSaved]        = useState(false)
 
   useEffect(() => {
-    if (shop) {
-      setForm({
-        shop_name:  shop.shop_name  || '',
-        phone:      shop.phone      || '',
-        barangay:   shop.barangay   || '',
-        dti_number: shop.dti_number || '',
-        latitude:   shop.latitude   || null,
-        longitude:  shop.longitude  || null,
-      })
-      setPhotoPreview(shop.photo_url || null)
-    }
-  }, [shop])
+  if (shop) {
+    setForm({
+      shop_name:  shop.shop_name  || '',
+      phone:      shop.phone      || profile?.phone || '',
+      barangay:   shop.barangay   || profile?.barangay || '',
+      dti_number: shop.dti_number || '',
+      latitude:   shop.latitude   || null,
+      longitude:  shop.longitude  || null,
+    })
+    setPhotoPreview(shop.photo_url || null)
+  }
+}, [shop, profile])
 
   const update = (field, val) => setForm(p => ({ ...p, [field]: val }))
 

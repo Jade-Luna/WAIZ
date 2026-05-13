@@ -204,12 +204,6 @@ export default function Signup() {
                 ))}
               </div>
 
-              {role === 'junkshop' && (
-                <div className="mb-4 px-4 py-3 rounded-xl text-xs" style={{ backgroundColor: '#FAEEDA', color: '#854F0B' }}>
-                  Junkshop accounts are reviewed within 24 hours before activation.
-                </div>
-              )}
-
               <button onClick={handleGoogle}
                 className="w-full flex items-center justify-center gap-3 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition mb-3">
                 <svg width="16" height="16" viewBox="0 0 18 18">
