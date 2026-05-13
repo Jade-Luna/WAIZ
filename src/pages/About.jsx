@@ -41,8 +41,8 @@ const HOW_ITEMS = [
 ]
 
 const TEAM = [
-  { initials: 'HA', name: 'HEZREEN ABELLERA',   role: 'Hustler', img: '/team/member1.jpg' },
-  { initials: 'AE', name: 'ADONAIKAH EVASCO',   role: 'Hacker', img: '/team/member2.jpg' },
+  { initials: 'HA', name: 'HEZREEN ABELLERA',   role: 'Hacker', img: '/team/member1.jpg' },
+  { initials: 'AE', name: 'ADONAIKAH EVASCO',   role: 'Hustler', img: '/team/member2.jpg' },
   { initials: 'MG', name: 'MARIANNE GUNDRAN', role: 'Hipster', img: '/team/member3.jpg' },
 ]
 
@@ -113,7 +113,9 @@ export default function About() {
           WA<span style={{ color:'#c8a84e' }}>I</span>Z
         </Link>
         <div style={{ display:'flex', alignItems:'center', gap:24 }}>
+          <Link to="/"             style={{ fontSize:13, color:'#2D6A4F', textDecoration:'none' }}>Home</Link>
           <Link to="/how-it-works" style={{ fontSize:13, color:'#2D6A4F', textDecoration:'none' }}>How It Works</Link>
+          <Link to="/about"        style={{ fontSize:13, color:'#2D6A4F', textDecoration:'none' }}>About</Link>
           <Link to="/junkshops"    style={{ fontSize:13, color:'#2D6A4F', textDecoration:'none' }}>Junkshops</Link>
           <div style={{ width:1, height:16, background:'rgba(0,0,0,0.1)' }} />
           {user ? (
