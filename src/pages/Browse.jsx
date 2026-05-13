@@ -54,6 +54,11 @@ export default function Browse() {
   const [barangay, setBarangay]     = useState('All barangays')
   const [sortBy, setSortBy]         = useState('newest')
   const [loading, setLoading]       = useState(false)
+  const [reportId,      setReportId]      = useState(null)
+const [reportReason,  setReportReason]  = useState('')
+const [reportSending, setReportSending] = useState(false)
+const [reportSent,    setReportSent]    = useState(false)
+
 
   useEffect(() => {
     fetchListings()
@@ -70,6 +75,25 @@ export default function Browse() {
   if (barangay !== 'All barangays') query = query.eq('barangay', barangay)
   if (sortBy === 'newest')   query = query.order('created_at',      { ascending: false })
   if (sortBy === 'heaviest') query = query.order('weight_estimate',  { ascending: false })
+
+  const handleReport = (id) => {
+  setReportId(id)
+  setReportReason('')
+  setReportSent(false)
+}
+
+const submitReport = async () => {
+  if (!reportReason.trim()) return
+  setReportSending(true)
+  await supabase.from('reports').insert({
+    listing_id:  reportId,
+    reported_by: user.id,
+    reason:      reportReason,
+  })
+  setReportSending(false)
+  setReportSent(true)
+  setTimeout(() => { setReportId(null); setReportSent(false) }, 2000)
+}
 
   const { data } = await query
    console.log('sample listing:', data?.[0])  
@@ -296,41 +320,42 @@ const statusLabel = {
         <div className="flex items-center justify-between border-t border-gray-50 pt-3">
           <span className="text-xs text-gray-300">{timeAgo(listing.created_at)}</span>
           <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-            {/* Edit button for owner */}
-            {isOwner && (
-              <button
-                onClick={(e) => { e.stopPropagation(); navigate(`/listing/${listing.id}/edit`) }}
-                className="text-xs px-2.5 py-1 rounded-lg border"
-                style={{ borderColor:'#1A4D35', color:'#1A4D35' }}>
-                Edit
-              </button>
-            )}
-            {/* Message button for junkshops */}
-            {user && profile?.role === 'junkshop' && !isOwner && (
-              <button
-  onClick={(e) => {
-    e.stopPropagation()
-    navigate(
-      `/dashboard/junkshop?tab=messages` +
-      `&contact=${listing.posted_by}` +
-      `&listing=${listing.id}` +
-      `&title=${encodeURIComponent(listing.title)}` +
-      `&image=${encodeURIComponent(listing.photos?.[0] || '')}` +
-      `&weight=${listing.weight_estimate || ''}` +
-      `&category=${encodeURIComponent(listing.category || '')}`
-    )
-  }}
-  className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
-  style={{ backgroundColor:'#1A4D35' }}
-  title="Message household">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-    stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="22" y1="2" x2="11" y2="13"/>
-    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-  </svg>
-</button>
-            )}
-          </div>
+  {/* Message button for junkshops */}
+  {user && profile?.role === 'junkshop' && !isOwner && (
+    <button
+      onClick={(e) => {
+        e.stopPropagation()
+        navigate(
+          `/dashboard/junkshop?tab=messages` +
+          `&contact=${listing.posted_by}` +
+          `&listing=${listing.id}` +
+          `&title=${encodeURIComponent(listing.title)}` +
+          `&image=${encodeURIComponent(listing.photos?.[0] || '')}` +
+          `&weight=${listing.weight_estimate || ''}` +
+          `&category=${encodeURIComponent(listing.category || '')}`
+        )
+      }}
+      className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
+      style={{ backgroundColor:'#1A4D35' }}
+      title="Message household">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  )}
+
+  {/* 3-dot dropdown */}
+  {user && (
+    <DropdownMenu
+      isOwner={isOwner}
+      listingId={listing.id}
+      onEdit={() => navigate(`/listing/${listing.id}/edit`)}
+      onReport={() => handleReport(listing.id)}
+    />
+  )}
+</div>
         </div>
       </div>
     </div>
@@ -341,4 +366,95 @@ const statusLabel = {
       </div>
     </div>
   )
+
+  function DropdownMenu({ isOwner, listingId, onEdit, onReport }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="relative">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(p => !p) }}
+        className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 text-gray-400 hover:bg-gray-50 transition">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <circle cx="12" cy="5" r="1" fill="currentColor"/>
+          <circle cx="12" cy="12" r="1" fill="currentColor"/>
+          <circle cx="12" cy="19" r="1" fill="currentColor"/>
+        </svg>
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 bottom-10 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden z-50"
+          style={{ minWidth:'140px' }}
+          onClick={e => e.stopPropagation()}>
+          {isOwner && (
+            <button
+              onClick={() => { setOpen(false); onEdit() }}
+              className="w-full text-left px-4 py-2.5 text-xs text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">
+              ✏️ Edit listing
+            </button>
+          )}
+          <button
+            onClick={() => { setOpen(false); onReport() }}
+            className="w-full text-left px-4 py-2.5 text-xs hover:bg-red-50 transition flex items-center gap-2"
+            style={{ color:'#DC2626' }}>
+            🚩 Report listing
+          </button>
+        </div>
+      )}
+      {reportId && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+    style={{ backgroundColor:'rgba(0,0,0,0.4)' }}
+    onClick={() => setReportId(null)}>
+    <div className="bg-white rounded-2xl p-6 w-full max-w-sm"
+      onClick={e => e.stopPropagation()}>
+      {reportSent ? (
+        <div className="text-center py-4">
+          <div className="text-4xl mb-3">✅</div>
+          <p className="text-sm font-medium text-gray-700">Report submitted</p>
+          <p className="text-xs text-gray-400 mt-1">We'll review this listing shortly</p>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-800">Report listing</h3>
+            <button onClick={() => setReportId(null)}
+              className="text-gray-300 hover:text-gray-500 text-lg">✕</button>
+          </div>
+          <p className="text-xs text-gray-400 mb-3">
+            Help us keep WAIZ safe. Tell us why you're reporting this listing.
+          </p>
+          <div className="space-y-2 mb-4">
+            {['Spam or misleading', 'Inappropriate content', 'Already sold/unavailable', 'Wrong category', 'Other'].map(r => (
+              <button key={r}
+                onClick={() => setReportReason(r)}
+                className="w-full text-left px-3 py-2.5 rounded-xl text-xs border transition"
+                style={{
+                  borderColor:     reportReason === r ? '#DC2626' : '#E5E7EB',
+                  backgroundColor: reportReason === r ? '#FEF2F2' : '#fff',
+                  color:           reportReason === r ? '#DC2626' : '#6B7280',
+                }}>
+                {r}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => setReportId(null)}
+              className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">
+              Cancel
+            </button>
+            <button onClick={submitReport} disabled={reportSending || !reportReason}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
+              style={{ backgroundColor: reportReason ? '#DC2626' : '#9CA3AF' }}>
+              {reportSending ? 'Sending...' : 'Submit report'}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+)}
+    </div>
+  )
+}
 }

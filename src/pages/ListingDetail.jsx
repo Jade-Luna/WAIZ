@@ -42,6 +42,7 @@ export default function ListingDetail() {
     const [submitting,     setSubmitting]     = useState(false)
 const [pickupSent,     setPickupSent]     = useState(false)
   const [loading,   setLoading]   = useState(true)
+const [showReport, setShowReport] = useState(false)
 
   useEffect(() => {
     fetchListing()
@@ -196,14 +197,23 @@ const photos = listing?.photos?.filter(Boolean) || []
 
       {/* NAV */}
       <nav className="w-full h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100 sticky top-0 z-50">
-        <Link to="/" className="text-xl font-medium tracking-widest" style={{ color:'#0D2B1F' }}>
-          WA<span style={{ color:'#C97A3A' }}>I</span>Z
-        </Link>
-        <button onClick={() => navigate(-1)}
-          className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
-          ← Back
-        </button>
-      </nav>
+  <Link to="/" className="text-xl font-medium tracking-widest" style={{ color:'#0D2B1F' }}>
+    WA<span style={{ color:'#C97A3A' }}>I</span>Z
+  </Link>
+  <div className="flex items-center gap-3">
+    <button onClick={() => navigate(-1)}
+      className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+      ← Back
+    </button>
+    {user && listing && (
+      <ListingDropdown
+        isOwner={user.id === listing.posted_by}
+        onEdit={() => navigate(`/listing/${listing.id}/edit`)}
+        onReport={() => setShowReport(true)}
+      />
+    )}
+  </div>
+</nav>
 
       <div className="max-w-6xl mx-auto px-8 py-10">
         <div className="grid grid-cols-5 gap-8">
@@ -432,17 +442,22 @@ const photos = listing?.photos?.filter(Boolean) || []
             )}
 
             {/* Report listing */}
-            {user && user.id !== listing.posted_by && (
-              <ReportButton listingId={listing.id} userId={user.id} />
-            )}
+            {showReport && user && user.id !== listing.posted_by && (
+  <ReportButton
+    listingId={listing.id}
+    userId={user.id}
+    onClose={() => setShowReport(false)}
+    autoOpen
+  />
+)}
           </div>
         </div>
       </div>
     </div>
   )
 }
-function ReportButton({ listingId, userId }) {
-  const [open, setOpen] = useState(false)
+ function ReportButton({ listingId, userId, autoOpen = false, onClose }) {
+  const [open, setOpen] = useState(autoOpen)
   const [reason, setReason] = useState('')
   const [sent, setSent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -466,6 +481,7 @@ function ReportButton({ listingId, userId }) {
     setSubmitting(false)
     setSent(true)
     setOpen(false)
+    onClose && onClose()
   }
 
   if (sent) return (
@@ -522,5 +538,43 @@ function ReportButton({ listingId, userId }) {
         </div>
       )}
     </>
+  )
+}
+function ListingDropdown({ isOwner, onEdit, onReport }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(p => !p)}
+        className="w-9 h-9 rounded-xl flex items-center justify-center border border-gray-200 text-gray-400 hover:bg-gray-50 transition">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <circle cx="12" cy="5" r="1" fill="currentColor"/>
+          <circle cx="12" cy="12" r="1" fill="currentColor"/>
+          <circle cx="12" cy="19" r="1" fill="currentColor"/>
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-11 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden z-50"
+          style={{ minWidth:'140px' }}>
+          {isOwner && (
+            <button
+              onClick={() => { setOpen(false); onEdit() }}
+              className="w-full text-left px-4 py-2.5 text-xs text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">
+              ✏️ Edit listing
+            </button>
+          )}
+          {!isOwner && (
+            <button
+              onClick={() => { setOpen(false); onReport() }}
+              className="w-full text-left px-4 py-2.5 text-xs hover:bg-red-50 transition flex items-center gap-2"
+              style={{ color:'#DC2626' }}>
+              🚩 Report listing
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
