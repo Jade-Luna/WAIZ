@@ -23,6 +23,7 @@ const [searchLoading,     setSearchLoading]     = useState(false)
   const [loading,       setLoading]       = useState(false)
   const bottomRef = useRef(null)
   const channelRef = useRef(null)
+  const cardSentRef = useRef(false)
   const [searchParams] = useSearchParams()
 
   useEffect(() => {
@@ -54,8 +55,9 @@ const [searchLoading,     setSearchLoading]     = useState(false)
   const listingCategory = searchParams.get('category')
 
   if (contactId) {
-    setActiveConv(contactId)
-    if (listingTitle && listingId) {
+  setActiveConv(contactId)
+  if (listingTitle && listingId && !cardSentRef.current) {
+    cardSentRef.current = true
       const listingUrl = `${window.location.origin}/listing/${listingId}`
       const cardContent = JSON.stringify({
         type:     'listing_card',
