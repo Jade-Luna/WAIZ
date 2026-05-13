@@ -375,9 +375,7 @@ const handleDeleteRating = async (id, junkshopId) => {
 
         {/* Top bar */}
         <div className="h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100 sticky top-0 z-40">
-          <div className="text-sm font-medium text-gray-500">
-            {NAV.find(n => n.key === activeTab)?.label || 'Admin'}
-          </div>
+          <div className="flex-1"></div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-1.5">
               <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
