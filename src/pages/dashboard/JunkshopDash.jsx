@@ -365,12 +365,10 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
 
       {/* SHOP PROFILE */}
       {activeTab === 'profile' && (
-  <div>
-    <h2 className="text-base font-medium text-gray-700 mb-4">Shop Profile</h2>
-    <div className="grid grid-cols-2 gap-5">
+  <div className="grid grid-cols-2 gap-5">
 
-      {/* Editable shop details */}
-      <JunkshopProfileEditor shop={shop} user={user} />
+    {/* Editable shop details */}
+    <JunkshopProfileEditor shop={shop} user={user} />
 
       {/* Right column */}
       <div className="space-y-5">
@@ -412,7 +410,6 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
 
       </div>
     </div>
-  </div>
 )}
 {viewRequest && (
   <div className="fixed inset-0 z-50 flex items-center justify-center px-4"

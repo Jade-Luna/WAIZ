@@ -233,14 +233,6 @@ const startNewConversation = (otherUser) => {
   )
 
   return (
-  <div>
-    <div className="mb-5">
-      <h2 className="text-base font-medium text-gray-700">Messages</h2>
-      <p className="text-sm text-gray-400 mt-0.5">
-        Chat directly with {profile?.role === 'junkshop' ? 'households' : 'junkshops'}
-      </p>
-    </div>
-
     <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden"
   style={{ height:'560px', display:'flex', position:'relative' }}>      
 
@@ -484,6 +476,5 @@ const startNewConversation = (otherUser) => {
         </div>
       )}
     </div>
-  </div>
 )
 }

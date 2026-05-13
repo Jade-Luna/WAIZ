@@ -391,7 +391,7 @@ const fetchData = async () => {
 {activeTab === 'map' && (
   <div>
     <div className="mb-5">
-      <h2 className="text-base font-medium text-gray-700">Junkshops near you</h2>
+      <h2 className="text-base font-medium text-gray-700">Search for junkshops near your location.</h2>
       <p className="text-sm text-gray-400 mt-0.5">Click any pin to see buying rates</p>
     </div>
     <div className="flex items-center gap-5 mb-4">
@@ -722,7 +722,6 @@ function ProfileEditor({ profile, user, onSaved }) {
 
   return (
     <div className="max-w-lg">
-      <h2 className="text-base font-medium text-gray-700 mb-4">Profile & Settings</h2>
       <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-5">
         <div className="flex items-center gap-4">
           <label className="cursor-pointer relative shrink-0">
