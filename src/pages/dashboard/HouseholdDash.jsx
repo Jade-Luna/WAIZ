@@ -49,6 +49,9 @@ export default function HouseholdDash() {
   const [deleteId, setDeleteId]   = useState(null)
   const [receiptPickup, setReceiptPickup] = useState(null)
   const [loading,  setLoading]    = useState(false)
+  const [ratingPickup, setRatingPickup] = useState(null)
+const [ratingScore,  setRatingScore]  = useState(0)
+const [ratingDone,   setRatingDone]   = useState(false)
 
   useEffect(() => {
   if (!user) return
@@ -98,7 +101,19 @@ const fetchData = async () => {
   }))
 
   setListings(listData || [])
-  setHistory(enrichedPickups.filter(p => p.status === 'completed' || p.status === 'cancelled'))
+  
+  // Check which pickups have been rated
+const { data: ratedData } = await supabase
+  .from('ratings')
+  .select('pickup_id')
+  .eq('household_id', user.id)
+
+const ratedIds = new Set((ratedData || []).map(r => r.pickup_id))
+setHistory(enrichedPickups
+  .filter(p => p.status === 'completed' || p.status === 'cancelled')
+  .map(p => ({ ...p, rated: ratedIds.has(p.id) }))
+)
+
   setRequests(enrichedPickups.filter(p => p.status === 'requested' || p.status === 'offered' || p.status === 'accepted'))
   setLoading(false)
 }
@@ -110,7 +125,9 @@ const fetchData = async () => {
   }
 
   const handlePickupAction = async (id, status) => {
-  const pickup = requests.find(r => r.id === id)
+  
+  
+    const pickup = requests.find(r => r.id === id)
   const { error } = await supabase.from('pickups').update({ status }).eq('id', id)
   console.log('update error:', JSON.stringify(error))
   await supabase.from('pickups').update({ status }).eq('id', id)
@@ -130,6 +147,37 @@ const fetchData = async () => {
   }
   setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r))
   awaitfetchData()
+}
+
+const handleRate = async (score) => {
+  if (!ratingPickup) return
+  await supabase.from('ratings').insert({
+    junkshop_id:  ratingPickup.junkshop_id,
+    household_id: user.id,
+    pickup_id:    ratingPickup.id,
+    score,
+  })
+
+  // Recalculate average rating
+  const { data: allRatings } = await supabase
+    .from('ratings')
+    .select('score')
+    .eq('junkshop_id', ratingPickup.junkshop_id)
+
+  if (allRatings && allRatings.length > 0) {
+    const avg = allRatings.reduce((s, r) => s + r.score, 0) / allRatings.length
+    await supabase.from('junkshops')
+      .update({ rating: parseFloat(avg.toFixed(1)) })
+      .eq('id', ratingPickup.junkshop_id)
+  }
+
+  setRatingDone(true)
+  setTimeout(() => {
+    setRatingPickup(null)
+    setRatingScore(0)
+    setRatingDone(false)
+    fetchData()
+  }, 2000)
 }
 
   const totalKg        = listings.filter(l => l.status === 'completed').reduce((s, l) => s + (l.weight_estimate || 0), 0)
@@ -374,11 +422,19 @@ const fetchData = async () => {
         Completed
       </span>
       <button
-        onClick={() => setReceiptPickup(h)}
-        className="text-xs px-2.5 py-1 rounded-lg border mt-1"
-        style={{ borderColor:'#1A4D35', color:'#1A4D35' }}>
-        View receipt
-      </button>
+  onClick={() => setReceiptPickup(h)}
+  className="text-xs px-2.5 py-1 rounded-lg border mt-1"
+  style={{ borderColor:'#1A4D35', color:'#1A4D35' }}>
+  View receipt
+</button>
+{!h.rated && (
+  <button
+    onClick={() => setRatingPickup(h)}
+    className="text-xs px-2.5 py-1 rounded-lg border mt-1"
+    style={{ borderColor:'#C97A3A', color:'#C97A3A' }}>
+    ★ Rate pickup
+  </button>
+)}
     </div>
   </div>
 ))}
@@ -494,6 +550,58 @@ const fetchData = async () => {
           </div>
         </div>
       )}
+
+{ratingPickup && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+    style={{ backgroundColor:'rgba(0,0,0,0.4)' }}
+    onClick={() => setRatingPickup(null)}>
+    <div className="bg-white rounded-2xl p-6 w-full max-w-sm"
+      onClick={e => e.stopPropagation()}>
+      {ratingDone ? (
+        <div className="text-center py-6">
+          <div className="text-4xl mb-3">⭐</div>
+          <p className="text-sm font-medium text-gray-700">Thanks for rating!</p>
+          <p className="text-xs text-gray-400 mt-1">Your feedback helps other households</p>
+        </div>
+      ) : (
+        <>
+          <div className="text-center mb-5">
+            <h3 className="text-sm font-medium text-gray-800 mb-1">Rate this pickup</h3>
+            <p className="text-xs text-gray-400">
+              {ratingPickup.junkshop?.shop_name || ratingPickup.junkshop?.full_name || 'Junkshop'}
+            </p>
+          </div>
+          <div className="flex justify-center gap-3 mb-6">
+            {[1,2,3,4,5].map(star => (
+              <button key={star}
+                onClick={() => setRatingScore(star)}
+                style={{
+                  fontSize: '32px',
+                  color: star <= ratingScore ? '#C97A3A' : '#E5E7EB',
+                  transition: 'color 0.15s',
+                }}>
+                ★
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => setRatingPickup(null)}
+              className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">
+              Skip
+            </button>
+            <button
+              onClick={() => handleRate(ratingScore)}
+              disabled={!ratingScore}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
+              style={{ backgroundColor: ratingScore ? '#1A4D35' : '#9CA3AF' }}>
+              Submit
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+)}
 
       {/* Receipt modal */}
 {receiptPickup && (
