@@ -199,6 +199,22 @@ Keep responses short, punchy, and HIGH ENERGY — like an enthusiastic friend, n
     setLoading(false)
   }
 
+  //Waving Logic
+  const [waving, setWaving] = useState(false)
+
+useEffect(() => {
+  const scheduleWave = () => {
+    const delay = 10 * 1000 // 10 seconds between waves
+    return setTimeout(() => {
+      setWaving(true)
+      setTimeout(() => setWaving(false), 2200) // wave duration
+      timerRef.current = scheduleWave()
+    }, delay)
+  }
+  const timerRef = { current: scheduleWave() }
+  return () => clearTimeout(timerRef.current)
+}, [])
+
   // Drag logic
   const onMouseDown = (e) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -238,6 +254,7 @@ Keep responses short, punchy, and HIGH ENERGY — like an enthusiastic friend, n
 
   const mascotStyle = {
     position:  'fixed',
+    overflow: 'visible',
     width:     '50px',
     height:    '60px',
     cursor:    dragging ? 'grabbing' : 'grab',
@@ -364,7 +381,7 @@ Keep responses short, punchy, and HIGH ENERGY — like an enthusiastic friend, n
 
       {/* ECO MASCOT */}
       <div style={mascotStyle} onMouseDown={onMouseDown}>
-        <EcoSVG emotion={emotion} />
+        <EcoSVG emotion={emotion} waving={waving} />
       </div>
     </>
   )
@@ -385,7 +402,7 @@ function EcoMiniIcon() {
   )
 }
 
-function EcoSVG({ emotion }) {
+function EcoSVG({ emotion, waving }) {
   const isFloat   = emotion === 'float'
   const isDrag    = emotion === 'drag'
   const isClicked = emotion === 'clicked'
@@ -395,9 +412,20 @@ function EcoSVG({ emotion }) {
       width="60" height="68" viewBox="0 0 170 170"
       xmlns="http://www.w3.org/2000/svg"
       style={{
+        overflow: 'visible',
         animation: isFloat ? 'eco-bob 2.3s ease-in-out infinite' : 'none',
         filter:'drop-shadow(0 4px 12px rgba(13,43,31,0.25))'
       }}>
+
+      {/* WAVING ARM */}
+      {waving && (
+  <g style={{
+    transformOrigin: '85px 120px',
+    animation: 'eco-wave 1.2s ease-in-out infinite'
+  }}>
+    <circle cx="20" cy="20" r="16" fill="#52B788" stroke="#2D6A4F" strokeWidth="2"/>
+  </g>
+)}
 
       <style>{`
         @keyframes eco-bob    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
@@ -405,6 +433,16 @@ function EcoSVG({ emotion }) {
         @keyframes eco-spark  { 0%,78%,100%{opacity:0;transform:scale(0.3)} 86%,93%{opacity:1;transform:scale(1)} }
         @keyframes eco-gear-cw  { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         @keyframes eco-gear-ccw { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
+        @keyframes eco-wave {
+  0%   { transform: rotate(-20deg) scaleX(1)    scaleY(1); }
+  10%  { transform: rotate(-5deg)  scaleX(0.9)  scaleY(1.1); }
+  20%  { transform: rotate(-20deg) scaleX(1.1)  scaleY(0.9); }
+  30%  { transform: rotate(-5deg)  scaleX(0.9)  scaleY(1.1); }
+  40%  { transform: rotate(-15deg) scaleX(1.05) scaleY(0.95); }
+  50%  { transform: rotate(-8deg)  scaleX(0.95) scaleY(1.05); }
+  60%  { transform: rotate(-20deg) scaleX(1)    scaleY(1); }
+  100% { transform: rotate(-20deg) scaleX(1)    scaleY(1); }
+}
       `}</style>
 
       <defs>
