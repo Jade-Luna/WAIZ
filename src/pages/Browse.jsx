@@ -52,6 +52,9 @@ export default function Browse() {
   const [search, setSearch]         = useState('')
   const [category, setCategory]     = useState(searchParams.get('category') || 'all')
   const [barangay, setBarangay]     = useState('All barangays')
+  const [barangayInput,       setBarangayInput]       = useState('')
+const [barangaySuggestions, setBarangaySuggestions] = useState([])
+const [barangayOpen,        setBarangayOpen]        = useState(false)
   const [sortBy, setSortBy]         = useState('newest')
   const [loading, setLoading]       = useState(false)
   const [reportId,      setReportId]      = useState(null)
@@ -63,6 +66,31 @@ const [reportSent,    setReportSent]    = useState(false)
   useEffect(() => {
     fetchListings()
   }, [category, barangay, sortBy])
+
+  const ALL_BARANGAYS = [
+  'Abanao-Zandueta-Kayong-Chugum-Otek','Andres Bonifacio','Aurora Hill Proper',
+  'Bayan Park','Burnham-Legarda','Cabinet Hill-Teacher\'s Camp','Camp 7',
+  'Camp 8','Camp Allen','Campo Filipino','City Camp Central','City Camp Proper',
+  'Country Club Village','Cresencia Village','Dagsian','Dominican Hill-Mirador',
+  'Dontogan','Engineers Hill','Fairview Village','Ferdinand','Fort del Pilar',
+  'Gabriela Silang','General Luna Road','Gibraltar','Greenwater Village',
+  'Guisad Central','Guisad Sorong','Happy Hollow','Happy Homes','Harrison Road',
+  'Holy Ghost Extension','Holy Ghost Proper','Honeymoon','Irisan',
+  'Kabayanihan','Kagitingan','Kayang Extension','Kayang-Hilltop','Kias',
+  'Loakan Apugan','Loakan Liwanag','Loakan Proper','Loakan Road','Lopez Jaena',
+  'Lourdes Subdivision Extension','Lourdes Subdivision Proper','Lower Quirino Hill',
+  'Lualhati','Lucnab','Magsaysay Private Road','Magsaysay Lower','Magsaysay Upper',
+  'Manuel A. Roxas','Market Subdivision','Middle Quezon Hill','Military Cut-off',
+  'Mines View Park','Modern Site East','Modern Site West','MRR-Queen of Peace',
+  'New Lucban','Outlook Drive','Pacdal','Padre Burgos','Padre Zamora',
+  'Palma-Urbano','Phil-Am','Pinget','Pinsao Pilot','Pinsao Proper','Poliwes',
+  'Pucsusan','Quirino Hill East','Quirino Hill Lower','Quirino Hill Middle',
+  'Quirino Hill Proper','Quirino Hill West','Quirino-Magsaysay','Rock Quarry',
+  'Salud Mitra','San Antonio Village','San Luis Village','San Roque Village',
+  'San Vicente','Santa Escolastica','Santo Rosario','Santo Tomas Proper',
+  'Santo Tomas School Area','Session Road','Sierra Vista','Slaughter House Area',
+  'South Drive','Teodora Alonzo','Trancoville','Victoria Village',
+]
 
   const fetchListings = async () => {
   setLoading(true)
@@ -193,12 +221,58 @@ const submitReport = async () => {
             </div>
 
             {/* Barangay filter */}
-            <select
-              className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 outline-none"
-              value={barangay}
-              onChange={e => setBarangay(e.target.value)}>
-              {BARANGAYS.map(b => <option key={b}>{b}</option>)}
-            </select>
+            <div className="relative">
+  <input
+    className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 outline-none w-48"
+    placeholder="All barangays..."
+    value={barangayInput}
+    onChange={e => {
+      const val = e.target.value
+      setBarangayInput(val)
+      setBarangayOpen(true)
+      if (!val.trim()) {
+        setBarangay('All barangays')
+        setBarangaySuggestions([])
+        return
+      }
+      setBarangaySuggestions(
+        ALL_BARANGAYS.filter(b =>
+          b.toLowerCase().startsWith(val.toLowerCase())
+        ).slice(0, 6)
+      )
+    }}
+    onFocus={() => {
+      if (barangayInput) setBarangayOpen(true)
+    }}
+  />
+  {barangayOpen && barangaySuggestions.length > 0 && (
+    <div className="absolute z-50 w-64 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
+      style={{ maxHeight:'200px', overflowY:'auto' }}>
+      <button
+        onClick={() => {
+          setBarangay('All barangays')
+          setBarangayInput('')
+          setBarangaySuggestions([])
+          setBarangayOpen(false)
+        }}
+        className="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-50 border-b border-gray-100">
+        All barangays
+      </button>
+      {barangaySuggestions.map(b => (
+        <button key={b}
+          onClick={() => {
+            setBarangay(b)
+            setBarangayInput(b)
+            setBarangaySuggestions([])
+            setBarangayOpen(false)
+          }}
+          className="w-full text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-green-50 transition">
+          {b}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
 
             {/* Sort */}
             <select

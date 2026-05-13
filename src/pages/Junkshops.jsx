@@ -207,10 +207,58 @@ const [requestForm, setRequestForm] = useState({
                 onChange={e => setSearch(e.target.value)}
               />
             </div>
-            <select className="border border-gray-300 rounded-xl px-3 py-2 text-sm text-gray-600 outline-none"
-              value={barangay} onChange={e => setBarangay(e.target.value)}>
-              {BARANGAYS.map(b => <option key={b}>{b}</option>)}
-            </select>
+            <div className="relative">
+  <input
+    className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 outline-none w-48"
+    placeholder="All barangays..."
+    value={barangayInput}
+    onChange={e => {
+      const val = e.target.value
+      setBarangayInput(val)
+      setBarangayOpen(true)
+      if (!val.trim()) {
+        setBarangay('All barangays')
+        setBarangaySuggestions([])
+        return
+      }
+      setBarangaySuggestions(
+        ALL_BARANGAYS.filter(b =>
+          b.toLowerCase().startsWith(val.toLowerCase())
+        ).slice(0, 6)
+      )
+    }}
+    onFocus={() => {
+      if (barangayInput) setBarangayOpen(true)
+    }}
+  />
+  {barangayOpen && barangaySuggestions.length > 0 && (
+    <div className="absolute z-50 w-64 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
+      style={{ maxHeight:'200px', overflowY:'auto' }}>
+      <button
+        onClick={() => {
+          setBarangay('All barangays')
+          setBarangayInput('')
+          setBarangaySuggestions([])
+          setBarangayOpen(false)
+        }}
+        className="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-50 border-b border-gray-100">
+        All barangays
+      </button>
+      {barangaySuggestions.map(b => (
+        <button key={b}
+          onClick={() => {
+            setBarangay(b)
+            setBarangayInput(b)
+            setBarangaySuggestions([])
+            setBarangayOpen(false)
+          }}
+          className="w-full text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-green-50 transition">
+          {b}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
             <select className="border border-gray-300 rounded-xl px-3 py-2 text-sm text-gray-600 outline-none"
               value={sortBy} onChange={e => setSortBy(e.target.value)}>
               <option value="featured">Featured first</option>
