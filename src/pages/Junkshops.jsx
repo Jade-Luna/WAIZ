@@ -3,10 +3,29 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../supabase/config'
 import { useAuth } from '../context/AuthContext'
 
-const BARANGAYS = [
-  'All barangays','Burnham-Legarda','Cabinet Hill','Camp 7','Irisan',
-  'Loakan Proper','Mines View','Pinsao Proper','Quirino Hill','Session Road',
-  'Trancoville','Holy Ghost','Engineers Hill','Pacdal','Guisad',
+const ALL_BARANGAYS = [
+  'Abanao-Zandueta-Kayong-Chugum-Otek','Andres Bonifacio','Aurora Hill Proper',
+  'Bayan Park','Burnham-Legarda','Cabinet Hill-Teacher\'s Camp','Camp 7',
+  'Camp 8','Camp Allen','Campo Filipino','City Camp Central','City Camp Proper',
+  'Country Club Village','Cresencia Village','Dagsian','Dominican Hill-Mirador',
+  'Dontogan','Engineers Hill','Fairview Village','Ferdinand','Fort del Pilar',
+  'Gabriela Silang','General Luna Road','Gibraltar','Greenwater Village',
+  'Guisad Central','Guisad Sorong','Happy Hollow','Happy Homes','Harrison Road',
+  'Holy Ghost Extension','Holy Ghost Proper','Honeymoon','Irisan',
+  'Kabayanihan','Kagitingan','Kayang Extension','Kayang-Hilltop','Kias',
+  'Loakan Apugan','Loakan Liwanag','Loakan Proper','Loakan Road','Lopez Jaena',
+  'Lourdes Subdivision Extension','Lourdes Subdivision Proper','Lower Quirino Hill',
+  'Lualhati','Lucnab','Magsaysay Private Road','Magsaysay Lower','Magsaysay Upper',
+  'Manuel A. Roxas','Market Subdivision','Middle Quezon Hill','Military Cut-off',
+  'Mines View Park','Modern Site East','Modern Site West','MRR-Queen of Peace',
+  'New Lucban','Outlook Drive','Pacdal','Padre Burgos','Padre Zamora',
+  'Palma-Urbano','Phil-Am','Pinget','Pinsao Pilot','Pinsao Proper','Poliwes',
+  'Pucsusan','Quirino Hill East','Quirino Hill Lower','Quirino Hill Middle',
+  'Quirino Hill Proper','Quirino Hill West','Quirino-Magsaysay','Rock Quarry',
+  'Salud Mitra','San Antonio Village','San Luis Village','San Roque Village',
+  'San Vicente','Santa Escolastica','Santo Rosario','Santo Tomas Proper',
+  'Santo Tomas School Area','Session Road','Sierra Vista','Slaughter House Area',
+  'South Drive','Teodora Alonzo','Trancoville','Victoria Village',
 ]
 
 const MATERIALS = ['All','Metal','Paper','Plastic','E-waste','Glass','Secondhand','Others']
@@ -35,6 +54,9 @@ export default function Junkshops() {
   const [shops, setShops]       = useState([])
   const [search, setSearch]     = useState('')
   const [barangay, setBarangay] = useState('All barangays')
+  const [barangayInput,       setBarangayInput]       = useState('')
+const [barangaySuggestions, setBarangaySuggestions] = useState([])
+const [barangayOpen,        setBarangayOpen]        = useState(false)
   const [material, setMaterial] = useState('All')
   const [sortBy, setSortBy]     = useState('featured')
   const [selected, setSelected] = useState(null)
