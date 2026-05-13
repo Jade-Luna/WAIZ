@@ -93,7 +93,7 @@ const [pickups,   setPickups]   = useState([])
 
     const { data: pickupData } = await supabase
   .from('pickups')
-  .select('*, listings(title), profiles!household_id(full_name)')
+  .select('*, listings(title), profiles!household_id(full_name), junkshops!junkshop_id(shop_name)')
   .order('created_at', { ascending: false })
 
     if (usersData)              setUsers(usersData.length     > 0 ? usersData    : [])

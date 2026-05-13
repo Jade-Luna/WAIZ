@@ -150,7 +150,7 @@ const fetchListing = async () => {
     offered_price: parseFloat(offeredPrice),
     status:        'requested',
   })
-  console.log('Insert error:', error)
+  console.log('Insert error:', JSON.stringify(error))
 console.log('User ID:', user.id)
 console.log('Listing posted_by:', listing.posted_by)
 

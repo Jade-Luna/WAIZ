@@ -84,13 +84,13 @@ const fetchNotifications = async () => {
       .eq('status', 'requested')
     setPendingRequests(reqCount || 0)
   } else {
-    const { count: reqCount } = await supabase
-      .from('pickups')
-      .select('*', { count:'exact', head:true })
-      .eq('household_id', user.id)
-      .eq('status', 'requested')
-    setPendingRequests(reqCount || 0)
-  }
+  const { count: reqCount } = await supabase
+    .from('pickups')
+    .select('*', { count:'exact', head:true })
+    .eq('household_id', user.id)
+    .in('status', ['requested', 'offered'])
+  setPendingRequests(reqCount || 0)
+}
 }
   const handleSignOut = async () => {
     await signOut()

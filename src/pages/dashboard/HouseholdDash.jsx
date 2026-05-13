@@ -9,6 +9,7 @@ import Messages from '../../components/Messages'
 const STATUS_STYLE = {
   available: { bg:'#D8F3DC', color:'#085041', label:'Available'     },
   pending:   { bg:'#FAEEDA', color:'#7A3F08', label:'Pending pickup' },
+  offered:   { bg:'#E6F1FB', color:'#042C53', label:'Offer received' },
   completed: { bg:'#F3F4F6', color:'#6B7280', label:'Completed'     },
 }
 
@@ -49,13 +50,30 @@ export default function HouseholdDash() {
   const [receiptPickup, setReceiptPickup] = useState(null)
   const [loading,  setLoading]    = useState(false)
 
-  useEffect(() => { if (user) fetchData() }, [user])
+  useEffect(() => {
+  if (!user) return
+  fetchData()
+
+  // Real-time subscription for pickup status changes
+  const channel = supabase
+    .channel('household-pickup-updates')
+    .on('postgres_changes', {
+      event:  '*',
+      schema: 'public',
+      table:  'pickups',
+      filter: `household_id=eq.${user.id}`,
+    }, () => fetchData())
+    .subscribe()
+
+  return () => supabase.removeChannel(channel)
+}, [user])
 
 const fetchData = async () => {
   setLoading(true)
 
   const { data: listData } = await supabase
-    .from('listings').select('*')
+    .from('listings')
+    .select('*')
     .eq('posted_by', user.id)
     .order('created_at', { ascending: false })
 
@@ -66,27 +84,24 @@ const fetchData = async () => {
     .order('created_at', { ascending: false })
 
   const enrichedPickups = await Promise.all((pickupData || []).map(async (pickup) => {
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('full_name, barangay')
-    .eq('id', pickup.junkshop_id)
-    .single()
-  return {
-    ...pickup,
-    junkshop: profileData
-      ? { shop_name: profileData.full_name, barangay: profileData.barangay, is_verified: false }
-      : null
-  }
-}))
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('full_name, barangay')
+      .eq('id', pickup.junkshop_id)
+      .single()
+    return {
+      ...pickup,
+      junkshop: profileData
+        ? { shop_name: profileData.full_name, barangay: profileData.barangay, is_verified: false }
+        : null
+    }
+  }))
 
   setListings(listData || [])
-setHistory(enrichedPickups.filter(p => p.status === 'completed' || p.status === 'cancelled'))
-setRequests(enrichedPickups.filter(p => p.status === 'requested'))
-  setDataLoaded(true)
+  setHistory(enrichedPickups.filter(p => p.status === 'completed' || p.status === 'cancelled'))
+  setRequests(enrichedPickups.filter(p => p.status === 'requested' || p.status === 'offered' || p.status === 'accepted'))
   setLoading(false)
 }
-
-
 
   const handleDelete = async (id) => {
     await supabase.from('listings').delete().eq('id', id)
@@ -96,6 +111,8 @@ setRequests(enrichedPickups.filter(p => p.status === 'requested'))
 
   const handlePickupAction = async (id, status) => {
   const pickup = requests.find(r => r.id === id)
+  const { error } = await supabase.from('pickups').update({ status }).eq('id', id)
+  console.log('update error:', JSON.stringify(error))
   await supabase.from('pickups').update({ status }).eq('id', id)
   if (status === 'cancelled' && pickup?.listing_id) {
     await supabase.from('listings')
@@ -107,8 +124,12 @@ setRequests(enrichedPickups.filter(p => p.status === 'requested'))
       .update({ status: 'pending' })
       .eq('id', pickup.listing_id)
   }
+   if (status === 'cancelled') {
+    setRequests(prev => prev.filter(r => r.id !== id))
+    return
+  }
   setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r))
-  fetchData()
+  awaitfetchData()
 }
 
   const totalKg        = listings.filter(l => l.status === 'completed').reduce((s, l) => s + (l.weight_estimate || 0), 0)
@@ -269,18 +290,49 @@ setRequests(enrichedPickups.filter(p => p.status === 'requested'))
   </div>
 </div>
                   <div className="flex gap-2 shrink-0">
-                    <button
-  onClick={() => handlePickupAction(req.id, 'cancelled')}
-  className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 transition">
-  Decline
-</button>
-<button
-  onClick={() => handlePickupAction(req.id, 'accepted')}
-  className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
-  style={{ backgroundColor:'#C97A3A' }}>
-  Accept
-</button>
-                  </div>
+  {req.listing_id ? (
+    <>
+      <button
+        onClick={() => handlePickupAction(req.id, 'cancelled')}
+        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 transition">
+        Decline
+      </button>
+      <button
+        onClick={() => handlePickupAction(req.id, 'accepted')}
+        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+        style={{ backgroundColor:'#C97A3A' }}>
+        Accept
+      </button>
+    </>
+  ) : req.status === 'offered' ? (
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-medium" style={{ color:'#1A4D35' }}>
+        ₱{req.offered_price}/kg offered
+      </span>
+      <button
+        onClick={() => handlePickupAction(req.id, 'cancelled')}
+        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 transition">
+        Decline
+      </button>
+      <button
+        onClick={() => handlePickupAction(req.id, 'accepted')}
+        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+        style={{ backgroundColor:'#C97A3A' }}>
+        Accept
+      </button>
+    </div>
+  ) : req.status === 'accepted' ? (
+    <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
+      style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
+      Pickup confirmed ✓
+    </span>
+  ) : (
+    <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
+      style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
+      Awaiting junkshop offer
+    </span>
+  )}
+</div>
                 </div>
               ))}
             </div>
@@ -303,14 +355,14 @@ setRequests(enrichedPickups.filter(p => p.status === 'requested'))
   <div key={h.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4">
     <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
       style={{ backgroundColor:'#D8F3DC', color:'#0D2B1F' }}>
-      {(h.junkshops?.shop_name || h.shop_name || 'JS').slice(0,2).toUpperCase()}
+      {(h.junkshop?.shop_name || h.junkshop?.full_name || 'JS').slice(0,2).toUpperCase()}
     </div>
     <div className="flex-1 min-w-0">
       <div className="text-sm font-medium text-gray-700">
         {h.listings?.title || h.listing_title || 'Pickup'}
       </div>
       <div className="text-xs text-gray-400 mt-0.5">
-        {h.junkshops?.shop_name || h.shop_name || 'Junkshop'} · {h.scheduled_date || h.date || 'Completed'}
+        {h.junkshop?.shop_name || h.junkshop?.full_name || 'Junkshop'} · {h.scheduled_date || h.date || 'Completed'}
       </div>
     </div>
     <div className="text-right shrink-0 flex flex-col items-end gap-1">
@@ -462,7 +514,7 @@ setRequests(enrichedPickups.filter(p => p.status === 'requested'))
       <div className="border-t border-b border-dashed border-gray-200 py-4 space-y-2 mb-4">
         {[
           { label:'Item',      value: receiptPickup.listings?.title || 'Pickup'                           },
-          { label:'Junkshop',  value: receiptPickup.junkshops?.shop_name || 'Junkshop'                   },
+          { label:'Junkshop',  value: receiptPickup.junkshop?.shop_name || receiptPickup.junkshop?.full_name || 'Junkshop' },
           { label:'Date',      value: receiptPickup.scheduled_date || receiptPickup.date || 'Completed'   },
           { label:'Amount',    value: `₱${receiptPickup.offered_price || receiptPickup.agreed_price || 0}` },
           { label:'Status',    value: 'Completed ✓'                                                       },

@@ -17,6 +17,7 @@ L.Icon.Default.mergeOptions({
 
 const STATUS_STYLE = {
   requested: { bg:'#FAEEDA', color:'#7A3F08', label:'Requested' },
+  offered:   { bg:'#E6F1FB', color:'#042C53', label:'Offer sent' },
   accepted:  { bg:'#D8F3DC', color:'#085041', label:'Accepted'  },
   completed: { bg:'#F3F4F6', color:'#6B7280', label:'Completed' },
   cancelled: { bg:'#FAECE7', color:'#993C1D', label:'Cancelled' },
@@ -45,6 +46,9 @@ export default function JunkshopDash() {
   const { user, profile } = useAuth()
   const navigate          = useNavigate()
   const [searchParams]    = useSearchParams()
+  const [viewRequest,  setViewRequest]  = useState(null)
+const [offerPrice,   setOfferPrice]   = useState('')
+const [offering,     setOffering]     = useState(false)
   const activeTab         = searchParams.get('tab') || 'requests'
     const [customRates,  setCustomRates]  = useState([
   { label:'', price:'' },
@@ -76,8 +80,22 @@ const handleSaveRates = async () => {
   const [loading,      setLoading]      = useState(false)
 
   useEffect(() => {
-    if (user) fetchData()
-  }, [user])
+  if (!user) return
+  fetchData()
+
+  // Real-time subscription for new pickup requests
+  const channel = supabase
+    .channel('pickup-updates')
+    .on('postgres_changes', {
+      event:  'INSERT',
+      schema: 'public',
+      table:  'pickups',
+      filter: `junkshop_id=eq.${user.id}`,
+    }, () => fetchData())
+    .subscribe()
+
+  return () => supabase.removeChannel(channel)
+}, [user])
 
   const fetchData = async () => {
   setLoading(true)
@@ -134,6 +152,19 @@ const handleSaveRates = async () => {
     }
   }
   setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r))
+  fetchData()
+}
+
+const handleOffer = async () => {
+  if (!offerPrice || !viewRequest) return
+  setOffering(true)
+  const { error } = await supabase.from('pickups')
+    .update({ offered_price: parseFloat(offerPrice), status: 'offered' })
+    .eq('id', viewRequest.id)
+  console.log('offer error:', JSON.stringify(error))
+  setOffering(false)
+  setOfferPrice('')
+  setViewRequest(null)
   fetchData()
 }
 
@@ -225,7 +256,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
           ) : (
             <div className="space-y-3">
               {requests.filter(r => r.status === 'requested').map(req => (
-                <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} showActions />
+                <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} showActions onView={setViewRequest} />
               ))}
             </div>
           )}
@@ -383,17 +414,145 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
     </div>
   </div>
 )}
+{viewRequest && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+    style={{ backgroundColor:'rgba(0,0,0,0.4)' }}
+    onClick={() => setViewRequest(null)}>
+    <div className="bg-white rounded-2xl p-6 w-full max-w-md"
+      onClick={e => e.stopPropagation()}>
 
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-sm font-medium text-gray-800">Pickup Request</h3>
+          <p className="text-xs text-gray-400 mt-0.5">
+            from {viewRequest.household?.full_name || 'Household'}
+          </p>
+        </div>
+        <button onClick={() => setViewRequest(null)}
+          className="text-gray-300 hover:text-gray-500 text-lg">✕</button>
+      </div>
+
+      <div className="space-y-3">
+        {/* Materials */}
+        {viewRequest.material_types?.length > 0 && (
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-1.5">Materials</p>
+            <div className="flex flex-wrap gap-1.5">
+              {viewRequest.material_types.map(m => (
+                <span key={m} className="text-xs px-2.5 py-1 rounded-full font-medium"
+                  style={{ backgroundColor:'#D8F3DC', color:'#1A4D35' }}>
+                  {m}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Weight */}
+        {viewRequest.est_weight_kg && (
+          <div className="flex justify-between py-2 border-b border-gray-50">
+            <span className="text-xs text-gray-400">Estimated weight</span>
+            <span className="text-xs font-medium text-gray-700">~{viewRequest.est_weight_kg} kg</span>
+          </div>
+        )}
+
+        {/* Preferred date */}
+        {viewRequest.preferred_date && (
+          <div className="flex justify-between py-2 border-b border-gray-50">
+            <span className="text-xs text-gray-400">Preferred date</span>
+            <span className="text-xs font-medium text-gray-700">{viewRequest.preferred_date}</span>
+          </div>
+        )}
+
+        {/* Note */}
+        {viewRequest.note && (
+          <div className="py-2 border-b border-gray-50">
+            <p className="text-xs text-gray-400 mb-1">Note</p>
+            <p className="text-xs text-gray-700">{viewRequest.note}</p>
+          </div>
+        )}
+
+        {/* Photos */}
+        {viewRequest.photos?.length > 0 && (
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-1.5">Photos</p>
+            <div className="grid grid-cols-4 gap-2">
+              {viewRequest.photos.map((src, i) => (
+                <img key={i} src={src} alt=""
+                  className="w-full aspect-square object-cover rounded-xl border border-gray-100" />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {viewRequest?.status !== 'offered' && (
+  <div className="mt-4 pt-4 border-t border-gray-100">
+    <p className="text-xs font-medium text-gray-500 mb-2">Send a price offer</p>
+    <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-3 py-2">
+      <span className="text-xs text-gray-400">₱</span>
+      <input
+        type="number" min="0" step="0.5"
+        className="flex-1 text-sm outline-none"
+        placeholder="Price per kg"
+        value={offerPrice}
+        onChange={e => setOfferPrice(e.target.value)}
+      />
+      <span className="text-xs text-gray-400">/kg</span>
+    </div>
+    <div className="flex gap-2 mt-2">
+      <button
+        onClick={() => { onUpdate(viewRequest.id, 'cancelled'); setViewRequest(null) }}
+        className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">
+        Decline
+      </button>
+      <button
+        onClick={handleOffer}
+        disabled={offering || !offerPrice}
+        className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
+        style={{ backgroundColor: offerPrice ? '#C97A3A' : '#9CA3AF' }}>
+        {offering ? 'Sending...' : 'Send offer'}
+      </button>
+    </div>
+  </div>
+)}
+
+<div className="flex gap-2 mt-5">
+  <button
+   onClick={() => navigate(
+  `/dashboard/junkshop?tab=messages&contact=${viewRequest.household_id}`
+)}
+    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+    style={{ backgroundColor:'#1A4D35', color:'#fff' }}>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="22" y1="2" x2="11" y2="13"/>
+      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+    </svg>
+  </button>
+  <button onClick={() => { setViewRequest(null); setOfferPrice('') }}
+    className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
+    style={{ backgroundColor:'#1A4D35' }}>
+    Close
+  </button>
+</div>
+  </div>
+  </div>
+)}
     </DashboardLayout>
   )
 }
 
-function RequestCard({ req, onUpdate, showActions, showComplete }) {
+function RequestCard({ req, onUpdate, showActions, showComplete, onView }) {
+  const [offerPrice, setOfferPrice] = useState('')
+  const [offering,   setOffering]   = useState(false)
+
   const s        = STATUS_STYLE[req.status] || STATUS_STYLE.requested
-  const title    = req.listings?.title             || req.listing_title
-  const barangay = req.listings?.barangay          || req.barangay
-  const weight   = req.listings?.weight_estimate   || req.weight
-  const name = req.household?.full_name || req.profiles?.full_name || 'Household'
+  const title = req.listings?.title || req.listing_title || ('Request from ' + (req.household?.full_name || 'Household'))
+  const barangay = req.listings?.barangay        || req.barangay       || '—'
+  const weight   = req.listings?.weight_estimate || req.weight         || req.est_weight_kg || null
+  const name     = req.household?.full_name      || req.profiles?.full_name || 'Household'
+
 
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4">
@@ -412,18 +571,40 @@ function RequestCard({ req, onUpdate, showActions, showComplete }) {
           <span>·</span>
           <span>{barangay}</span>
           {weight && <><span>·</span><span>~{weight} kg</span></>}
-          <span>·</span>
-          <span className="font-medium" style={{ color:'#1A4D35' }}>
-  ₱{req.offered_price || 0}
-</span>
+          {req.material_types?.length > 0 && (
+            <><span>·</span><span>{req.material_types.join(', ')}</span></>
+          )}
+          {req.offered_price && (
+            <><span>·</span>
+            <span className="font-medium" style={{ color:'#1A4D35' }}>₱{req.offered_price}/kg</span></>
+          )}
+          {/* Request details for household-initiated pickups */}
+          {req.preferred_date && (
+            <><span>·</span>
+            <span>Prefers {req.preferred_date}</span></>
+          )}  
         </div>
       </div>
       <div className="flex gap-2 shrink-0">
         {showActions && (
-  <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
-    style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
-    Awaiting household
-  </span>
+  req.listing_id ? (
+    <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
+      style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
+      Awaiting household
+    </span>
+  ) : (
+    req.status === 'offered' ? (
+      <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
+        style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
+        Offer sent ✓
+      </span>
+    ) : (
+      <button onClick={() => onView(req)}
+        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-500 hover:bg-gray-50 transition">
+        View details
+      </button>
+    )
+  )
 )}
         {showComplete && (
           <button onClick={() => onUpdate(req.id, 'completed')}

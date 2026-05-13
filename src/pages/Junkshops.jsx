@@ -39,6 +39,12 @@ export default function Junkshops() {
   const [sortBy, setSortBy]     = useState('featured')
   const [selected, setSelected] = useState(null)
   const [loading, setLoading]   = useState(false)
+  const [requestShop, setRequestShop] = useState(null)
+const [requesting,  setRequesting]  = useState(false)
+const [requested,   setRequested]   = useState(false)
+const [photoFiles,    setPhotoFiles]    = useState([])
+const [photoPreviews, setPhotoPreviews] = useState([])
+
 
   useEffect(() => { fetchShops() }, [barangay, sortBy])
 
@@ -57,6 +63,87 @@ export default function Junkshops() {
   setShops(data || [])
   setLoading(false)
 }
+
+const handleRequest = async () => {
+  if (!requestForm.material_types.length) return
+  setRequesting(true)
+
+  let photoUrls = []
+  if (photoFiles.length > 0) {
+    for (const file of photoFiles) {
+      const ext  = file.name.split('.').pop()
+      const path = `requests/${user.id}-${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('listing-photos')
+        .upload(path, file, { upsert: true })
+      if (!uploadError) {
+        const { data } = supabase.storage.from('listing-photos').getPublicUrl(path)
+        photoUrls.push(data.publicUrl)
+      }
+    }
+  }
+
+  const { error: insertError } = await supabase.from('pickups').insert({
+    junkshop_id:    requestShop.id,
+    household_id:   user.id,
+    material_types: requestForm.material_types,
+    est_weight_kg:  requestForm.est_weight_kg ? parseFloat(requestForm.est_weight_kg) : null,
+    preferred_date: requestForm.preferred_date || null,
+    note:           requestForm.note || null,
+    photos:         photoUrls.length > 0 ? photoUrls : null,
+    status:         'requested',
+  })
+
+  console.log('insert error:', JSON.stringify(insertError))
+
+  await supabase.from('junkshops')
+    .update({ total_pickups: (requestShop.total_pickups || 0) + 1 })
+    .eq('id', requestShop.id)
+
+  setRequesting(false)
+  setRequested(true)
+  setTimeout(() => {
+    setRequested(false)
+    setRequestShop(null)
+    setRequestForm({
+      note:           '',
+      material_types: [],
+      preferred_date: '',
+      preferred_time: '',
+      est_weight_kg:  '',
+    })
+    setPhotoFiles([])
+    setPhotoPreviews([])
+    fetchShops()
+  }, 2000)
+}
+
+const toggleMaterial = (m) => {
+  setRequestForm(p => ({
+    ...p,
+    material_types: p.material_types.includes(m)
+      ? p.material_types.filter(x => x !== m)
+      : [...p.material_types, m]
+  }))
+}
+
+const handlePhotoChange = (e) => {
+  const newFiles = Array.from(e.target.files)
+  setPhotoFiles(prev => {
+    const combined = [...prev, ...newFiles].slice(0, 4)
+    setPhotoPreviews(combined.map(f => URL.createObjectURL(f)))
+    return combined
+  })
+}
+
+const [requestForm, setRequestForm] = useState({
+  note:           '',
+  material_types: [],
+  preferred_date: '',
+  preferred_time: '',
+  est_weight_kg:  '',
+})
+
 
   const filtered = shops.filter(s => {
     const matchSearch   = s.shop_name.toLowerCase().includes(search.toLowerCase())
@@ -252,10 +339,11 @@ export default function Junkshops() {
 
             {user && profile?.role === 'household' && (
               <button
-                className="w-full py-2.5 rounded-xl text-sm font-medium text-white"
-                style={{ backgroundColor: '#C97A3A' }}>
-                Request this junkshop for pickup
-              </button>
+    onClick={() => { setRequestShop(selected); setSelected(null) }}
+    className="w-full py-2.5 rounded-xl text-sm font-medium text-white"
+    style={{ backgroundColor: '#C97A3A' }}>
+    Request this junkshop for pickup
+  </button>
             )}
             {!user && (
               <Link to="/signup"
@@ -267,6 +355,138 @@ export default function Junkshops() {
           </div>
         </div>
       )}
+      
+      {requestShop && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+    style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
+    onClick={() => setRequestShop(null)}>
+    <div className="bg-white rounded-2xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto"
+      onClick={e => e.stopPropagation()}>
+
+      {requested ? (
+        <div className="text-center py-8">
+          <div className="text-5xl mb-3">✅</div>
+          <p className="text-sm font-medium text-gray-800">Pickup requested!</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {requestShop.shop_name} will review and contact you
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-sm font-medium text-gray-800">Request Pickup</h3>
+              <p className="text-xs text-gray-400 mt-0.5">{requestShop.shop_name}</p>
+            </div>
+            <button onClick={() => setRequestShop(null)}
+              className="text-gray-300 hover:text-gray-500 text-lg">✕</button>
+          </div>
+
+          <div className="space-y-4">
+
+            {/* Material types */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-2">
+                What materials do you have? <span className="text-red-400">*</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {MATERIALS.map(m => (
+                  <button key={m}
+                    onClick={() => toggleMaterial(m)}
+                    className="px-3 py-1.5 rounded-full text-xs font-medium transition border"
+                    style={{
+                      backgroundColor: requestForm.material_types.includes(m) ? '#1A4D35' : '#F9FAFB',
+                      color:           requestForm.material_types.includes(m) ? '#fff'     : '#6B7280',
+                      borderColor:     requestForm.material_types.includes(m) ? '#1A4D35' : '#E5E7EB',
+                    }}>
+                    {m}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Estimated weight */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Estimated total weight (kg) <span className="text-gray-300 font-normal">— optional</span>
+              </label>
+              <input type="number" min="0" step="0.5"
+                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
+                placeholder="e.g. 5"
+                value={requestForm.est_weight_kg}
+                onChange={e => setRequestForm(p => ({ ...p, est_weight_kg: e.target.value }))}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                The junkshop will confirm the final price at pickup
+              </p>
+            </div>
+
+            {/* Photos */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Photos of your recyclables <span className="text-gray-300 font-normal">— up to 4</span>
+              </label>
+              <label className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-green-700 transition text-xs text-gray-400">
+                <span>📷</span> Tap to add photos
+                <input type="file" accept="image/*" multiple className="hidden"
+                  onChange={handlePhotoChange} />
+              </label>
+              {photoPreviews.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  {photoPreviews.map((src, i) => (
+                    <img key={i} src={src} alt=""
+                      className="w-full aspect-square object-cover rounded-lg border border-gray-100" />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Preferred date */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Preferred pickup date <span className="text-gray-300 font-normal">— optional</span>
+              </label>
+              <input type="date"
+                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
+                value={requestForm.preferred_date}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={e => setRequestForm(p => ({ ...p, preferred_date: e.target.value }))}
+              />
+            </div>
+
+            {/* Note */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Additional note <span className="text-gray-300 font-normal">— optional</span>
+              </label>
+              <textarea
+                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700 resize-none"
+                rows={2}
+                placeholder="Address, access instructions, best time to call..."
+                value={requestForm.note}
+                onChange={e => setRequestForm(p => ({ ...p, note: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-5">
+            <button onClick={() => setRequestShop(null)}
+              className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">
+              Cancel
+            </button>
+            <button
+              onClick={handleRequest}
+              disabled={requesting || !requestForm.material_types.length}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition"
+              style={{ backgroundColor: requesting || !requestForm.material_types.length ? '#9CA3AF' : '#C97A3A' }}>
+              {requesting ? 'Sending...' : 'Send request'}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+)}
     </div>
   )
 }
@@ -316,6 +536,7 @@ function ShopCard({ shop, onSelect }) {
         <span className="text-xs text-gray-300">{shop.total_pickups || 0} pickups completed</span>
         <span className="text-xs font-medium" style={{ color: '#C97A3A' }}>View details →</span>
       </div>
+
     </div>
   )
 }
