@@ -205,12 +205,12 @@ const fetchNotifications = async () => {
     <span style={{ color:'#52B788' }}><BrowseIcon /></span>
     {!collapsed && <span>Marketplace</span>}
   </Link>
-  <button onClick={handleSignOut}
-    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm"
-    style={{ color:'#74C69D', fontWeight: '600', fontSize: '13px', letterSpacing: '0.015em' }}>
-    <span style={{ color:'#52B788' }}><SignOutIcon /></span>
-    {!collapsed && <span>Sign out</span>}
-  </button>
+  <button onClick={() => setShowSignOutModal(true)}
+  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm"
+  style={{ color:'#74C69D', fontWeight: '600', fontSize: '13px', letterSpacing: '0.015em' }}>
+  <span style={{ color:'#52B788' }}><SignOutIcon /></span>
+  {!collapsed && <span>Sign out</span>}
+</button>
 </div>
       </aside>
 
@@ -252,7 +252,6 @@ const fetchNotifications = async () => {
     <div className="bg-white rounded-2xl p-6 w-full max-w-sm"
       onClick={e => e.stopPropagation()}>
       <div className="text-center mb-5">
-        <div className="text-3xl mb-3">👋</div>
         <h3 className="text-base font-medium text-gray-800 mb-1">Sign out of WAIZ?</h3>
         <p className="text-sm text-gray-400">You'll need to sign back in to access your dashboard.</p>
       </div>
