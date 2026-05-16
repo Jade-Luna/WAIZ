@@ -769,53 +769,54 @@ const handleDeleteRating = async (id, junkshopId) => {
   <div>
     <div className="flex items-center justify-between mb-6">
       <div>
-        <h2 className="text-xl font-medium text-gray-800">Platform Analytics</h2>
-        <p className="text-sm text-gray-400 mt-0.5">
+        <h2 className="text-xl font-semibold text-gray-900">Platform Analytics</h2>
+        <p className="text-xs font-normal text-gray-500 mt-0.5">
           Real-time waste management data — Baguio City
         </p>
       </div>
       <button
         onClick={() => exportCSV({ listings, pickups, users, junkshops })}
-        className="px-5 py-2.5 rounded-xl text-sm font-medium text-white flex items-center gap-2"
-        style={{ backgroundColor:'#C97A3A' }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        className="px-4 py-1.5 rounded-lg text-xs font-medium text-white flex items-center gap-1.5 transition hover:shadow-lg"
+        style={{ backgroundColor:'#C97A3A', boxShadow: '0 2px 8px rgba(201, 122, 58, 0.2)' }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="7 10 12 15 17 10"/>
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
-        Export for LGU Report
+        Export
       </button>
     </div>
 
     {/* RA 9003 Compliance Banner */}
-    <div className="rounded-2xl p-5 mb-6"
-      style={{ background:'linear-gradient(135deg, #1A4D35 0%, #0D2B1F 100%)' }}>
-      <div className="flex items-center justify-between">
+    <div className="rounded-2xl p-4 mb-6 relative overflow-hidden"
+      style={{ background:'linear-gradient(135deg, #1A4D35 0%, #0D2B1F 100%)', boxShadow: '0 2px 8px rgba(13, 43, 31, 0.15)' }}>
+      <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-5 rounded-full -mr-12 -mt-12" />
+      <div className="flex items-center justify-between relative z-10">
         <div>
-          <p className="text-xs font-medium tracking-widest uppercase mb-1" style={{ color:'#52B788' }}>
-            RA 9003 Compliance Data
+          <p className="text-xs font-medium tracking-widest uppercase mb-0.5" style={{ color:'#52B788' }}>
+            ✓ RA 9003 Compliance
           </p>
-          <h3 className="text-lg font-medium text-white mb-1">
+          <h3 className="text-base font-semibold text-white mb-0.5">
             Baguio City Waste Diversion Report
           </h3>
-          <p className="text-sm" style={{ color:'#74C69D' }}>
+          <p className="text-xs font-normal" style={{ color:'#B7E4C7' }}>
             Live data for CENRO, SWMO, and DENR reporting
           </p>
         </div>
-        <div className="text-right">
-          <div className="text-3xl font-medium text-white">
-            {stats.kg_diverted.toLocaleString()} kg
+        <div className="text-right ml-6">
+          <div className="text-2xl font-semibold text-white">
+            {stats.kg_diverted.toLocaleString()}
           </div>
-          <div className="text-xs mt-1" style={{ color:'#74C69D' }}>
-            total materials diverted from SLF
+          <div className="text-xs mt-1 font-normal" style={{ color:'#B7E4C7' }}>
+            kg diverted from SLF
           </div>
         </div>
       </div>
     </div>
 
     {/* Key metrics row */}
-    <div className="grid grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-4 gap-3 mb-6">
       {[
         {
           label: 'Household participation',
@@ -823,7 +824,7 @@ const handleDeleteRating = async (id, junkshopId) => {
             ? `${Math.round((stats.total_households / 100) * 100)}%`
             : '0%',
           sub:   `${stats.total_households} of est. 100 target households`,
-          bg:    '#D8F3DC', color:'#085041',
+          bg:    '#D8F3DC', color:'#085041', icon: '👥',
         },
         {
           label: 'Pickup completion rate',
@@ -831,39 +832,48 @@ const handleDeleteRating = async (id, junkshopId) => {
             ? `${Math.round((stats.completed_pickups / stats.total_pickups) * 100)}%`
             : '0%',
           sub:   `${stats.completed_pickups} of ${stats.total_pickups} pickups done`,
-          bg:    '#E6F1FB', color:'#042C53',
+          bg:    '#E6F1FB', color:'#042C53', icon: '✓',
         },
         {
           label: 'Active junkshop network',
           value: stats.total_junkshops,
           sub:   'registered collectors in Baguio',
-          bg:    '#FAEEDA', color:'#7A3F08',
+          bg:    '#FAEEDA', color:'#7A3F08', icon: '🏪',
         },
         {
           label: 'CO₂ equivalent saved',
           value: `${(stats.kg_diverted * 0.5).toFixed(0)} kg`,
           sub:   'based on IPCC recycling factors',
-          bg:    '#EAF3DE', color:'#173404',
+          bg:    '#EAF3DE', color:'#173404', icon: '🌿',
         },
       ].map(s => (
-        <div key={s.label} className="rounded-2xl p-5" style={{ backgroundColor: s.bg }}>
-          <div className="text-2xl font-medium mb-0.5" style={{ color: s.color }}>{s.value}</div>
+        <div key={s.label} className="rounded-xl p-4 transition hover:shadow-md hover:-translate-y-0.5" style={{
+          backgroundColor: s.bg,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          border: `1px solid ${s.color}15`
+        }}>
+          <div className="flex items-start justify-between mb-2">
+            <div className="text-lg">{s.icon}</div>
+          </div>
+          <div className="text-2xl font-semibold mb-0.5" style={{ color: s.color }}>{s.value}</div>
           <div className="text-xs font-medium mb-1" style={{ color: s.color }}>{s.label}</div>
-          <div className="text-xs opacity-70" style={{ color: s.color }}>{s.sub}</div>
+          <div className="text-xs font-normal opacity-70" style={{ color: s.color }}>{s.sub}</div>
         </div>
       ))}
     </div>
 
-    <div className="grid grid-cols-2 gap-5 mb-5">
+    <div className="grid grid-cols-2 gap-4 mb-6">
 
       {/* Material breakdown */}
-      <div className="bg-white border border-gray-100 rounded-2xl p-5">
-        <p className="text-sm font-medium text-gray-700 mb-1">
-          Waste Characterization by Material
-        </p>
-        <p className="text-xs text-gray-400 mb-4">
-          Required for RA 9003 Sec. 17 annual report
-        </p>
+      <div className="bg-white rounded-2xl p-4 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div className="mb-4">
+          <h3 className="text-sm font-bold text-gray-900 mb-0.5">
+            Waste Characterization by Material
+          </h3>
+          <p className="text-xs text-gray-500">
+            Required for RA 9003 Sec. 17 annual report
+          </p>
+        </div>
         {(() => {
           const breakdown = [
             { key:'metal',      label:'Metal / Scrap',    color:'#085041', bg:'#D8F3DC' },
@@ -883,18 +893,19 @@ const handleDeleteRating = async (id, junkshopId) => {
           }))
           const totalCount = counts.reduce((s, b) => s + b.count, 0) || 1
           return counts.map(b => (
-            <div key={b.key} className="mb-3">
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-gray-600">{b.label}</span>
-                <span className="font-medium" style={{ color: b.color }}>
-                  {b.count} listings · {b.kg} kg diverted
+            <div key={b.key} className="mb-2.5">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs font-medium text-gray-700">{b.label}</span>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: b.bg, color: b.color }}>
+                  {b.count} · {b.kg}kg
                 </span>
               </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: b.bg }}>
-                <div className="h-full rounded-full"
+              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${b.bg}80` }}>
+                <div className="h-full rounded-full transition-all duration-300"
                   style={{
                     width: `${Math.round((b.count / totalCount) * 100)}%`,
                     backgroundColor: b.color,
+                    boxShadow: `0 0 6px ${b.color}30`
                   }} />
               </div>
             </div>
@@ -903,13 +914,15 @@ const handleDeleteRating = async (id, junkshopId) => {
       </div>
 
       {/* Barangay activity */}
-      <div className="bg-white border border-gray-100 rounded-2xl p-5">
-        <p className="text-sm font-medium text-gray-700 mb-1">
-          Barangay Activity Map
-        </p>
-        <p className="text-xs text-gray-400 mb-4">
-          Geographic waste generation data for city planning
-        </p>
+      <div className="bg-white rounded-2xl p-4 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div className="mb-4">
+          <h3 className="text-sm font-bold text-gray-900 mb-0.5">
+            Barangay Activity Map
+          </h3>
+          <p className="text-xs text-gray-500">
+            Geographic waste generation data for city planning
+          </p>
+        </div>
         {(() => {
           const barangayCounts = {}
           listings.forEach(l => {
@@ -923,25 +936,29 @@ const handleDeleteRating = async (id, junkshopId) => {
           const max = sorted[0]?.[1] || 1
 
           if (sorted.length === 0) return (
-            <div className="text-center py-8">
-              <p className="text-sm text-gray-300">No barangay data yet</p>
+            <div className="text-center py-4">
+              <p className="text-xs text-gray-400">No barangay data yet</p>
             </div>
           )
 
           return sorted.map(([barangay, count], i) => (
-            <div key={barangay} className="flex items-center gap-3 mb-2">
-              <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium shrink-0"
-                style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
+            <div key={barangay} className="flex items-center gap-2 mb-2">
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
+                style={{ backgroundColor:'#1A4D35', color:'#fff' }}>
                 {i + 1}
               </div>
-              <div className="flex-1">
-                <div className="flex justify-between text-xs mb-0.5">
-                  <span className="text-gray-600 truncate">{barangay}</span>
-                  <span className="font-medium ml-2" style={{ color:'#1A4D35' }}>{count}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-xs font-medium text-gray-700 truncate">{barangay}</span>
+                  <span className="font-bold ml-2 text-xs" style={{ color:'#1A4D35' }}>{count}</span>
                 </div>
                 <div className="h-1.5 rounded-full overflow-hidden bg-gray-100">
-                  <div className="h-full rounded-full"
-                    style={{ width:`${(count/max)*100}%`, backgroundColor:'#1A4D35' }} />
+                  <div className="h-full rounded-full transition-all duration-300"
+                    style={{
+                      width:`${(count/max)*100}%`,
+                      backgroundColor:'#1A4D35',
+                      boxShadow: '0 0 4px rgba(26, 77, 53, 0.3)'
+                    }} />
                 </div>
               </div>
             </div>
@@ -950,59 +967,71 @@ const handleDeleteRating = async (id, junkshopId) => {
       </div>
     </div>
 
-    <div className="grid grid-cols-2 gap-5 mb-5">
+    <div className="grid grid-cols-2 gap-4 mb-6">
 
       {/* Junkshop network */}
-      <div className="bg-white border border-gray-100 rounded-2xl p-5">
-        <p className="text-sm font-medium text-gray-700 mb-1">
-          Informal Collector Network
-        </p>
-        <p className="text-xs text-gray-400 mb-4">
-          Economic mapping of Baguio's recycling economy
-        </p>
+      <div className="bg-white rounded-2xl p-4 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div className="mb-4">
+          <h3 className="text-sm font-bold text-gray-900 mb-0.5">
+            Informal Collector Network
+          </h3>
+          <p className="text-xs text-gray-500">
+            Economic mapping of Baguio's recycling economy
+          </p>
+        </div>
         <div className="space-y-2">
           {[
-            { label:'Registered collectors',     value: stats.total_junkshops         },
-            { label:'Verified collectors',        value: junkshops.filter(s => s.is_verified).length  },
-            { label:'Total pickups completed',    value: stats.completed_pickups       },
-            { label:'Active listings available',  value: stats.active_listings         },
+            { label:'Registered collectors',     value: stats.total_junkshops,         icon: '🏪' },
+            { label:'Verified collectors',        value: junkshops.filter(s => s.is_verified).length, icon: '✓' },
+            { label:'Total pickups completed',    value: stats.completed_pickups,       icon: '📦' },
+            { label:'Active listings available',  value: stats.active_listings,         icon: '📋' },
             { label:'Est. economic value',
-              value: `₱${(pickups.filter(p=>p.status==='completed').reduce((s,p)=>s+(p.offered_price||0),0)).toLocaleString()}`
+              value: `₱${(pickups.filter(p=>p.status==='completed').reduce((s,p)=>s+(p.offered_price||0),0)).toLocaleString()}`,
+              icon: '💰'
             },
           ].map(row => (
             <div key={row.label}
-              className="flex justify-between py-2 border-b border-gray-50 last:border-0">
-              <span className="text-sm text-gray-500">{row.label}</span>
-              <span className="text-sm font-medium" style={{ color:'#1A4D35' }}>{row.value}</span>
+              className="flex items-center justify-between py-2 px-2.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition"
+              style={{ borderColor: 'rgba(13, 43, 31, 0.1)' }}>
+              <div className="flex items-center gap-2">
+                <span className="text-base">{row.icon}</span>
+                <span className="text-xs text-gray-600">{row.label}</span>
+              </div>
+              <span className="text-xs font-bold" style={{ color:'#1A4D35' }}>{row.value}</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* Environmental impact */}
-      <div className="bg-white border border-gray-100 rounded-2xl p-5">
-        <p className="text-sm font-medium text-gray-700 mb-1">
-          Environmental Impact Report
-        </p>
-        <p className="text-xs text-gray-400 mb-4">
-          Suitable for DENR and international sustainability reporting
-        </p>
-        <div className="space-y-3">
+      <div className="bg-white rounded-2xl p-4 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div className="mb-4">
+          <h3 className="text-sm font-bold text-gray-900 mb-0.5">
+            Environmental Impact Report
+          </h3>
+          <p className="text-xs text-gray-500">
+            Suitable for DENR and international sustainability reporting
+          </p>
+        </div>
+        <div className="space-y-2">
           {[
-            { label:'Total kg diverted from SLF', value:`${stats.kg_diverted.toLocaleString()} kg`,      icon:'♻️' },
-            { label:'CO₂ emissions avoided',       value:`${(stats.kg_diverted*0.5).toFixed(1)} kg CO₂`, icon:'🌿' },
-            { label:'Tree planting equivalent',    value:`${Math.floor(stats.kg_diverted/15)} trees`,     icon:'🌳' },
-            { label:'Water conserved',             value:`${(stats.kg_diverted*2).toLocaleString()} L`,   icon:'💧' },
+            { label:'Total kg diverted from SLF', value:`${stats.kg_diverted.toLocaleString()} kg`,      icon:'♻️', color: '#085041' },
+            { label:'CO₂ emissions avoided',       value:`${(stats.kg_diverted*0.5).toFixed(1)} kg CO₂`, icon:'🌿', color: '#173404' },
+            { label:'Tree planting equivalent',    value:`${Math.floor(stats.kg_diverted/15)} trees`,     icon:'🌳', color: '#2D6B3F' },
+            { label:'Water conserved',             value:`${(stats.kg_diverted*2).toLocaleString()} L`,   icon:'💧', color: '#042C53' },
             { label:'E-waste properly handled',
               value:`${listings.filter(l=>l.category==='ewaste').reduce((s,l)=>s+(l.weight_estimate||0),0)} kg`,
-              icon:'⚡'
+              icon:'⚡', color: '#412402'
             },
           ].map(row => (
             <div key={row.label}
-              className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
-              <span>{row.icon}</span>
-              <span className="flex-1 text-sm text-gray-500">{row.label}</span>
-              <span className="text-sm font-medium" style={{ color:'#1A4D35' }}>{row.value}</span>
+              className="flex items-center justify-between py-2 px-2.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition"
+              style={{ borderColor: `${row.color}15` }}>
+              <div className="flex items-center gap-2">
+                <span className="text-base">{row.icon}</span>
+                <span className="text-xs text-gray-600">{row.label}</span>
+              </div>
+              <span className="text-xs font-bold" style={{ color: row.color }}>{row.value}</span>
             </div>
           ))}
         </div>
@@ -1010,11 +1039,13 @@ const handleDeleteRating = async (id, junkshopId) => {
     </div>
 
     {/* Monthly trend */}
-    <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-5">
-      <p className="text-sm font-medium text-gray-700 mb-1">Monthly Pickup Trend</p>
-      <p className="text-xs text-gray-400 mb-5">
-        Pickup volume over time — shows program growth for LGU reporting
-      </p>
+    <div className="bg-white rounded-2xl p-4 mb-6 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <div className="mb-4">
+        <h3 className="text-sm font-bold text-gray-900 mb-0.5">Monthly Pickup Trend</h3>
+        <p className="text-xs text-gray-500">
+          Pickup volume over time — shows program growth for LGU reporting
+        </p>
+      </div>
       {(() => {
         const months = {}
         pickups.forEach(p => {
@@ -1025,22 +1056,29 @@ const handleDeleteRating = async (id, junkshopId) => {
         const max = Math.max(...entries.map(e => e[1]), 1)
 
         if (entries.length === 0) return (
-          <div className="text-center py-8">
-            <p className="text-sm text-gray-300">No trend data yet — appears after first pickups</p>
+          <div className="text-center py-6">
+            <p className="text-xs text-gray-400">No trend data yet — appears after first pickups</p>
           </div>
         )
 
         return (
-          <div className="flex items-end gap-3 h-32">
+          <div className="flex items-end justify-around gap-3 h-32 px-1">
             {entries.map(([month, count]) => (
-              <div key={month} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-xs font-medium" style={{ color:'#1A4D35' }}>{count}</span>
-                <div className="w-full rounded-t-lg"
-                  style={{ height:`${(count/max)*100}px`, minHeight:'4px', backgroundColor:'#D8F3DC' }}>
-                  <div className="w-full h-full rounded-t-lg"
-                    style={{ backgroundColor:'#1A4D35', opacity: 0.6 + (count/max*0.4) }} />
+              <div key={month} className="flex flex-col items-center gap-1.5 flex-1">
+                <div className="relative w-full flex flex-col items-center justify-end" style={{ height: '110px' }}>
+                  <div className="absolute top-0 text-xs font-bold text-gray-600 mb-0.5" style={{ color:'#1A4D35' }}>
+                    {count}
+                  </div>
+                  <div className="w-full bg-linear-to-t rounded-t-lg transition-all duration-300 hover:shadow-lg"
+                    style={{
+                      height:`${(count/max)*100}%`,
+                      minHeight:'6px',
+                      background: `linear-gradient(180deg, #1A4D35 0%, #52B788 100%)`,
+                      boxShadow: `0 0 8px rgba(26, 77, 53, 0.2)`,
+                    }}>
+                  </div>
                 </div>
-                <span className="text-xs text-gray-400">{month}</span>
+                <span className="text-xs font-semibold text-gray-500">{month}</span>
               </div>
             ))}
           </div>
@@ -1049,29 +1087,39 @@ const handleDeleteRating = async (id, junkshopId) => {
     </div>
 
     {/* LGU Data Package info */}
-    <div className="rounded-2xl p-5"
-      style={{ backgroundColor:'#FAEEDA' }}>
-      <div className="flex items-start gap-4">
-        <div className="text-2xl">📊</div>
-        <div>
-          <p className="text-sm font-medium mb-1" style={{ color:'#7A3F08' }}>
+    <div className="rounded-2xl p-4 relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, #FAEEDA 0%, #FFF9E6 100%)',
+        boxShadow: '0 2px 8px rgba(201, 122, 58, 0.12)',
+        border: '1px solid rgba(201, 122, 58, 0.15)'
+      }}>
+      <div className="absolute top-0 right-0 w-20 h-20 bg-white opacity-8 rounded-full -mr-8 -mt-8" />
+      <div className="flex items-start gap-3 relative z-10">
+        <div className="text-2xl shrink-0">📊</div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold mb-1.5" style={{ color:'#7A3F08' }}>
             WAIZ Data Package
           </p>
           <p className="text-xs leading-relaxed mb-3" style={{ color:'#854F0B' }}>
-            Download a comprehensive CSV dataset to track waste diversion metrics, generate reports, and inform policy decisions. Updated in real-time with the latest listings, pickups, user registrations, and junkshop activity.
+            Download a comprehensive CSV dataset to track waste diversion metrics, generate reports, and inform policy decisions.
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => exportCSV({ listings, pickups, users, junkshops })}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-white"
-              style={{ backgroundColor:'#C97A3A' }}>
-              Download Full Dataset (CSV)
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition hover:shadow-md flex items-center gap-1"
+              style={{ backgroundColor:'#C97A3A', boxShadow: '0 2px 6px rgba(201, 122, 58, 0.25)' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Download
             </button>
             <button
               onClick={() => window.print()}
-              className="px-4 py-2 rounded-xl text-xs font-medium border"
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold border transition hover:bg-white"
               style={{ borderColor:'#C97A3A', color:'#C97A3A' }}>
-              Print Report
+              Print
             </button>
           </div>
         </div>
