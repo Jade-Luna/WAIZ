@@ -47,6 +47,7 @@ export default function HouseholdDash() {
   const [history,  setHistory]    = useState([])
   const [dataLoaded, setDataLoaded] = useState(false)
   const [deleteId, setDeleteId]   = useState(null)
+  const [actionInProgress, setActionInProgress] = useState(null)
   const [receiptPickup, setReceiptPickup] = useState(null)
   const [loading,  setLoading]    = useState(false)
   const [ratingPickup, setRatingPickup] = useState(null)
@@ -72,50 +73,58 @@ const [ratingDone,   setRatingDone]   = useState(false)
 }, [user])
 
 const fetchData = async () => {
-  setLoading(true)
+  try {
+    setLoading(true)
 
-  const { data: listData } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('posted_by', user.id)
-    .order('created_at', { ascending: false })
+    const { data: listData, error: listError } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('posted_by', user.id)
+      .order('created_at', { ascending: false })
 
-  const { data: pickupData } = await supabase
-    .from('pickups')
-    .select('*, listings(title, category, barangay)')
-    .eq('household_id', user.id)
-    .order('created_at', { ascending: false })
+    if (listError) throw listError
 
-  const enrichedPickups = await Promise.all((pickupData || []).map(async (pickup) => {
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('full_name, barangay')
-      .eq('id', pickup.junkshop_id)
-      .single()
-    return {
-      ...pickup,
-      junkshop: profileData
-        ? { shop_name: profileData.full_name, barangay: profileData.barangay, is_verified: false }
-        : null
-    }
-  }))
+    const { data: pickupData, error: pickupError } = await supabase
+      .from('pickups')
+      .select('*, listings(title, category, barangay)')
+      .eq('household_id', user.id)
+      .order('created_at', { ascending: false })
 
-  setListings(listData || [])
-  
-  // Check which pickups have been rated
-const { data: ratedData } = await supabase
-  .from('ratings')
-  .select('pickup_id')
-  .eq('household_id', user.id)
+    if (pickupError) throw pickupError
 
-const ratedIds = new Set((ratedData || []).map(r => r.pickup_id))
-setHistory(enrichedPickups
-  .filter(p => p.status === 'completed' || p.status === 'cancelled')
-  .map(p => ({ ...p, rated: ratedIds.has(p.id) }))
-)
+    const enrichedPickups = await Promise.all((pickupData || []).map(async (pickup) => {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name, barangay')
+        .eq('id', pickup.junkshop_id)
+        .single()
+      return {
+        ...pickup,
+        junkshop: profileData
+          ? { shop_name: profileData.full_name, barangay: profileData.barangay, is_verified: false }
+          : null
+      }
+    }))
 
-  setRequests(enrichedPickups.filter(p => p.status === 'requested' || p.status === 'offered' || p.status === 'accepted'))
-  setLoading(false)
+    setListings(listData || [])
+
+    const { data: ratedData } = await supabase
+      .from('ratings')
+      .select('pickup_id')
+      .eq('household_id', user.id)
+
+    const ratedIds = new Set((ratedData || []).map(r => r.pickup_id))
+    setHistory(enrichedPickups
+      .filter(p => p.status === 'completed' || p.status === 'cancelled')
+      .map(p => ({ ...p, rated: ratedIds.has(p.id) }))
+    )
+
+    setRequests(enrichedPickups.filter(p => p.status === 'requested' || p.status === 'offered' || p.status === 'accepted'))
+    setLoading(false)
+  } catch (err) {
+    console.error('fetchData error:', err)
+    setLoading(false)
+  }
 }
 
   const handleDelete = async (id) => {
@@ -125,28 +134,63 @@ setHistory(enrichedPickups
   }
 
   const handlePickupAction = async (id, status) => {
-  
-  
+  try {
+    setActionInProgress(id)
     const pickup = requests.find(r => r.id === id)
-  const { error } = await supabase.from('pickups').update({ status }).eq('id', id)
-  console.log('update error:', JSON.stringify(error))
-  await supabase.from('pickups').update({ status }).eq('id', id)
-  if (status === 'cancelled' && pickup?.listing_id) {
-    await supabase.from('listings')
-      .update({ status: 'available' })
-      .eq('id', pickup.listing_id)
+    if (!pickup) {
+      console.error('Pickup not found:', id)
+      setActionInProgress(null)
+      return
+    }
+
+    console.log('Updating pickup:', { id, status, pickup })
+
+    const { error: updateError } = await supabase
+      .from('pickups')
+      .update({ status })
+      .eq('id', id)
+
+    if (updateError) {
+      console.error('Pickup update error:', updateError)
+      alert(`Error updating pickup: ${updateError.message}`)
+      setActionInProgress(null)
+      return
+    }
+
+    console.log('Pickup updated successfully, status now:', status)
+
+    if (status === 'cancelled' && pickup?.listing_id) {
+      await supabase.from('listings')
+        .update({ status: 'available' })
+        .eq('id', pickup.listing_id)
+    }
+    if (status === 'accepted' && pickup?.listing_id) {
+      console.log('Updating listing to pending:', pickup.listing_id)
+      await supabase.from('listings')
+        .update({ status: 'pending' })
+        .eq('id', pickup.listing_id)
+    }
+
+    if (status === 'cancelled') {
+      setRequests(prev => prev.filter(r => r.id !== id))
+      setActionInProgress(null)
+      return
+    }
+
+    if (status === 'accepted') {
+      setRequests(prev => prev.filter(r => r.id !== id))
+      setActionInProgress(null)
+      return
+    }
+
+    // For other statuses, update local state
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r))
+    setActionInProgress(null)
+  } catch (err) {
+    console.error('handlePickupAction error:', err)
+    alert(`Error: ${err.message}`)
+    setActionInProgress(null)
   }
-  if (status === 'accepted' && pickup?.listing_id) {
-    await supabase.from('listings')
-      .update({ status: 'pending' })
-      .eq('id', pickup.listing_id)
-  }
-   if (status === 'cancelled') {
-    setRequests(prev => prev.filter(r => r.id !== id))
-    return
-  }
-  setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r))
-  awaitfetchData()
 }
 
 const handleRate = async (score) => {
@@ -342,14 +386,17 @@ const handleRate = async (score) => {
     <>
       <button
         onClick={() => handlePickupAction(req.id, 'cancelled')}
-        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 transition">
-        Decline
+        disabled={actionInProgress === req.id}
+        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 transition"
+        style={{ opacity: actionInProgress === req.id ? 0.5 : 1, cursor: actionInProgress === req.id ? 'wait' : 'pointer' }}>
+        {actionInProgress === req.id ? 'Processing...' : 'Decline'}
       </button>
       <button
         onClick={() => handlePickupAction(req.id, 'accepted')}
+        disabled={actionInProgress === req.id}
         className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
-        style={{ backgroundColor:'#C97A3A' }}>
-        Accept
+        style={{ backgroundColor: actionInProgress === req.id ? '#999' : '#C97A3A', cursor: actionInProgress === req.id ? 'wait' : 'pointer' }}>
+        {actionInProgress === req.id ? 'Processing...' : 'Accept'}
       </button>
     </>
   ) : req.status === 'offered' ? (
@@ -359,14 +406,17 @@ const handleRate = async (score) => {
       </span>
       <button
         onClick={() => handlePickupAction(req.id, 'cancelled')}
-        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 transition">
-        Decline
+        disabled={actionInProgress === req.id}
+        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 transition"
+        style={{ opacity: actionInProgress === req.id ? 0.5 : 1, cursor: actionInProgress === req.id ? 'wait' : 'pointer' }}>
+        {actionInProgress === req.id ? 'Processing...' : 'Decline'}
       </button>
       <button
         onClick={() => handlePickupAction(req.id, 'accepted')}
+        disabled={actionInProgress === req.id}
         className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
-        style={{ backgroundColor:'#C97A3A' }}>
-        Accept
+        style={{ backgroundColor: actionInProgress === req.id ? '#999' : '#C97A3A', cursor: actionInProgress === req.id ? 'wait' : 'pointer' }}>
+        {actionInProgress === req.id ? 'Processing...' : 'Accept'}
       </button>
     </div>
   ) : req.status === 'accepted' ? (
@@ -854,18 +904,18 @@ function ProfileEditor({ profile, user, onSaved }) {
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1.5">Full name</label>
-          <input className={inputClass} placeholder="Your full name"
+          <label htmlFor="fullName" className="block text-xs font-medium text-gray-500 mb-1.5">Full name</label>
+          <input id="fullName" className={inputClass} placeholder="Your full name"
             value={form.full_name} onChange={e => update('full_name', e.target.value)} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1.5">Phone number</label>
-          <input className={inputClass} placeholder="09XX XXX XXXX"
+          <label htmlFor="phone" className="block text-xs font-medium text-gray-500 mb-1.5">Phone number</label>
+          <input id="phone" className={inputClass} placeholder="09XX XXX XXXX"
             value={form.phone} onChange={e => update('phone', e.target.value)} />
         </div>
         <div className="relative">
-          <label className="block text-xs font-medium text-gray-500 mb-1.5">Barangay</label>
-          <input className={inputClass}
+          <label htmlFor="barangay" className="block text-xs font-medium text-gray-500 mb-1.5">Barangay</label>
+          <input id="barangay" className={inputClass}
             placeholder="Type to search barangay..."
             value={barangayInput}
             onChange={e => handleBarangayInput(e.target.value)} />
