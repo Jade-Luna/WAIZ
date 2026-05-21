@@ -8,26 +8,18 @@ import TourOverlay from './TourOverlay'
 
 export default function DashboardLayout({ children, activeTab }) {
   const { profile, signOut, user } = useAuth()
-  const navigate    = useNavigate()
-  const isJunk      = profile?.role === 'junkshop'
+  const navigate   = useNavigate()
+  const isJunk     = profile?.role === 'junkshop'
   const [collapsed, setCollapsed] = useState(false)
 
-  // ── Tour ──────────────────────────────────────────────────────────────────
+  // ── Tour ────────────────────────────────────────────────────────────────
   const tour = useTour({ user, profile })
 
-  // Called on every nav-item click.
-  // If the tour is waiting for THIS item to be clicked:
-  //   1. Prevent the Link from navigating immediately
-  //   2. Complete the tour action (advances tooltip after 700 ms)
-  //   3. Navigate to the path ourselves after the same delay so the
-  //      user sees the tooltip update before the page changes
-  const handleNavClick = (e, itemKey, itemPath) => {
-    if (tour.tourWaiting && tour.step?.actionTarget === itemKey) {
-      e.preventDefault()
+  // Handle nav-item clicks that are also tour action targets
+  const handleNavClick = (key) => {
+    if (tour.tourWaiting && tour.step?.actionTarget === `[data-tour="nav-${key}"]`) {
       tour.completeAction()
-      setTimeout(() => navigate(itemPath), 700)
     }
-    // Otherwise: let the Link navigate normally
   }
 
   const HOUSEHOLD_NAV = [
@@ -56,39 +48,57 @@ export default function DashboardLayout({ children, activeTab }) {
   useEffect(() => {
     if (!user) return
     fetchNotifications()
+
     const channel = supabase
       .channel('notifications')
-      .on('postgres_changes', { event:'*', schema:'public', table:'messages',
-          filter:`receiver_id=eq.${user.id}` }, () => fetchNotifications())
-      .on('postgres_changes', { event:'*', schema:'public', table:'pickups' },
-          () => fetchNotifications())
+      .on('postgres_changes', {
+        event:  '*',
+        schema: 'public',
+        table:  'messages',
+        filter: `receiver_id=eq.${user.id}`,
+      }, () => fetchNotifications())
+      .on('postgres_changes', {
+        event:  '*',
+        schema: 'public',
+        table:  'pickups',
+      }, () => fetchNotifications())
       .subscribe()
+
     return () => supabase.removeChannel(channel)
   }, [user])
 
   useEffect(() => {
     if (!user || activeTab !== 'messages') return
-    supabase.from('messages').update({ is_read: true })
-      .eq('receiver_id', user.id).eq('is_read', false)
+    supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('receiver_id', user.id)
+      .eq('is_read', false)
       .then(() => fetchNotifications())
   }, [activeTab, user])
 
   const fetchNotifications = async () => {
     if (!user) return
     const { count: msgCount } = await supabase
-      .from('messages').select('*', { count:'exact', head:true })
-      .eq('receiver_id', user.id).eq('is_read', false)
+      .from('messages')
+      .select('*', { count:'exact', head:true })
+      .eq('receiver_id', user.id)
+      .eq('is_read', false)
     setUnreadMessages(msgCount || 0)
 
     if (isJunk) {
       const { count: reqCount } = await supabase
-        .from('pickups').select('*', { count:'exact', head:true })
-        .eq('junkshop_id', user.id).eq('status', 'requested')
+        .from('pickups')
+        .select('*', { count:'exact', head:true })
+        .eq('junkshop_id', user.id)
+        .eq('status', 'requested')
       setPendingRequests(reqCount || 0)
     } else {
       const { count: reqCount } = await supabase
-        .from('pickups').select('*', { count:'exact', head:true })
-        .eq('household_id', user.id).in('status', ['requested', 'offered'])
+        .from('pickups')
+        .select('*', { count:'exact', head:true })
+        .eq('household_id', user.id)
+        .in('status', ['requested', 'offered'])
       setPendingRequests(reqCount || 0)
     }
   }
@@ -103,23 +113,23 @@ export default function DashboardLayout({ children, activeTab }) {
 
       <style>{`
         @keyframes eco-spark-dot {
-          0%, 100% { opacity:1; transform:scale(1);   }
-          50%       { opacity:0.4; transform:scale(0.6); }
+          0%, 100% { opacity: 1; transform: scale(1);   }
+          50%       { opacity: 0.4; transform: scale(0.6); }
         }
         .hide-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
         .hide-scrollbar::-webkit-scrollbar { display:none; }
       `}</style>
 
-      {/* ══ SIDEBAR ══════════════════════════════════════════════════════════ */}
+      {/* ══ SIDEBAR — data-tour="sidebar" ══════════════════════════════════ */}
       <aside
         data-tour="sidebar"
-        className="flex flex-col h-screen overflow-hidden shrink-0 transition-all duration-200"
+        className="flex flex-col h-screen overflow-hidden shrink-0 transition-all duration-200 z-30"
         style={{
           width:    collapsed ? '64px' : '220px',
           minWidth: collapsed ? '64px' : '220px',
           backgroundColor:'#0D2B1F',
+          // Lift above spotlight overlay when it's the highlighted target
           position:'relative',
-          // Lift sidebar above the spotlight overlay when it's spotlighted
           zIndex: tour.tourActive && tour.step?.target === '[data-tour="sidebar"]' ? 9920 : 30,
         }}
       >
@@ -127,14 +137,15 @@ export default function DashboardLayout({ children, activeTab }) {
         <div className="flex items-center justify-between px-4 h-14 border-b"
           style={{ borderColor:'#1A4D35' }}>
           {!collapsed && (
-            <Link to="/" className="font-bold tracking-tighter"
+            <Link to="/" className="font-bold tracking-tighter text-lg"
               style={{ color:'#D8F3DC', letterSpacing:'-0.03em', fontSize:18, fontWeight:800 }}>
               WA<span style={{ color:'#C97A3A' }}>I</span>Z
             </Link>
           )}
-          <button onClick={() => setCollapsed(c => !c)}
-            className="p-1.5 rounded-lg"
-            style={{ color:'#52B788', marginLeft: collapsed ? 'auto' : 0 }}>
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="p-1.5 rounded-lg transition"
+            style={{ color:'#52B788', marginLeft: collapsed ? 'auto' : '0' }}>
             {collapsed ? <MenuOpenIcon /> : <MenuCloseIcon />}
           </button>
         </div>
@@ -142,7 +153,7 @@ export default function DashboardLayout({ children, activeTab }) {
         {/* User info */}
         {!collapsed && (
           <div className="px-4 py-4 border-b" style={{ borderColor:'#1A4D35' }}>
-            <div className="w-9 h-9 rounded-xl overflow-hidden mb-2 flex items-center justify-center text-sm font-medium"
+            <div className="w-9 h-9 rounded-xl overflow-hidden mb-2 flex items-center justify-center text-sm font-medium shrink-0"
               style={{ backgroundColor:'#1A4D35', color:'#B7E4C7' }}>
               {profile?.avatar_url || profile?.photo_url
                 ? <img src={profile.avatar_url || profile.photo_url} alt="avatar" className="w-full h-full object-cover" />
@@ -152,8 +163,7 @@ export default function DashboardLayout({ children, activeTab }) {
             <div className="text-sm font-bold truncate" style={{ color:'#D8F3DC', fontWeight:700 }}>
               {profile?.full_name || 'User'}
             </div>
-            <div className="text-xs mt-1.5"
-              style={{ color:'#52B788', fontWeight:500, fontSize:12, letterSpacing:'0.02em' }}>
+            <div className="text-xs mt-1.5" style={{ color:'#52B788', fontWeight:500, fontSize:12, letterSpacing:'0.02em' }}>
               {isJunk ? 'Junkshop' : 'Household'} · {profile?.barangay?.split('-')[0] || 'Baguio'}
             </div>
           </div>
@@ -162,35 +172,41 @@ export default function DashboardLayout({ children, activeTab }) {
         {/* Nav items */}
         <nav className="flex-1 px-2 py-3 space-y-0.5">
           {NAV.map(item => {
-            const isActive     = activeTab === item.key
+            const isActive = activeTab === item.key
+            const dotCount = item.key === 'messages'
+              ? unreadMessages
+              : item.key === 'requests'
+              ? pendingRequests
+              : 0
+
+            // Is this nav item the tour's spotlight target?
             const isTourTarget = tour.tourActive &&
               tour.step?.target === `[data-tour="nav-${item.key}"]`
-            const dotCount = item.key === 'messages' ? unreadMessages
-              : item.key === 'requests' ? pendingRequests : 0
 
             return (
               <Link
                 key={item.key}
                 to={item.path}
                 data-tour={`nav-${item.key}`}
-                onClick={e => handleNavClick(e, item.key, item.path)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm"
+                onClick={() => handleNavClick(item.key)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm relative"
                 style={{
                   backgroundColor: isActive ? '#C97A3A' : 'transparent',
                   color:           isActive ? '#fff'    : '#74C69D',
                   fontWeight:      isActive ? '700'     : '600',
                   fontSize:        13,
                   letterSpacing:   isActive ? '-0.01em' : '0.015em',
+                  transition:      'all 0.2s ease',
+                  // Lift above overlay when spotlighted
                   position:        'relative',
-                  // Lift this nav item above spotlight when it's the target
                   zIndex:          isTourTarget ? 9920 : 'auto',
-                  transition:      'all 0.15s ease',
                 }}
               >
                 <span className="shrink-0 relative" style={{ color: isActive ? '#fff' : '#52B788' }}>
                   {item.icon}
                   {dotCount > 0 && !isActive && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-white"
+                    <span
+                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-white"
                       style={{ backgroundColor:'#C97A3A', fontSize:8, fontWeight:700,
                         animation:'eco-spark-dot 1.5s ease-in-out infinite' }}>
                       {dotCount > 9 ? '9+' : dotCount}
@@ -210,29 +226,30 @@ export default function DashboardLayout({ children, activeTab }) {
         {/* Bottom links */}
         <div className="px-2 py-3 border-t space-y-0.5" style={{ borderColor:'#1A4D35' }}>
           <Link to="/browse"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-            style={{ color:'#74C69D', fontWeight:600, fontSize:13 }}>
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm"
+            style={{ color:'#74C69D', fontWeight:600, fontSize:13, letterSpacing:'0.015em' }}>
             <span style={{ color:'#52B788' }}><BrowseIcon /></span>
             {!collapsed && <span>Marketplace</span>}
           </Link>
-          <button onClick={() => setShowSignOutModal(true)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm"
-            style={{ color:'#74C69D', fontWeight:600, fontSize:13 }}>
+          <button
+            onClick={() => setShowSignOutModal(true)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm"
+            style={{ color:'#74C69D', fontWeight:600, fontSize:13, letterSpacing:'0.015em' }}>
             <span style={{ color:'#52B788' }}><SignOutIcon /></span>
             {!collapsed && <span>Sign out</span>}
           </button>
         </div>
       </aside>
 
-      {/* ══ MAIN CONTENT ═════════════════════════════════════════════════════ */}
+      {/* ══ MAIN CONTENT ════════════════════════════════════════════════════ */}
       <main className="flex-1 min-w-0 flex flex-col">
         {/* Top bar */}
         <div className="h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100 shrink-0 z-30">
-          <div className="text-base font-bold"
-            style={{ color:'#1f2937', letterSpacing:'-0.02em', fontWeight:800 }}>
+          <div className="text-base font-bold" style={{ color:'#1f2937', letterSpacing:'-0.02em', fontWeight:800 }}>
             {NAV.find(n => n.key === activeTab)?.label || 'Dashboard'}
           </div>
           <div className="flex items-center gap-3">
+            {/* Post button — tour target for household "post-btn" step */}
             {!isJunk && (
               <Link
                 to="/post-item"
@@ -241,6 +258,7 @@ export default function DashboardLayout({ children, activeTab }) {
                   padding:'7px 16px', borderRadius:10, fontSize:13,
                   fontWeight:600, background:'#1A4D35', color:'#fff',
                   textDecoration:'none', display:'inline-flex', alignItems:'center', gap:6,
+                  // Lift above spotlight when targeted
                   position:'relative',
                   zIndex: tour.tourActive && tour.step?.target === '[data-tour="post-btn"]' ? 9920 : 'auto',
                 }}
@@ -251,11 +269,10 @@ export default function DashboardLayout({ children, activeTab }) {
           </div>
         </div>
 
-        {/* Page content */}
+        {/* Page content — stat cards get data-tour attr via wrapper */}
         <div className="flex-1 overflow-y-auto hide-scrollbar">
           <div className="p-4 md:p-8 pb-20 md:pb-8">
-            {/* data-tour="stat-cards" wraps children so the spotlight can
-                highlight the stat grid at the top of each dashboard */}
+            {/* Stat-cards tour target wrapper — wraps the first child (stat grid) */}
             <div data-tour="stat-cards">
               {children}
             </div>
@@ -263,18 +280,19 @@ export default function DashboardLayout({ children, activeTab }) {
         </div>
 
         {/* Mobile bottom nav */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex md:hidden z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex md:hidden z-50 safe-area-inset-bottom">
           {NAV.slice(0, 5).map(item => {
             const isActive = activeTab === item.key
             return (
               <Link key={item.key} to={item.path}
-                onClick={e => handleNavClick(e, item.key, item.path)}
+                onClick={() => handleNavClick(item.key)}
                 data-tour={`nav-${item.key}`}
                 className="flex-1 flex flex-col items-center justify-center py-3 gap-1"
-                style={{ color: isActive ? '#1A4D35' : '#9CA3AF', fontSize:11,
-                  fontWeight: isActive ? '700' : '500' }}>
+                style={{ color: isActive ? '#1A4D35' : '#9CA3AF', fontWeight: isActive ? '700' : '500', fontSize:11 }}>
                 <span style={{ color: isActive ? '#1A4D35' : '#9CA3AF' }}>{item.icon}</span>
-                <span>{item.label.split(' ')[0]}</span>
+                <span style={{ fontWeight: isActive ? '700' : '600', letterSpacing:'0.01em' }}>
+                  {item.label.split(' ')[0]}
+                </span>
               </Link>
             )
           })}
@@ -285,19 +303,18 @@ export default function DashboardLayout({ children, activeTab }) {
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
             style={{ backgroundColor:'rgba(0,0,0,0.4)' }}
             onClick={() => setShowSignOutModal(false)}>
-            <div className="bg-white rounded-2xl p-6 w-full max-w-sm"
-              onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
               <div className="text-center mb-5">
                 <h3 className="text-base font-medium text-gray-800 mb-1">Sign out of WAIZ?</h3>
                 <p className="text-sm text-gray-400">You'll need to sign back in to access your dashboard.</p>
               </div>
               <div className="flex gap-3">
                 <button onClick={() => setShowSignOutModal(false)}
-                  className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">
+                  className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500 hover:bg-gray-50 transition">
                   Cancel
                 </button>
                 <button onClick={handleSignOut}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition"
                   style={{ backgroundColor:'#1A4D35' }}>
                   Yes, sign out
                 </button>
@@ -307,7 +324,7 @@ export default function DashboardLayout({ children, activeTab }) {
         )}
       </main>
 
-      {/* ══ TOUR OVERLAY ═════════════════════════════════════════════════════ */}
+      {/* ══ TOUR OVERLAY — rendered last so it sits above everything ════════ */}
       <TourOverlay
         tourActive={tour.tourActive}
         showDone={tour.showDone}
@@ -326,6 +343,7 @@ export default function DashboardLayout({ children, activeTab }) {
   )
 }
 
+// ── Icon components  ───────────────────────────────────────────────
 function ListIcon()      { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg> }
 function TruckIcon()     { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> }
 function ChatIcon()      { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> }
