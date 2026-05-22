@@ -303,11 +303,20 @@ const handleDeleteRating = async (id, junkshopId) => {
   const totalKg = MATERIAL_DATA.reduce((s, m) => s + m.kg, 0)
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor:'#FEFDF8' }}>
+    <div className="flex w-full" style={{ backgroundColor:'#FEFDF8', minHeight: '100vh' }}>
 
       {/* SIDEBAR */}
-      <aside className="flex flex-col sticky top-0 h-screen shrink-0"
-        style={{ width: collapsed ? '64px' : '220px', backgroundColor:'#0D2B1F' }}>
+      <aside className="flex flex-col shrink-0"
+        style={{
+          width: collapsed ? '64px' : '220px',
+          backgroundColor:'#0D2B1F',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          height: '100vh',
+          overflow: 'hidden',
+          zIndex: 30
+        }}>
 
         {/* Logo */}
         <div className="flex items-center justify-between px-4 h-14 border-b"
@@ -337,7 +346,7 @@ const handleDeleteRating = async (id, junkshopId) => {
         )}
 
         {/* Nav */}
-        <nav className="flex-1 px-2 py-3 space-y-0.5">
+        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
           {NAV.map(item => {
             const isActive = activeTab === item.key
             return (
@@ -371,7 +380,11 @@ const handleDeleteRating = async (id, junkshopId) => {
       </aside>
 
       {/* MAIN */}
-      <main className="flex-1 min-w-0">
+      <main className="flex-1 min-w-0"
+        style={{
+          marginLeft: collapsed ? '64px' : '220px',
+          transition: 'margin-left 0.2s ease',
+        }}>
 
         {/* Top bar */}
         <div className="h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100 sticky top-0 z-40">
@@ -864,9 +877,9 @@ const handleDeleteRating = async (id, junkshopId) => {
 
     <div className="grid grid-cols-2 gap-4 mb-6">
 
-      {/* Material breakdown */}
-      <div className="bg-white rounded-2xl p-4 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-        <div className="mb-4">
+      {/* Material breakdown - Vertical Bar Chart */}
+      <div className="bg-white rounded-2xl p-5 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div className="mb-5">
           <h3 className="text-sm font-bold text-gray-900 mb-0.5">
             Waste Characterization by Material
           </h3>
@@ -876,41 +889,117 @@ const handleDeleteRating = async (id, junkshopId) => {
         </div>
         {(() => {
           const breakdown = [
-            { key:'metal',      label:'Metal / Scrap',    color:'#085041', bg:'#D8F3DC' },
-            { key:'paper',      label:'Paper / Cardboard',color:'#173404', bg:'#EAF3DE' },
-            { key:'plastic',    label:'Plastic',          color:'#042C53', bg:'#E6F1FB' },
-            { key:'ewaste',     label:'E-waste',          color:'#412402', bg:'#FAEEDA' },
-            { key:'glass',      label:'Glass',            color:'#26215C', bg:'#EEEDFE' },
-            { key:'secondhand', label:'Secondhand',       color:'#4B1528', bg:'#FBEAF0' },
-            { key:'others',     label:'Others',           color:'#2C2C2A', bg:'#F1EFE8' },
+            { key:'metal',      label:'Metal',      color:'#085041', bg:'#D8F3DC' },
+            { key:'paper',      label:'Paper',      color:'#173404', bg:'#EAF3DE' },
+            { key:'plastic',    label:'Plastic',    color:'#042C53', bg:'#E6F1FB' },
+            { key:'ewaste',     label:'E-waste',    color:'#412402', bg:'#FAEEDA' },
+            { key:'glass',      label:'Glass',      color:'#26215C', bg:'#EEEDFE' },
+            { key:'secondhand', label:'Secondhand', color:'#4B1528', bg:'#FBEAF0' },
           ]
-          const counts = breakdown.map(b => ({
+          const data = breakdown.map(b => ({
             ...b,
-            count: listings.filter(l => l.category === b.key).length,
-            kg:    listings
+            kg: listings
               .filter(l => l.category === b.key && l.status === 'completed')
               .reduce((s, l) => s + (l.weight_estimate || 0), 0)
           }))
-          const totalCount = counts.reduce((s, b) => s + b.count, 0) || 1
-          return counts.map(b => (
-            <div key={b.key} className="mb-2.5">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-medium text-gray-700">{b.label}</span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: b.bg, color: b.color }}>
-                  {b.count} · {b.kg}kg
-                </span>
-              </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${b.bg}80` }}>
-                <div className="h-full rounded-full transition-all duration-300"
-                  style={{
-                    width: `${Math.round((b.count / totalCount) * 100)}%`,
-                    backgroundColor: b.color,
-                    boxShadow: `0 0 6px ${b.color}30`
-                  }} />
-              </div>
+          const maxKg = Math.max(...data.map(d => d.kg), 1)
+          const chartHeight = 180
+          const barWidth = 45
+          const chartWidth = data.length * 60 + 20
+
+          return (
+            <div className="overflow-x-auto -mx-1 px-1">
+              <svg width={chartWidth} height={chartHeight + 60} style={{ minWidth: '100%' }}>
+                {/* Y-axis labels */}
+                {[0, 0.25, 0.5, 0.75, 1].map((percent, i) => {
+                  const kgValue = Math.round(maxKg * percent)
+                  const y = chartHeight - (chartHeight * percent)
+                  return (
+                    <g key={`y-${i}`}>
+                      <text x="18" y={y + 65} fontSize="11" fill="#9CA3AF" textAnchor="end" dominantBaseline="middle">
+                        {kgValue}
+                      </text>
+                      {i > 0 && (
+                        <line x1="28" y1={y + 60} x2={chartWidth - 10} y2={y + 60} stroke="#E5E7EB" strokeWidth="1" strokeDasharray="2,2" />
+                      )}
+                    </g>
+                  )
+                })}
+
+                {/* Bars and labels */}
+                {data.map((d, i) => {
+                  const barHeight = (d.kg / maxKg) * chartHeight
+                  const x = 60 + i * 60
+                  const y = chartHeight + 60 - barHeight
+
+                  return (
+                    <g key={d.key}>
+                      {/* Bar */}
+                      <rect
+                        x={x - barWidth / 2}
+                        y={y}
+                        width={barWidth}
+                        height={barHeight}
+                        fill={d.color}
+                        rx="4"
+                        opacity="0.9"
+                        style={{ transition: 'opacity 0.2s' }}
+                      />
+
+                      {/* Bar value label */}
+                      <text
+                        x={x}
+                        y={y - 8}
+                        fontSize="12"
+                        fontWeight="600"
+                        fill={d.color}
+                        textAnchor="middle"
+                      >
+                        {d.kg > 0 ? `${Math.round(d.kg)}kg` : '—'}
+                      </text>
+
+                      {/* X-axis label */}
+                      <text
+                        x={x}
+                        y={chartHeight + 75}
+                        fontSize="12"
+                        fontWeight="500"
+                        fill="#374151"
+                        textAnchor="middle"
+                      >
+                        {d.label}
+                      </text>
+                    </g>
+                  )
+                })}
+
+                {/* Axes */}
+                <line x1="28" y1="60" x2="28" y2={chartHeight + 60} stroke="#D1D5DB" strokeWidth="2" />
+                <line x1="28" y1={chartHeight + 60} x2={chartWidth - 10} y2={chartHeight + 60} stroke="#D1D5DB" strokeWidth="2" />
+              </svg>
             </div>
-          ))
+          )
         })()}
+        <div className="mt-4 pt-3 border-t border-gray-100">
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            {listings.length > 0 && (
+              <>
+                <div>
+                  <span className="text-gray-500">Total listings: </span>
+                  <span className="font-semibold" style={{ color:'#1A4D35' }}>{listings.length}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Completed: </span>
+                  <span className="font-semibold" style={{ color:'#1A4D35' }}>{listings.filter(l => l.status === 'completed').length}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Total kg diverted: </span>
+                  <span className="font-semibold" style={{ color:'#1A4D35' }}>{stats.kg_diverted}kg</span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Barangay activity */}
@@ -1039,8 +1128,8 @@ const handleDeleteRating = async (id, junkshopId) => {
     </div>
 
     {/* Monthly trend */}
-    <div className="bg-white rounded-2xl p-4 mb-6 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-      <div className="mb-4">
+    <div className="bg-white rounded-2xl p-5 mb-6 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <div className="mb-5">
         <h3 className="text-sm font-bold text-gray-900 mb-0.5">Monthly Pickup Trend</h3>
         <p className="text-xs text-gray-500">
           Pickup volume over time — shows program growth for LGU reporting
@@ -1054,36 +1143,114 @@ const handleDeleteRating = async (id, junkshopId) => {
         })
         const entries = Object.entries(months).slice(-6)
         const max = Math.max(...entries.map(e => e[1]), 1)
+        const chartHeight = 160
+        const barWidth = 35
+        const chartWidth = entries.length * 55 + 40
 
         if (entries.length === 0) return (
-          <div className="text-center py-6">
+          <div className="text-center py-8">
             <p className="text-xs text-gray-400">No trend data yet — appears after first pickups</p>
           </div>
         )
 
         return (
-          <div className="flex items-end justify-around gap-3 h-32 px-1">
-            {entries.map(([month, count]) => (
-              <div key={month} className="flex flex-col items-center gap-1.5 flex-1">
-                <div className="relative w-full flex flex-col items-center justify-end" style={{ height: '110px' }}>
-                  <div className="absolute top-0 text-xs font-bold text-gray-600 mb-0.5" style={{ color:'#1A4D35' }}>
-                    {count}
-                  </div>
-                  <div className="w-full bg-linear-to-t rounded-t-lg transition-all duration-300 hover:shadow-lg"
-                    style={{
-                      height:`${(count/max)*100}%`,
-                      minHeight:'6px',
-                      background: `linear-gradient(180deg, #1A4D35 0%, #52B788 100%)`,
-                      boxShadow: `0 0 8px rgba(26, 77, 53, 0.2)`,
-                    }}>
-                  </div>
-                </div>
-                <span className="text-xs font-semibold text-gray-500">{month}</span>
-              </div>
-            ))}
+          <div className="overflow-x-auto -mx-2 px-2">
+            <svg width={chartWidth} height={chartHeight + 70} style={{ minWidth: '100%' }}>
+              {/* Y-axis labels and gridlines */}
+              {[0, 0.25, 0.5, 0.75, 1].map((percent, i) => {
+                const pickupValue = Math.round(max * percent)
+                const y = chartHeight - (chartHeight * percent)
+                return (
+                  <g key={`y-${i}`}>
+                    <text x="28" y={y + 65} fontSize="11" fill="#9CA3AF" textAnchor="end" dominantBaseline="middle">
+                      {pickupValue}
+                    </text>
+                    {i > 0 && (
+                      <line x1="32" y1={y + 60} x2={chartWidth - 15} y2={y + 60} stroke="#E5E7EB" strokeWidth="1" strokeDasharray="2,2" />
+                    )}
+                  </g>
+                )
+              })}
+
+              {/* Bars */}
+              {entries.map(([month, count], i) => {
+                const barHeight = (count / max) * chartHeight
+                const x = 55 + i * 55
+                const y = chartHeight + 60 - barHeight
+
+                return (
+                  <g key={month}>
+                    {/* Bar */}
+                    <rect
+                      x={x - barWidth / 2}
+                      y={y}
+                      width={barWidth}
+                      height={barHeight}
+                      fill="#1A4D35"
+                      rx="4"
+                      opacity="0.85"
+                      style={{
+                        transition: 'all 0.3s ease',
+                        filter: 'drop-shadow(0 2px 4px rgba(26, 77, 53, 0.15))'
+                      }}
+                    />
+
+                    {/* Value label on top of bar */}
+                    <text
+                      x={x}
+                      y={y - 10}
+                      fontSize="13"
+                      fontWeight="700"
+                      fill="#1A4D35"
+                      textAnchor="middle"
+                    >
+                      {count}
+                    </text>
+
+                    {/* Month label below */}
+                    <text
+                      x={x}
+                      y={chartHeight + 78}
+                      fontSize="12"
+                      fontWeight="600"
+                      fill="#4B5563"
+                      textAnchor="middle"
+                    >
+                      {month}
+                    </text>
+                  </g>
+                )
+              })}
+
+              {/* Axes */}
+              <line x1="28" y1="60" x2="28" y2={chartHeight + 60} stroke="#D1D5DB" strokeWidth="2" />
+              <line x1="28" y1={chartHeight + 60} x2={chartWidth - 15} y2={chartHeight + 60} stroke="#D1D5DB" strokeWidth="2" />
+            </svg>
           </div>
         )
       })()}
+      <div className="mt-5 pt-4 border-t border-gray-100">
+        <div className="grid grid-cols-2 gap-4 text-xs">
+          <div>
+            <span className="text-gray-500">Total pickups: </span>
+            <span className="font-semibold" style={{ color:'#1A4D35' }}>{pickups.length}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Avg per month: </span>
+            <span className="font-semibold" style={{ color:'#1A4D35' }}>
+              {(() => {
+                const months = {}
+                pickups.forEach(p => {
+                  const month = new Date(p.created_at).toLocaleDateString('en-PH', { month:'short', year:'2-digit' })
+                  months[month] = (months[month] || 0) + 1
+                })
+                const entries = Object.entries(months)
+                return entries.length > 0 ? Math.round(pickups.length / entries.length) : 0
+              })()}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
 
     {/* LGU Data Package info */}

@@ -88,7 +88,7 @@ export default function JunkshopProfile() {
       <div className="max-w-3xl mx-auto px-6 py-10">
 
         {/* Header card */}
-        <div className="rounded-2xl p-6 mb-6 flex items-center justify-between gap-4"
+        <div className="rounded-2xl p-6 mb-6"
           style={{ background:'linear-gradient(135deg, #1A4D35 0%, #0D2B1F 100%)' }}>
           <div className="flex items-center gap-4">
             {/* Avatar / photo */}
@@ -126,14 +126,6 @@ export default function JunkshopProfile() {
               </div>
             </div>
           </div>
-
-          {/* Message button */}
-          <button
-            onClick={handleMessage}
-            className="px-5 py-2.5 rounded-xl text-sm font-medium shrink-0 transition"
-            style={{ backgroundColor:'#C97A3A', color:'#fff' }}>
-            💬 Message
-          </button>
         </div>
 
         <div className="grid grid-cols-2 gap-5">

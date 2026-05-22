@@ -99,7 +99,7 @@ export default function DashboardLayout({ children, activeTab }) {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden" style={{ backgroundColor:'#FEFDF8' }}>
+    <div className="flex w-full" style={{ backgroundColor:'#FEFDF8', minHeight: '100vh' }}>
 
       <style>{`
         @keyframes eco-spark-dot {
@@ -113,12 +113,16 @@ export default function DashboardLayout({ children, activeTab }) {
       {/* ══ SIDEBAR ══════════════════════════════════════════════════════════ */}
       <aside
         data-tour="sidebar"
-        className="flex flex-col h-screen overflow-hidden shrink-0 transition-all duration-200"
+        className="flex flex-col shrink-0 transition-all duration-200"
         style={{
           width:    collapsed ? '64px' : '220px',
           minWidth: collapsed ? '64px' : '220px',
           backgroundColor:'#0D2B1F',
-          position:'relative',
+          position:'fixed',
+          top: 0,
+          left: 0,
+          height: '100vh',
+          overflow: 'hidden',
           // Lift sidebar above the spotlight overlay when it's spotlighted
           zIndex: tour.tourActive && tour.step?.target === '[data-tour="sidebar"]' ? 9920 : 30,
         }}
@@ -225,7 +229,11 @@ export default function DashboardLayout({ children, activeTab }) {
       </aside>
 
       {/* ══ MAIN CONTENT ═════════════════════════════════════════════════════ */}
-      <main className="flex-1 min-w-0 flex flex-col">
+      <main className="flex-1 min-w-0 flex flex-col"
+        style={{
+          marginLeft: collapsed ? '64px' : '220px',
+          transition: 'margin-left 0.2s ease',
+        }}>
         {/* Top bar */}
         <div className="h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100 shrink-0 z-30">
           <div className="text-base font-bold"
