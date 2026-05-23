@@ -837,7 +837,7 @@ const handleDeleteRating = async (id, junkshopId) => {
             ? `${Math.round((stats.total_households / 100) * 100)}%`
             : '0%',
           sub:   `${stats.total_households} of est. 100 target households`,
-          bg:    '#D8F3DC', color:'#085041', icon: '👥',
+          bg:    '#D8F3DC', color:'#085041', icon: '👥', gradient: 'linear-gradient(135deg, #D8F3DC 0%, #B7E4C7 100%)',
         },
         {
           label: 'Pickup completion rate',
@@ -845,32 +845,58 @@ const handleDeleteRating = async (id, junkshopId) => {
             ? `${Math.round((stats.completed_pickups / stats.total_pickups) * 100)}%`
             : '0%',
           sub:   `${stats.completed_pickups} of ${stats.total_pickups} pickups done`,
-          bg:    '#E6F1FB', color:'#042C53', icon: '✓',
+          bg:    '#E6F1FB', color:'#042C53', icon: '✓', gradient: 'linear-gradient(135deg, #E6F1FB 0%, #B5D4F4 100%)',
         },
         {
           label: 'Active junkshop network',
           value: stats.total_junkshops,
           sub:   'registered collectors in Baguio',
-          bg:    '#FAEEDA', color:'#7A3F08', icon: '🏪',
+          bg:    '#FAEEDA', color:'#7A3F08', icon: '🏪', gradient: 'linear-gradient(135deg, #FAEEDA 0%, #FAC775 100%)',
         },
         {
           label: 'CO₂ equivalent saved',
           value: `${(stats.kg_diverted * 0.5).toFixed(0)} kg`,
           sub:   'based on IPCC recycling factors',
-          bg:    '#EAF3DE', color:'#173404', icon: '🌿',
+          bg:    '#EAF3DE', color:'#173404', icon: '🌿', gradient: 'linear-gradient(135deg, #EAF3DE 0%, #C0DD97 100%)',
         },
       ].map(s => (
-        <div key={s.label} className="rounded-xl p-4 transition hover:shadow-md hover:-translate-y-0.5" style={{
-          backgroundColor: s.bg,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-          border: `1px solid ${s.color}15`
+        <div key={s.label} className="group rounded-xl p-3.5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer relative overflow-hidden" style={{
+          background: s.gradient,
+          border: `1.5px solid ${s.color}20`,
+          boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
         }}>
-          <div className="flex items-start justify-between mb-2">
-            <div className="text-lg">{s.icon}</div>
+          {/* Decorative background element */}
+          <div className="absolute top-0 right-0 w-20 h-20 rounded-full opacity-10 -mr-6 -mt-6" style={{ backgroundColor: s.color }} />
+
+          <div className="relative z-10">
+            {/* Icon container */}
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg mb-2 transition-all duration-300 group-hover:scale-110" style={{
+              backgroundColor: `${s.color}15`,
+              border: `1px solid ${s.color}30`
+            }}>
+              {s.icon}
+            </div>
+
+            {/* Value */}
+            <div className="text-2xl font-bold mb-0.5" style={{ color: s.color }}>
+              {s.value}
+            </div>
+
+            {/* Label */}
+            <div className="text-xs font-semibold mb-1" style={{ color: s.color }}>
+              {s.label}
+            </div>
+
+            {/* Sub text */}
+            <div className="text-xs font-normal" style={{ color: s.color, opacity: 0.75 }}>
+              {s.sub}
+            </div>
           </div>
-          <div className="text-2xl font-semibold mb-0.5" style={{ color: s.color }}>{s.value}</div>
-          <div className="text-xs font-medium mb-1" style={{ color: s.color }}>{s.label}</div>
-          <div className="text-xs font-normal opacity-70" style={{ color: s.color }}>{s.sub}</div>
+
+          {/* Bottom accent line */}
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r" style={{
+            backgroundImage: `linear-gradient(to right, ${s.color}30, ${s.color}10, transparent)`
+          }} />
         </div>
       ))}
     </div>
@@ -1144,7 +1170,7 @@ const handleDeleteRating = async (id, junkshopId) => {
         const entries = Object.entries(months).slice(-6)
         const max = Math.max(...entries.map(e => e[1]), 1)
         const chartHeight = 160
-        const barWidth = 35
+        const pointRadius = 5
         const chartWidth = entries.length * 55 + 40
 
         if (entries.length === 0) return (
@@ -1152,6 +1178,19 @@ const handleDeleteRating = async (id, junkshopId) => {
             <p className="text-xs text-gray-400">No trend data yet — appears after first pickups</p>
           </div>
         )
+
+        // Calculate points for the line
+        const points = entries.map(([month, count], i) => {
+          const x = 65 + i * 55
+          const y = chartHeight + 60 - ((count / max) * chartHeight)
+          return { x, y, count, month }
+        })
+
+        // Create path string for the line
+        const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+
+        // Create path string for the fill area
+        const fillPath = `${linePath} L ${points[points.length - 1].x} ${chartHeight + 60} L ${points[0].x} ${chartHeight + 60} Z`
 
         return (
           <div className="overflow-x-auto -mx-2 px-2">
@@ -1162,65 +1201,83 @@ const handleDeleteRating = async (id, junkshopId) => {
                 const y = chartHeight - (chartHeight * percent)
                 return (
                   <g key={`y-${i}`}>
-                    <text x="28" y={y + 65} fontSize="11" fill="#9CA3AF" textAnchor="end" dominantBaseline="middle">
+                    <text x="18" y={y + 65} fontSize="11" fill="#9CA3AF" textAnchor="end" dominantBaseline="middle">
                       {pickupValue}
                     </text>
                     {i > 0 && (
-                      <line x1="32" y1={y + 60} x2={chartWidth - 15} y2={y + 60} stroke="#E5E7EB" strokeWidth="1" strokeDasharray="2,2" />
+                      <line x1="28" y1={y + 60} x2={chartWidth - 15} y2={y + 60} stroke="#E5E7EB" strokeWidth="1" strokeDasharray="2,2" />
                     )}
                   </g>
                 )
               })}
 
-              {/* Bars */}
-              {entries.map(([month, count], i) => {
-                const barHeight = (count / max) * chartHeight
-                const x = 55 + i * 55
-                const y = chartHeight + 60 - barHeight
+              {/* Fill area under line */}
+              <path
+                d={fillPath}
+                fill="#1A4D35"
+                opacity="0.08"
+              />
 
-                return (
-                  <g key={month}>
-                    {/* Bar */}
-                    <rect
-                      x={x - barWidth / 2}
-                      y={y}
-                      width={barWidth}
-                      height={barHeight}
-                      fill="#1A4D35"
-                      rx="4"
-                      opacity="0.85"
-                      style={{
-                        transition: 'all 0.3s ease',
-                        filter: 'drop-shadow(0 2px 4px rgba(26, 77, 53, 0.15))'
-                      }}
-                    />
+              {/* Line */}
+              <path
+                d={linePath}
+                stroke="#1A4D35"
+                strokeWidth="3"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
 
-                    {/* Value label on top of bar */}
-                    <text
-                      x={x}
-                      y={y - 10}
-                      fontSize="13"
-                      fontWeight="700"
-                      fill="#1A4D35"
-                      textAnchor="middle"
-                    >
-                      {count}
-                    </text>
+              {/* Data points and labels */}
+              {points.map((p, i) => (
+                <g key={`point-${i}`}>
+                  {/* Larger circle for hover area */}
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={pointRadius + 2}
+                    fill="transparent"
+                    style={{ cursor: 'pointer' }}
+                  />
 
-                    {/* Month label below */}
-                    <text
-                      x={x}
-                      y={chartHeight + 78}
-                      fontSize="12"
-                      fontWeight="600"
-                      fill="#4B5563"
-                      textAnchor="middle"
-                    >
-                      {month}
-                    </text>
-                  </g>
-                )
-              })}
+                  {/* Value label above point */}
+                  <text
+                    x={p.x}
+                    y={p.y - 15}
+                    fontSize="13"
+                    fontWeight="700"
+                    fill="#1A4D35"
+                    textAnchor="middle"
+                  >
+                    {p.count}
+                  </text>
+
+                  {/* Data point circle */}
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={pointRadius}
+                    fill="#1A4D35"
+                    stroke="#fff"
+                    strokeWidth="2.5"
+                    style={{
+                      filter: 'drop-shadow(0 2px 4px rgba(26, 77, 53, 0.2))'
+                    }}
+                  />
+
+                  {/* Month label below */}
+                  <text
+                    x={p.x}
+                    y={chartHeight + 78}
+                    fontSize="12"
+                    fontWeight="600"
+                    fill="#4B5563"
+                    textAnchor="middle"
+                  >
+                    {p.month}
+                  </text>
+                </g>
+              ))}
 
               {/* Axes */}
               <line x1="28" y1="60" x2="28" y2={chartHeight + 60} stroke="#D1D5DB" strokeWidth="2" />
