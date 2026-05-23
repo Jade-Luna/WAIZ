@@ -162,7 +162,7 @@ export default function Home() {
           width: '100%', height: 56,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '0 32px',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          borderBottom: '1px solid rgba(255,255,255,0.25)',
           backdropFilter: 'blur(4px)',
         }}>
           <Link to="/" style={{
@@ -176,7 +176,7 @@ export default function Home() {
             <Link to="/how-it-works" style={{ fontSize: 13, color: '#74a86a', textDecoration: 'none' }}>How It Works</Link>
             <Link to="/about"        style={{ fontSize: 13, color: '#74a86a', textDecoration: 'none' }}>About</Link>
             <Link to="/junkshops"    style={{ fontSize: 13, color: '#74a86a', textDecoration: 'none' }}>Junkshops</Link>
-            <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.12)' }} />
+            <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.35)' }} />
             {user ? (
               <Link
                 to={profile?.role === 'junkshop' ? '/dashboard/junkshop' : '/dashboard/household'}
@@ -191,7 +191,7 @@ export default function Home() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Link to="/login" style={{
                   fontSize: 13, color: '#a8d898',
-                  border: '1px solid rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.4)',
                   padding: '6px 16px', borderRadius: 99, textDecoration: 'none',
                 }}>Log in</Link>
                 <Link to="/signup" style={{

@@ -1029,7 +1029,7 @@ const handleDeleteRating = async (id, junkshopId) => {
       </div>
 
       {/* Barangay activity */}
-      <div className="bg-white rounded-2xl p-4 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <div className="bg-white rounded-2xl p-4 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }}>
         <div className="mb-4">
           <h3 className="text-sm font-bold text-gray-900 mb-0.5">
             Barangay Activity Map
@@ -1072,7 +1072,7 @@ const handleDeleteRating = async (id, junkshopId) => {
                     style={{
                       width:`${(count/max)*100}%`,
                       backgroundColor:'#1A4D35',
-                      boxShadow: '0 0 4px rgba(26, 77, 53, 0.3)'
+                      boxShadow: '0 0 4px rgba(26, 77, 53, 0.6)'
                     }} />
                 </div>
               </div>
@@ -1085,7 +1085,7 @@ const handleDeleteRating = async (id, junkshopId) => {
     <div className="grid grid-cols-2 gap-4 mb-6">
 
       {/* Junkshop network */}
-      <div className="bg-white rounded-2xl p-4 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <div className="bg-white rounded-2xl p-4 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }}>
         <div className="mb-4">
           <h3 className="text-sm font-bold text-gray-900 mb-0.5">
             Informal Collector Network
@@ -1107,7 +1107,7 @@ const handleDeleteRating = async (id, junkshopId) => {
           ].map(row => (
             <div key={row.label}
               className="flex items-center justify-between py-2 px-2.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition"
-              style={{ borderColor: 'rgba(13, 43, 31, 0.1)' }}>
+              style={{ borderColor: 'rgba(13, 43, 31, 0.3)' }}>
               <div className="flex items-center gap-2">
                 <span className="text-base">{row.icon}</span>
                 <span className="text-xs text-gray-600">{row.label}</span>
@@ -1119,7 +1119,7 @@ const handleDeleteRating = async (id, junkshopId) => {
       </div>
 
       {/* Environmental impact */}
-      <div className="bg-white rounded-2xl p-4 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <div className="bg-white rounded-2xl p-4 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }}>
         <div className="mb-4">
           <h3 className="text-sm font-bold text-gray-900 mb-0.5">
             Environmental Impact Report
@@ -1314,8 +1314,8 @@ const handleDeleteRating = async (id, junkshopId) => {
     <div className="rounded-2xl p-4 relative overflow-hidden"
       style={{
         background: 'linear-gradient(135deg, #FAEEDA 0%, #FFF9E6 100%)',
-        boxShadow: '0 2px 8px rgba(201, 122, 58, 0.12)',
-        border: '1px solid rgba(201, 122, 58, 0.15)'
+        boxShadow: '0 2px 8px rgba(201, 122, 58, 0.3)',
+        border: '1px solid rgba(201, 122, 58, 0.4)'
       }}>
       <div className="absolute top-0 right-0 w-20 h-20 bg-white opacity-8 rounded-full -mr-8 -mt-8" />
       <div className="flex items-start gap-3 relative z-10">
@@ -1331,7 +1331,7 @@ const handleDeleteRating = async (id, junkshopId) => {
             <button
               onClick={() => exportCSV({ listings, pickups, users, junkshops })}
               className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition hover:shadow-md flex items-center gap-1"
-              style={{ backgroundColor:'#C97A3A', boxShadow: '0 2px 6px rgba(201, 122, 58, 0.25)' }}>
+              style={{ backgroundColor:'#C97A3A', boxShadow: '0 2px 6px rgba(201, 122, 58, 0.4)' }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="7 10 12 15 17 10"/>

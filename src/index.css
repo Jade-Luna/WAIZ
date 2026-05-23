@@ -40,7 +40,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {
   border-color: #1A4D35 !important;
   outline: none !important;
-  box-shadow: 0 0 0 3px rgba(26,77,53,0.1) !important;
+  box-shadow: 0 0 0 3px rgba(26,77,53,0.3) !important;
 }
 
 /* Enhanced body text */

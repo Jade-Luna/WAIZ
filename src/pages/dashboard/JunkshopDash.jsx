@@ -195,13 +195,13 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
             <span className="text-sm" style={{ color:'#74C69D' }}>{shop?.barangay || 'Baguio City'}</span>
             {shop?.is_verified && (
               <span className="text-xs px-2.5 py-0.5 rounded-full font-medium"
-                style={{ backgroundColor:'rgba(255,255,255,0.15)', color:'#B7E4C7' }}>
+                style={{ backgroundColor:'rgba(255,255,255,0.35)', color:'#B7E4C7' }}>
                 ✓ Verified
               </span>
             )}
             {shop?.is_featured && (
               <span className="text-xs px-2.5 py-0.5 rounded-full font-medium"
-                style={{ backgroundColor:'rgba(201,122,58,0.3)', color:'#FAEEDA' }}>
+                style={{ backgroundColor:'rgba(201,122,58,0.5)', color:'#FAEEDA' }}>
                 Featured
               </span>
             )}
@@ -210,7 +210,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
         <div className="flex gap-2 shrink-0">
   <Link to="/browse"
     className="px-5 py-2.5 rounded-xl text-sm font-medium"
-    style={{ backgroundColor:'rgba(255,255,255,0.15)', color:'#fff' }}>
+    style={{ backgroundColor:'rgba(255,255,255,0.35)', color:'#fff' }}>
     Marketplace
   </Link>
   <Link to="/junkshops"
@@ -837,7 +837,7 @@ function LocationPicker({ lat, lng, onChange }) {
 
   const pinIcon = new L.DivIcon({
     className: '',
-    html: `<div style="background:#C97A3A;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3)"><div style="transform:rotate(45deg);color:#fff;font-size:11px;text-align:center;line-height:24px">♻</div></div>`,
+    html: `<div style="background:#C97A3A;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5)"><div style="transform:rotate(45deg);color:#fff;font-size:11px;text-align:center;line-height:24px">♻</div></div>`,
     iconSize:  [28,28], iconAnchor:[14,28],
   })
 

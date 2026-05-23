@@ -14,19 +14,19 @@ L.Icon.Default.mergeOptions({
 
 const featuredIcon = new L.DivIcon({
   className: '',
-  html: `<div style="background:#C97A3A;width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3)"><div style="transform:rotate(45deg);color:#fff;font-size:14px;text-align:center;line-height:30px">★</div></div>`,
+  html: `<div style="background:#C97A3A;width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5)"><div style="transform:rotate(45deg);color:#fff;font-size:14px;text-align:center;line-height:30px">★</div></div>`,
   iconSize:[34,34], iconAnchor:[17,34], popupAnchor:[0,-38],
 })
 
 const regularIcon = new L.DivIcon({
   className: '',
-  html: `<div style="background:#1A4D35;width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.25)"><div style="transform:rotate(45deg);color:#fff;font-size:12px;text-align:center;line-height:26px">♻</div></div>`,
+  html: `<div style="background:#1A4D35;width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.45)"><div style="transform:rotate(45deg);color:#fff;font-size:12px;text-align:center;line-height:26px">♻</div></div>`,
   iconSize:[30,30], iconAnchor:[15,30], popupAnchor:[0,-34],
 })
 
 const userIcon = new L.DivIcon({
   className: '',
-  html: `<div style="background:#3B82F6;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 3px rgba(59,130,246,0.35)"></div>`,
+  html: `<div style="background:#3B82F6;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 3px rgba(59,130,246,0.65)"></div>`,
   iconSize:[14,14], iconAnchor:[7,7],
 })
 
@@ -210,7 +210,7 @@ export default function BaguioMap({
         <div style={{
           position: 'absolute', bottom: '12px', left: '12px', right: '12px',
           background: '#fff', borderRadius: '12px', padding: '12px 14px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 1000,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.35)', zIndex: 1000,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px'
         }}>
           <div style={{ flex: 1 }}>

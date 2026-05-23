@@ -247,7 +247,7 @@ export default function TourOverlay({
       {tourActive && (
         <div style={{
           position:'fixed', top:0, left:0, right:0, height:3,
-          zIndex:9999, background:'rgba(200,168,78,0.15)',
+          zIndex:9999, background:'rgba(200,168,78,0.4)',
         }}>
           <div style={{
             height:'100%',
@@ -283,7 +283,7 @@ export default function TourOverlay({
             background:'#fff',
             borderRadius:20,
             border:'2px solid #e8ead8',
-            boxShadow:'0 16px 52px rgba(10,22,8,0.26)',
+            boxShadow:'0 16px 52px rgba(10,22,8,0.5)',
             overflow:'hidden',
             animation:'ttIn 0.38s cubic-bezier(0.34,1.56,0.64,1) both',
           }}
@@ -294,7 +294,7 @@ export default function TourOverlay({
               to   { opacity:1; transform:scale(1)    translateY(0);    }
             }
             @keyframes pulseHint {
-              0%,100% { box-shadow:0 0 0 0 rgba(200,168,78,0.35); }
+              0%,100% { box-shadow:0 0 0 0 rgba(200,168,78,0.65); }
               50%     { box-shadow:0 0 0 7px rgba(200,168,78,0);   }
             }
           `}</style>
@@ -398,7 +398,7 @@ export default function TourOverlay({
               background:'#fff', borderRadius:24,
               padding:'40px 36px', textAlign:'center',
               maxWidth:420, width:'90%',
-              boxShadow:'0 32px 80px rgba(10,22,8,0.32)',
+              boxShadow:'0 32px 80px rgba(10,22,8,0.6)',
               animation:'ttIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both',
             }}>
               <div style={{ fontSize:52, marginBottom:12, display:'block',
@@ -453,8 +453,8 @@ export default function TourOverlay({
           onClick={resetTour}
           style={{
             position:'fixed', bottom:14, left:14, zIndex:9998,
-            background:'rgba(45,90,39,0.12)', border:'1px solid #d8ead0',
-            color:'#6a8a64', fontSize:11, padding:'6px 12px',
+            background:'rgba(45,90,39,0.35)', border:'1px solid #6a8a64',
+            color:'#2d5a27', fontSize:11, padding:'6px 12px',
             borderRadius:20, cursor:'pointer', fontFamily:'inherit',
           }}
         >

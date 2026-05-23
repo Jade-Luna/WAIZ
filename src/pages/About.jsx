@@ -91,7 +91,7 @@ export default function About() {
       <style>{`
         @keyframes waiz-twinkle { 0%,100%{opacity:.1} 50%{opacity:.7} }
         .about-how-card { transition: transform .25s ease, box-shadow .25s ease; }
-        .about-how-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(29,75,53,0.12); }
+        .about-how-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(29,75,53,0.35); }
         .about-team-card { transition: transform .22s ease; }
         .about-team-card:hover { transform: translateY(-2px); }
       `}</style>
@@ -102,7 +102,7 @@ export default function About() {
         width:'100%', height:56,
         display:'flex', alignItems:'center', justifyContent:'space-between',
         padding:'0 32px',
-        borderBottom:'1px solid rgba(0,0,0,0.06)',
+        borderBottom:'1px solid rgba(0,0,0,0.2)',
         backgroundColor:'rgba(254,253,248,0.92)',
         backdropFilter:'blur(8px)',
       }}>
@@ -117,7 +117,7 @@ export default function About() {
           <Link to="/how-it-works" style={{ fontSize:13, color:'#2D6A4F', textDecoration:'none' }}>How It Works</Link>
           <Link to="/about"        style={{ fontSize:13, color:'#2D6A4F', textDecoration:'none' }}>About</Link>
           <Link to="/junkshops"    style={{ fontSize:13, color:'#2D6A4F', textDecoration:'none' }}>Junkshops</Link>
-          <div style={{ width:1, height:16, background:'rgba(0,0,0,0.1)' }} />
+          <div style={{ width:1, height:16, background:'rgba(0,0,0,0.25)' }} />
           {user ? (
             <Link
               to={profile?.role === 'junkshop' ? '/dashboard/junkshop' : '/dashboard/household'}
@@ -132,7 +132,7 @@ export default function About() {
             <div style={{ display:'flex', gap:10 }}>
               <Link to="/login" style={{
                 fontSize:13, color:'#2D6A4F',
-                border:'1px solid rgba(29,75,53,0.25)',
+                border:'1px solid rgba(29,75,53,0.6)',
                 padding:'6px 16px', borderRadius:99, textDecoration:'none',
               }}>Log in</Link>
               <Link to="/signup" style={{
@@ -363,7 +363,7 @@ export default function About() {
                 borderRadius:20, padding:'32px 28px',
                 textAlign:'center',
                 minWidth:180, flex:'1 1 180px', maxWidth:200,
-                boxShadow:'0 2px 12px rgba(29,75,53,0.07)',
+                boxShadow:'0 2px 12px rgba(29,75,53,0.25)',
               }}>
                 <div style={{
   width:100, height:100, borderRadius:'50%',

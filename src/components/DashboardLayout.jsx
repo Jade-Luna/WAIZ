@@ -11,6 +11,7 @@ export default function DashboardLayout({ children, activeTab }) {
   const navigate    = useNavigate()
   const isJunk      = profile?.role === 'junkshop'
   const [collapsed, setCollapsed] = useState(false)
+  const [showMobileMore, setShowMobileMore] = useState(false)
 
   // ── Tour ──────────────────────────────────────────────────────────────────
   const tour = useTour({ user, profile })
@@ -108,10 +109,14 @@ export default function DashboardLayout({ children, activeTab }) {
         }
         .hide-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
         .hide-scrollbar::-webkit-scrollbar { display:none; }
+        @media (max-width: 768px) {
+          .sidebar { display:none; }
+        }
       `}</style>
 
-      {/* ══ SIDEBAR ══════════════════════════════════════════════════════════ */}
+      {/* ══ SIDEBAR (Desktop only) ════════════════════════════════════════════ */}
       <aside
+        className="sidebar flex flex-col h-screen overflow-hidden shrink-0 transition-all duration-200"
         data-tour="sidebar"
         className="flex flex-col shrink-0 transition-all duration-200"
         style={{
@@ -123,7 +128,6 @@ export default function DashboardLayout({ children, activeTab }) {
           left: 0,
           height: '100vh',
           overflow: 'hidden',
-          // Lift sidebar above the spotlight overlay when it's spotlighted
           zIndex: tour.tourActive && tour.step?.target === '[data-tour="sidebar"]' ? 9920 : 30,
         }}
       >
@@ -235,25 +239,33 @@ export default function DashboardLayout({ children, activeTab }) {
           transition: 'margin-left 0.2s ease',
         }}>
         {/* Top bar */}
-        <div className="h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100 shrink-0 z-30">
-          <div className="text-base font-bold"
+        <div className="h-14 md:h-14 flex items-center justify-between px-4 md:px-8 bg-white border-b border-gray-100 shrink-0 z-30">
+          <div className="text-sm md:text-base font-bold"
             style={{ color:'#1f2937', letterSpacing:'-0.02em', fontWeight:800 }}>
             {NAV.find(n => n.key === activeTab)?.label || 'Dashboard'}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {!isJunk && (
               <Link
                 to="/post-item"
                 data-tour="post-btn"
+                className="text-xs md:text-sm"
                 style={{
-                  padding:'7px 16px', borderRadius:10, fontSize:13,
-                  fontWeight:600, background:'#1A4D35', color:'#fff',
-                  textDecoration:'none', display:'inline-flex', alignItems:'center', gap:6,
+                  padding:'6px 12px',
+                  borderRadius:10,
+                  fontSize:'inherit',
+                  fontWeight:600,
+                  background:'#1A4D35',
+                  color:'#fff',
+                  textDecoration:'none',
+                  display:'inline-flex',
+                  alignItems:'center',
+                  gap:4,
                   position:'relative',
                   zIndex: tour.tourActive && tour.step?.target === '[data-tour="post-btn"]' ? 9920 : 'auto',
                 }}
               >
-                + Post Item
+                <span className="hidden md:inline">+</span> Post Item
               </Link>
             )}
           </div>
@@ -261,7 +273,7 @@ export default function DashboardLayout({ children, activeTab }) {
 
         {/* Page content */}
         <div className="flex-1 overflow-y-auto hide-scrollbar">
-          <div className="p-4 md:p-8 pb-20 md:pb-8">
+          <div className="p-4 md:p-8 pb-24 md:pb-8">
             {/* data-tour="stat-cards" wraps children so the spotlight can
                 highlight the stat grid at the top of each dashboard */}
             <div data-tour="stat-cards">
@@ -270,22 +282,132 @@ export default function DashboardLayout({ children, activeTab }) {
           </div>
         </div>
 
-        {/* Mobile bottom nav */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex md:hidden z-50">
-          {NAV.slice(0, 5).map(item => {
-            const isActive = activeTab === item.key
-            return (
-              <Link key={item.key} to={item.path}
-                onClick={e => handleNavClick(e, item.key, item.path)}
-                data-tour={`nav-${item.key}`}
-                className="flex-1 flex flex-col items-center justify-center py-3 gap-1"
-                style={{ color: isActive ? '#1A4D35' : '#9CA3AF', fontSize:11,
-                  fontWeight: isActive ? '700' : '500' }}>
-                <span style={{ color: isActive ? '#1A4D35' : '#9CA3AF' }}>{item.icon}</span>
-                <span>{item.label.split(' ')[0]}</span>
-              </Link>
-            )
-          })}
+        {/* Mobile bottom nav - Cute icons */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 md:hidden z-50"
+          style={{ boxShadow:'0 -2px 8px rgba(0,0,0,0.1)' }}>
+          <div className="flex items-center justify-around">
+            {NAV.map((item, idx) => {
+              if (idx >= 4) return null
+              const isActive = activeTab === item.key
+              const dotCount = item.key === 'messages' ? unreadMessages
+                : item.key === 'requests' ? pendingRequests : 0
+
+              return (
+                <Link key={item.key} to={item.path}
+                  onClick={e => handleNavClick(e, item.key, item.path)}
+                  data-tour={`nav-${item.key}`}
+                  className="flex-1 flex flex-col items-center justify-center py-3 gap-1 relative transition"
+                  style={{
+                    color: isActive ? '#1A4D35' : '#9CA3AF',
+                    fontSize: 11,
+                    fontWeight: isActive ? '700' : '500',
+                    borderTop: isActive ? '3px solid #1A4D35' : 'none',
+                    paddingTop: isActive ? '6px' : '12px'
+                  }}>
+                  <span style={{ color: isActive ? '#1A4D35' : '#52B788', position:'relative', display:'inline-flex' }}>
+                    {item.icon}
+                    {dotCount > 0 && (
+                      <span className="absolute -top-1 -right-2 w-4 h-4 rounded-full flex items-center justify-center text-white text-xs"
+                        style={{
+                          backgroundColor:'#C97A3A',
+                          fontSize:7,
+                          fontWeight:700,
+                          animation:'eco-spark-dot 1.5s ease-in-out infinite'
+                        }}>
+                        {dotCount > 9 ? '9+' : dotCount}
+                      </span>
+                    )}
+                  </span>
+                  <span style={{ fontSize:10 }}>{item.label.split(' ')[0]}</span>
+                </Link>
+              )
+            })}
+
+            {/* More menu */}
+            <div className="flex-1 flex flex-col items-center justify-center py-3 gap-1 relative"
+              style={{ cursor:'pointer' }}>
+              <button
+                onClick={() => setShowMobileMore(!showMobileMore)}
+                className="flex items-center justify-center transition"
+                style={{
+                  color: showMobileMore ? '#1A4D35' : '#52B788',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                <MoreIcon />
+              </button>
+              <span style={{ fontSize:10, color: showMobileMore ? '#1A4D35' : '#9CA3AF' }}>More</span>
+
+              {showMobileMore && (
+                <div className="absolute bottom-full left-0 right-0 bg-white border border-gray-100 rounded-t-2xl p-3 mb-1"
+                  style={{ boxShadow:'0 -4px 12px rgba(0,0,0,0.1)' }}>
+                  <div className="grid grid-cols-2 gap-2">
+                    {NAV.slice(4).map(item => {
+                      const isActive = activeTab === item.key
+                      const dotCount = item.key === 'messages' ? unreadMessages
+                        : item.key === 'requests' ? pendingRequests : 0
+
+                      return (
+                        <Link key={item.key} to={item.path}
+                          onClick={(e) => {
+                            handleNavClick(e, item.key, item.path)
+                            setShowMobileMore(false)
+                          }}
+                          data-tour={`nav-${item.key}`}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg transition text-sm"
+                          style={{
+                            backgroundColor: isActive ? '#E8F5E9' : '#F9FAFB',
+                            color: isActive ? '#1A4D35' : '#6B7280',
+                            fontWeight: isActive ? '700' : '600',
+                            textDecoration: 'none',
+                            position: 'relative'
+                          }}>
+                          <span style={{ color: isActive ? '#1A4D35' : '#52B788', position:'relative', display:'inline-flex' }}>
+                            {item.icon}
+                            {dotCount > 0 && (
+                              <span className="absolute -top-1 -right-2 w-3 h-3 rounded-full flex items-center justify-center text-white"
+                                style={{
+                                  backgroundColor:'#C97A3A',
+                                  fontSize:6,
+                                  fontWeight:700,
+                                  animation:'eco-spark-dot 1.5s ease-in-out infinite'
+                                }}>
+                                {dotCount > 9 ? '9+' : dotCount}
+                              </span>
+                            )}
+                          </span>
+                          <span>{item.label}</span>
+                        </Link>
+                      )
+                    })}
+
+                    {/* Mobile menu - Browse & Sign out */}
+                    <Link to="/browse"
+                      onClick={() => setShowMobileMore(false)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                      style={{ backgroundColor:'#F9FAFB', color:'#6B7280', fontWeight:600, textDecoration:'none' }}>
+                      <span style={{ color:'#52B788' }}><BrowseIcon /></span>
+                      <span>Browse</span>
+                    </Link>
+
+                    <button
+                      onClick={() => {
+                        setShowMobileMore(false)
+                        setShowSignOutModal(true)
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                      style={{ backgroundColor:'#F9FAFB', color:'#6B7280', fontWeight:600, border:'none', cursor:'pointer', width:'100%', textAlign:'left' }}>
+                      <span style={{ color:'#52B788' }}><SignOutIcon /></span>
+                      <span>Sign out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Sign-out modal */}
@@ -346,3 +468,4 @@ function BrowseIcon()    { return <svg width="16" height="16" viewBox="0 0 24 24
 function SignOutIcon()   { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> }
 function MenuCloseIcon() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> }
 function MenuOpenIcon()  { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg> }
+function MoreIcon()      { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg> }

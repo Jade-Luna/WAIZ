@@ -352,7 +352,7 @@ const startNewConversation = (otherUser) => {
           fontSize:'10px', zIndex:10,
           display:'flex', alignItems:'center', justifyContent:'center',
           transition:'left 0.15s',
-          boxShadow:'0 2px 6px rgba(0,0,0,0.2)'
+          boxShadow:'0 2px 6px rgba(0,0,0,0.4)'
         }}>
         {sidebarOpen ? '◀' : '▶'}
       </button>
@@ -398,14 +398,14 @@ const startNewConversation = (otherUser) => {
                               return (
                                 <div style={{
                                   borderRadius: '12px', overflow: 'hidden',
-                                  border: isMe ? '1px solid rgba(255,255,255,0.2)' : '1px solid #E5E7EB',
+                                  border: isMe ? '1px solid rgba(255,255,255,0.5)' : '1px solid #D1D5DB',
                                   minWidth: '200px', maxWidth: '240px',
                                 }}>
                                   {parsed.image && (
                                     <img src={parsed.image} alt={parsed.title}
                                       style={{ width:'100%', height:'120px', objectFit:'cover', display:'block' }} />
                                   )}
-                                  <div style={{ padding:'8px 10px', backgroundColor: isMe ? 'rgba(255,255,255,0.08)' : '#F9FAFB' }}>
+                                  <div style={{ padding:'8px 10px', backgroundColor: isMe ? 'rgba(255,255,255,0.25)' : '#F3F4F6' }}>
                                     <p style={{ fontSize:'12px', fontWeight:600, margin:'0 0 2px', color: isMe ? '#fff' : '#111827' }}>
                                       {parsed.title}
                                     </p>
@@ -419,7 +419,7 @@ const startNewConversation = (otherUser) => {
                                       style={{
                                         display:'block', textAlign:'center', fontSize:'11px',
                                         padding:'5px 10px', borderRadius:'8px', textDecoration:'none',
-                                        backgroundColor: isMe ? 'rgba(255,255,255,0.15)' : '#1A4D35',
+                                        backgroundColor: isMe ? 'rgba(255,255,255,0.4)' : '#1A4D35',
                                         color:'#fff',
                                       }}>
                                       View listing →

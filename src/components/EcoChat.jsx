@@ -275,7 +275,7 @@ useEffect(() => {
     borderRadius:'16px',
     overflow:   'hidden',
     zIndex:     95,
-    boxShadow:  '0 10px 36px rgba(13,43,31,0.18)',
+    boxShadow:  '0 10px 36px rgba(13,43,31,0.4)',
     ...(pos.x !== null
       ? {
           left:   Math.min(pos.x + 80, window.innerWidth  - 340),
@@ -319,7 +319,7 @@ useEffect(() => {
 
             <button
               onClick={() => setOpen(false)}
-              style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.5)', fontSize:'16px', lineHeight:1, padding:'0', width:'24px', height:'24px', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.85)', fontSize:'16px', lineHeight:1, padding:'0', width:'24px', height:'24px', display:'flex', alignItems:'center', justifyContent:'center' }}>
               ✕
             </button>
           </div>
@@ -414,7 +414,7 @@ function EcoSVG({ emotion, waving }) {
       style={{
         overflow: 'visible',
         animation: isFloat ? 'eco-bob 2.3s ease-in-out infinite' : 'none',
-        filter:'drop-shadow(0 4px 12px rgba(13,43,31,0.25))'
+        filter:'drop-shadow(0 4px 12px rgba(13,43,31,0.45))'
       }}>
 
       {/* WAVING ARM */}

@@ -237,27 +237,27 @@ const handleRate = async (score) => {
 
       {/* HEADER CARD - only show on main tabs */}
 {!['messages','map','profile'].includes(activeTab) && (
-  <div className="rounded-2xl p-4 md:p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+  <div className="rounded-2xl p-4 md:p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4"
     style={{ background:'linear-gradient(135deg, #1A4D35 0%, #0D2B1F 100%)' }}>
     <div>
       <p className="text-xs font-medium tracking-widest uppercase mb-1" style={{ color:'#52B788' }}>
         Household Dashboard
       </p>
-      <h1 className="text-2xl font-medium text-white">
+      <h1 className="text-xl md:text-2xl font-medium text-white">
         Good to see you, {profile?.full_name?.split(' ')[0] || 'there'} 👋
       </h1>
-      <p className="text-sm mt-1" style={{ color:'#74C69D' }}>
+      <p className="text-xs md:text-sm mt-1" style={{ color:'#74C69D' }}>
         {profile?.barangay || 'Baguio City'} · {listings.length} listing{listings.length !== 1 ? 's' : ''} posted
       </p>
     </div>
-    <div className="flex gap-2 shrink-0">
+    <div className="flex gap-2 shrink-0 w-full sm:w-auto">
   <Link to="/browse"
-    className="px-5 py-2.5 rounded-xl text-sm font-medium"
-    style={{ backgroundColor:'rgba(255,255,255,0.15)', color:'#fff' }}>
+    className="flex-1 sm:flex-none px-3 md:px-5 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-medium text-center"
+    style={{ backgroundColor:'rgba(255,255,255,0.35)', color:'#fff' }}>
     Marketplace
   </Link>
   <Link to="/junkshops"
-    className="px-5 py-2.5 rounded-xl text-sm font-medium"
+    className="flex-1 sm:flex-none px-3 md:px-5 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-medium text-center"
     style={{ backgroundColor:'#C97A3A', color:'#fff' }}>
     Junkshops
   </Link>
@@ -267,17 +267,17 @@ const handleRate = async (score) => {
 
       {/* STAT CARDS - only show on main tabs */}
 {!['messages','map','profile'].includes(activeTab) && (
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
     {[
       { label:'Active listings',   value: activeCount,    bg:'#D8F3DC', color:'#085041', sub:'available now'    },
       { label:'Pending pickups',   value: pendingCount,   bg:'#FAEEDA', color:'#7A3F08', sub:'awaiting pickup'  },
       { label:'Completed',         value: completedCount, bg:'#E6F1FB', color:'#042C53', sub:'total done'       },
       { label:'Total earned',      value:`₱${totalEarned}`, bg:'#EAF3DE', color:'#173404', sub:'from all pickups' },
     ].map(stat => (
-      <div key={stat.label} className="rounded-2xl p-5"
+      <div key={stat.label} className="rounded-2xl p-3 md:p-5"
         style={{ backgroundColor: stat.bg }}>
-        <div className="text-2xl font-medium mb-0.5" style={{ color: stat.color }}>{stat.value}</div>
-        <div className="text-xs font-medium" style={{ color: stat.color }}>{stat.label}</div>
+        <div className="text-xl md:text-2xl font-medium mb-0.5" style={{ color: stat.color }}>{stat.value}</div>
+        <div className="text-xs md:text-sm font-medium" style={{ color: stat.color }}>{stat.label}</div>
         <div className="text-xs mt-1 opacity-70" style={{ color: stat.color }}>{stat.sub}</div>
       </div>
     ))}
@@ -287,10 +287,10 @@ const handleRate = async (score) => {
       {/* MY LISTINGS */}
       {activeTab === 'listings' && (
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 mb-4">
             <h2 className="text-base font-medium text-gray-700">My Listings</h2>
             <Link to="/post-item"
-              className="text-xs px-4 py-2 rounded-xl font-medium text-white"
+              className="w-full md:w-auto text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 rounded-xl font-medium text-white text-center"
               style={{ backgroundColor:'#1A4D35' }}>
               + New listing
             </Link>
@@ -303,47 +303,47 @@ const handleRate = async (score) => {
                 const s   = STATUS_STYLE[l.status] || STATUS_STYLE.available
                 const cat = CAT_COLORS[l.category] || CAT_COLORS.metal
                 return (
-                  <div key={l.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4">
+                  <div key={l.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
                       style={{ backgroundColor: cat.bg, color: cat.color }}>
                       {l.category?.slice(0,2).toUpperCase()}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <div className="flex-1 min-w-0 w-full">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1 flex-wrap">
                         <span className="text-sm font-medium text-gray-700 truncate">{l.title}</span>
                         <span className="text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0"
                           style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs text-gray-400 flex-wrap">
                         <span>{l.barangay}</span>
-                        {l.weight_estimate && <><span>·</span><span>~{l.weight_estimate} kg</span></>}
-                        <span>·</span><span>{timeAgo(l.created_at)}</span>
+                        {l.weight_estimate && <><span className="hidden sm:inline">·</span><span>~{l.weight_estimate} kg</span></>}
+                        <span className="hidden sm:inline">·</span><span>{timeAgo(l.created_at)}</span>
                         {l.pickup_requests > 0 && (
-                          <><span>·</span>
+                          <><span className="hidden sm:inline">·</span>
                           <span className="font-medium" style={{ color:'#160e07' }}>
                             {l.pickup_requests} request{l.pickup_requests > 1 ? 's' : ''}
                           </span></>
                         )}
                       </div>
                     </div>
-<div className="flex gap-2 shrink-0">
+<div className="flex gap-2 shrink-0 w-full sm:w-auto flex-wrap sm:flex-nowrap">
   {l.status === 'available' && (
     <button onClick={() => setDeleteId(l.id)}
-      className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition">
+      className="flex-1 sm:flex-none px-2 md:px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition">
       Remove
     </button>
   )}
   {l.status === 'available' && (
     <button
       onClick={() => navigate(`/listing/${l.id}/edit`)}
-      className="px-3 py-1.5 rounded-lg text-xs border font-medium"
+      className="flex-1 sm:flex-none px-2 md:px-3 py-1.5 rounded-lg text-xs border font-medium"
       style={{ borderColor:'#1A4D35', color:'#1A4D35' }}>
       Edit
     </button>
   )}
   <button
     onClick={() => navigate(`/listing/${l.id}`)}
-    className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+    className="flex-1 sm:flex-none px-2 md:px-3 py-1.5 rounded-lg text-xs font-medium text-white"
     style={{ backgroundColor:'#1A4D35' }}>
     View
   </button>

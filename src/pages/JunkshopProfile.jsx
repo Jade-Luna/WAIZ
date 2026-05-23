@@ -93,7 +93,7 @@ export default function JunkshopProfile() {
           <div className="flex items-center gap-4">
             {/* Avatar / photo */}
             <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 flex items-center justify-center text-xl font-medium"
-              style={{ backgroundColor:'rgba(255,255,255,0.15)', color:'#D8F3DC' }}>
+              style={{ backgroundColor:'rgba(255,255,255,0.35)', color:'#D8F3DC' }}>
               {shop.photo_url
                 ? <img src={shop.photo_url} alt={shop.shop_name} className="w-full h-full object-cover" />
                 : (shop.shop_name || 'JS').slice(0,2).toUpperCase()
@@ -104,13 +104,13 @@ export default function JunkshopProfile() {
                 <h1 className="text-xl font-medium text-white">{shop.shop_name}</h1>
                 {shop.is_verified && (
                   <span className="text-xs px-2.5 py-0.5 rounded-full font-medium"
-                    style={{ backgroundColor:'rgba(255,255,255,0.15)', color:'#B7E4C7' }}>
+                    style={{ backgroundColor:'rgba(255,255,255,0.35)', color:'#B7E4C7' }}>
                     ✓ Verified
                   </span>
                 )}
                 {shop.is_featured && (
                   <span className="text-xs px-2.5 py-0.5 rounded-full font-medium"
-                    style={{ backgroundColor:'rgba(201,122,58,0.3)', color:'#FAEEDA' }}>
+                    style={{ backgroundColor:'rgba(201,122,58,0.5)', color:'#FAEEDA' }}>
                     Featured
                   </span>
                 )}
