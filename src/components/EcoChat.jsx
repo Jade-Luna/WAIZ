@@ -245,7 +245,6 @@ if (newSessionCount >= MAX_SESSION_MESSAGES) {
       { triggers:['messages','my messages','open chat'], path: profile?.role === 'junkshop' ? '/dashboard/junkshop?tab=messages' : '/dashboard/household?tab=messages' },
     ]
 
-    const lowerText = userText.toLowerCase()
     let navigated = false
     for (const cmd of navCommands) {
       if (cmd.triggers.some(t => lowerText.includes(t))) {
