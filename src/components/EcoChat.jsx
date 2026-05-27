@@ -141,6 +141,87 @@ Keep responses short, punchy, and HIGH ENERGY — like an enthusiastic friend, n
     ]
 
     const lowerText = userText.toLowerCase()
+
+// STRICT WAIZ FILTER
+const allowedKeywords = [
+  'waiz',
+  'recycle',
+  'recycling',
+  'junkshop',
+  'pickup',
+  'listing',
+  'post item',
+  'dashboard',
+  'scrap',
+  'metal',
+  'plastic',
+  'paper',
+  'glass',
+  'e-waste',
+  'secondhand',
+  'bote',
+  'bakal',
+  'price',
+  'rates',
+  'environment',
+  'waste',
+  'garbage',
+  'trash',
+  'messages',
+  'requests',
+  'browse',
+  'login',
+  'sign up',
+  'register',
+  'hi',
+  'hello',
+  'hey'
+]
+
+const blockedKeywords = [
+  'math',
+  'philosophy',
+  'religion',
+  'politics',
+  'anime',
+  'movie',
+  'gaming',
+  'valorant',
+  'ml',
+  'cod',
+  'programming',
+  'javascript',
+  'python',
+  'react',
+  'love life',
+  'girlfriend',
+  'boyfriend',
+  'weather',
+  'news'
+]
+
+const hasAllowed = allowedKeywords.some(word =>
+  lowerText.includes(word)
+)
+
+const hasBlocked = blockedKeywords.some(word =>
+  lowerText.includes(word)
+)
+
+if (!hasAllowed || hasBlocked) {
+  setMessages(prev => [
+    ...prev,
+    {
+      role: 'assistant',
+      content:
+        "I can only assist with WAIZ and recycling-related topics ♻️"
+    }
+  ])
+
+  setLoading(false)
+  return
+}
+
     let navigated = false
     for (const cmd of navCommands) {
       if (cmd.triggers.some(t => lowerText.includes(t))) {
