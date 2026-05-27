@@ -346,7 +346,13 @@ const handleDeleteRating = async (id, junkshopId) => {
         )}
 
         {/* Nav */}
-        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto" style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}>
+          <style>{`
+            nav::-webkit-scrollbar { display: none; }
+          `}</style>
           {NAV.map(item => {
             const isActive = activeTab === item.key
             return (
