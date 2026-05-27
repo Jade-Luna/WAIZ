@@ -184,6 +184,7 @@ Keep responses short, punchy, and HIGH ENERGY — like an enthusiastic friend, n
     const userText = text || input.trim()
     if (!userText || loading) return
     setInput('')
+    const lowerText = userText.toLowerCase()
 
     // Rate limit check
   if (rateLimited) {
@@ -201,15 +202,6 @@ Keep responses short, punchy, and HIGH ENERGY — like an enthusiastic friend, n
   // If sending faster than 1 message/sec, increment burst count
   const newCount = timeSinceLast < 1000 ? messageCount + 1 : 1
   setMessageCount(newCount)
-
-  if (newCount >= 6) {
-    setRateLimited(true)
-    setMessages(prev => [...prev, {
-      role: 'assistant',
-      content: `Haha okay okay, too fast for me! 😅 Take a 30 second breather and I'll be ready! 🌿`
-    }])
-    return
-  }
 
   // Session message cap
 if (sessionEnded) {
@@ -239,12 +231,6 @@ if (newSessionCount >= MAX_SESSION_MESSAGES) {
   return
 }
  
-    setEmotion('clicked')
-
-    const newMessages = [...messages, { role:'user', content: userText }]
-    setMessages(newMessages)
-    setLoading(true)
-
     // Navigation commands
     const navCommands = [
       { triggers:['take me to junkshop','go to junkshop','open junkshop','junkshop directory','show me junkshops','find junkshop','junkshop near','where are the junkshop'], path:'/junkshops' },
@@ -259,7 +245,7 @@ if (newSessionCount >= MAX_SESSION_MESSAGES) {
       { triggers:['messages','my messages','open chat'], path: profile?.role === 'junkshop' ? '/dashboard/junkshop?tab=messages' : '/dashboard/household?tab=messages' },
     ]
 
-    const lowerText = userText.toLowerCase()
+    
 
     // Dismissive response detection
 const dismissivePatterns = ['weh','ows','hmm','ehh','eh','huh','ah','oh','ok','okay','sige','nga','talaga','lol','haha','hehe','k','kk','sure','cool','nice']
@@ -271,12 +257,8 @@ if (isDismissive) {
 
   if (newCount >= 3) {
     setDismissiveCount(0)
-    setMessages(prev => [...prev, {
-      role: 'assistant',
-      content: `Haha okay I see you testing me! Ask me something recycling-related and I'll actually impress you!`
-    }])
     setLoading(false)
-    return  // skip API call entirely
+    return
   }
 
   if (newCount === 2) {
@@ -370,6 +352,12 @@ if (isSensitive) {
       }
     }
     if (navigated) return
+
+    // ✅ ALL guards passed — now show user message
+    setEmotion('clicked')
+    const newMessages = [...messages, { role:'user', content: userText }]
+    setMessages(newMessages)
+    setLoading(true)
 
     try {
       const res = await fetch(
