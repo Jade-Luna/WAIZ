@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Navigation from '../components/Navigation'
 
 const MISSION_CARDS = [
   {
@@ -97,59 +98,13 @@ export default function About() {
       `}</style>
 
       {/* NAV */}
-      <nav style={{
-        position:'sticky', top:0, zIndex:50,
-        width:'100%', height:56,
-        display:'flex', alignItems:'center', justifyContent:'space-between',
-        padding:'0 32px',
-        borderBottom:'1px solid rgba(0,0,0,0.2)',
-        backgroundColor:'rgba(254,253,248,0.92)',
-        backdropFilter:'blur(8px)',
-      }}>
-        <Link to="/" style={{
-          fontFamily:'Georgia, serif', fontSize:22, fontWeight:700,
-          color:'#1B4332', letterSpacing:'2px', textDecoration:'none',
-        }}>
-          WA<span style={{ color:'#c8a84e' }}>I</span>Z
-        </Link>
-        <div style={{ display:'flex', alignItems:'center', gap:24 }}>
-          <Link to="/"             style={{ fontSize:13, color:'#2D6A4F', textDecoration:'none' }}>Home</Link>
-          <Link to="/how-it-works" style={{ fontSize:13, color:'#2D6A4F', textDecoration:'none' }}>How It Works</Link>
-          <Link to="/about"        style={{ fontSize:13, color:'#2D6A4F', textDecoration:'none' }}>About</Link>
-          <Link to="/junkshops"    style={{ fontSize:13, color:'#2D6A4F', textDecoration:'none' }}>Junkshops</Link>
-          <div style={{ width:1, height:16, background:'rgba(0,0,0,0.25)' }} />
-          {user ? (
-            <Link
-              to={profile?.role === 'junkshop' ? '/dashboard/junkshop' : '/dashboard/household'}
-              style={{
-                fontSize:13, fontWeight:600, color:'#fff',
-                background:'#1B4332', padding:'7px 18px',
-                borderRadius:99, textDecoration:'none',
-              }}>
-              Dashboard
-            </Link>
-          ) : (
-            <div style={{ display:'flex', gap:10 }}>
-              <Link to="/login" style={{
-                fontSize:13, color:'#2D6A4F',
-                border:'1px solid rgba(29,75,53,0.6)',
-                padding:'6px 16px', borderRadius:99, textDecoration:'none',
-              }}>Log in</Link>
-              <Link to="/signup" style={{
-                fontSize:13, fontWeight:600, color:'#fff',
-                background:'#1B4332', padding:'7px 18px',
-                borderRadius:99, textDecoration:'none',
-              }}>Sign up</Link>
-            </div>
-          )}
-        </div>
-      </nav>
+      <Navigation />
 
       {/* HERO */}
       <section style={{
         position:'relative',
         background:'#0a1a0c',
-        padding:'90px 32px 110px',
+        padding:'clamp(50px, 10vw, 90px) clamp(16px, 4vw, 32px) clamp(60px, 15vw, 110px)',
         textAlign:'center',
         overflow:'hidden',
       }}>
@@ -232,9 +187,9 @@ export default function About() {
       </section>
 
       {/* HOW WAIZ HELPS BAGUIO */}
-      <section style={{ backgroundColor:'#fff', padding:'80px 32px' }}>
+      <section style={{ backgroundColor:'#fff', padding:'clamp(48px, 10vw, 80px) clamp(16px, 4vw, 32px)' }}>
         <div style={{ maxWidth:960, margin:'0 auto' }}>
-          <div style={{ textAlign:'center', marginBottom:52 }}>
+          <div style={{ textAlign:'center', marginBottom:'clamp(32px, 5vw, 52px)' }}>
             <span style={{ fontSize:11, letterSpacing:'0.18em', textTransform:'uppercase',
               color:'#52B788', fontWeight:500 }}>Our Impact</span>
             <h2 style={{
@@ -242,30 +197,30 @@ export default function About() {
               fontSize:'clamp(24px,3.5vw,36px)',
               fontWeight:700, color:'#1B4332', marginTop:10,
             }}>How WAIZ helps Baguio City</h2>
-            <p style={{ fontSize:14, color:'#6B7280', marginTop:12, maxWidth:460, margin:'12px auto 0' }}>
+            <p style={{ fontSize:'clamp(13px, 2vw, 14px)', color:'#6B7280', marginTop:12, maxWidth:460, margin:'12px auto 0' }}>
               Every listing posted and every pickup completed ripples outward
               into a cleaner, more connected city.
             </p>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:18 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:'clamp(12px, 3vw, 18px)' }}>
             {HOW_ITEMS.map((item, i) => (
               <div key={i} className="about-how-card" style={{
                 backgroundColor:'#F4FCF6',
                 border:'1px solid #D8F3DC',
-                borderRadius:20, padding:'32px 30px',
-                display:'flex', gap:20,
+                borderRadius:20, padding:'clamp(20px, 4vw, 32px) clamp(18px, 3vw, 30px)',
+                display:'flex', gap:'clamp(12px, 3vw, 20px)',
               }}>
                 <div style={{
                   fontFamily:'Georgia, serif',
-                  fontSize:32, fontWeight:700,
+                  fontSize:'clamp(24px, 4vw, 32px)', fontWeight:700,
                   color:'#D8F3DC', lineHeight:1,
                   flexShrink:0, marginTop:2,
                 }}>{item.num}</div>
                 <div>
-                  <div style={{ fontSize:15, fontWeight:600, color:'#1B4332', marginBottom:8 }}>
+                  <div style={{ fontSize:'clamp(13px, 2vw, 15px)', fontWeight:600, color:'#1B4332', marginBottom:8 }}>
                     {item.title}
                   </div>
-                  <div style={{ fontSize:13, color:'#52796F', lineHeight:1.78 }}>
+                  <div style={{ fontSize:'clamp(12px, 1.5vw, 13px)', color:'#52796F', lineHeight:1.78 }}>
                     {item.desc}
                   </div>
                 </div>
@@ -276,9 +231,9 @@ export default function About() {
       </section>
 
       {/* SDGs */}
-      <section style={{ backgroundColor:'#FEFDF8', padding:'80px 32px' }}>
+      <section style={{ backgroundColor:'#FEFDF8', padding:'clamp(48px, 10vw, 80px) clamp(16px, 4vw, 32px)' }}>
         <div style={{ maxWidth:960, margin:'0 auto' }}>
-          <div style={{ textAlign:'center', marginBottom:48 }}>
+          <div style={{ textAlign:'center', marginBottom:'clamp(32px, 5vw, 48px)' }}>
             <span style={{ fontSize:11, letterSpacing:'0.18em', textTransform:'uppercase',
               color:'#52B788', fontWeight:500 }}>Global Framework</span>
             <h2 style={{
@@ -286,30 +241,30 @@ export default function About() {
               fontSize:'clamp(24px,3.5vw,36px)',
               fontWeight:700, color:'#1B4332', marginTop:10,
             }}>Aligned with the UN SDGs</h2>
-            <p style={{ fontSize:14, color:'#6B7280', marginTop:12, maxWidth:520, margin:'12px auto 0' }}>
+            <p style={{ fontSize:'clamp(13px, 2vw, 14px)', color:'#6B7280', marginTop:12, maxWidth:520, margin:'12px auto 0' }}>
               WAIZ operationalizes global sustainability goals at the local level —
               making Baguio City a model for community-driven environmental action.
             </p>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:20 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:'clamp(12px, 3vw, 20px)' }}>
             {SDGS.map((sdg, i) => (
               <div key={i} style={{
                 border:`2px solid ${sdg.color}22`,
                 backgroundColor:'#fff',
-                borderRadius:24, padding:'36px 32px',
-                display:'flex', gap:24, alignItems:'flex-start',
+                borderRadius:24, padding:'clamp(20px, 4vw, 36px) clamp(18px, 3vw, 32px)',
+                display:'flex', gap:'clamp(12px, 3vw, 24px)', alignItems:'flex-start',
               }}>
                 {/* SDG badge */}
                 <div style={{
                   flexShrink:0,
-                  width:64, height:64, borderRadius:14,
+                  width:'clamp(48px, 8vw, 64px)', height:'clamp(48px, 8vw, 64px)', borderRadius:14,
                   backgroundColor: sdg.color,
                   display:'flex', flexDirection:'column',
                   alignItems:'center', justifyContent:'center',
                   color:'#fff',
                 }}>
                   <div style={{ fontSize:9, fontWeight:700, letterSpacing:'0.1em', opacity:.85 }}>SDG</div>
-                  <div style={{ fontSize:26, fontWeight:900, lineHeight:1, fontFamily:'Georgia, serif' }}>{sdg.num}</div>
+                  <div style={{ fontSize:'clamp(18px, 3vw, 26px)', fontWeight:900, lineHeight:1, fontFamily:'Georgia, serif' }}>{sdg.num}</div>
                 </div>
                 <div>
                   <div style={{
@@ -319,7 +274,7 @@ export default function About() {
                     backgroundColor:`${sdg.color}18`,
                     padding:'3px 10px', borderRadius:99, marginBottom:10,
                   }}>{sdg.target}</div>
-                  <div style={{ fontSize:15, fontWeight:700, color:'#1B4332', marginBottom:8 }}>
+                  <div style={{ fontSize:'clamp(13px, 2vw, 15px)', fontWeight:700, color:'#1B4332', marginBottom:8 }}>
                     {sdg.title}
                   </div>
                   <div style={{ fontSize:13, color:'#52796F', lineHeight:1.78 }}>

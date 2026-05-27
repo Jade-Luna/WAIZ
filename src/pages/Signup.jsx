@@ -148,22 +148,22 @@ export default function Signup() {
       {showPrivacy && <PrivacyModal onClose={() => setShowPrivacy(false)} />}
 
       {/* Nav */}
-      <nav className="w-full h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100">
-        <Link to="/" className="text-xl font-medium tracking-widest" style={{ color: '#1B4332' }}>
+      <nav className="w-full h-14 flex items-center justify-between px-4 md:px-8 bg-white border-b border-gray-100">
+        <Link to="/" className="text-lg md:text-xl font-medium tracking-widest" style={{ color: '#1B4332' }}>
           WA<span style={{ color: '#E9935A' }}>I</span>Z
         </Link>
-        <span className="text-sm text-gray-400">Baguio City's Recycling Marketplace</span>
+        <span className="text-xs md:text-sm text-gray-400 hidden md:inline">Baguio City's Recycling Marketplace</span>
       </nav>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md bg-white border border-gray-100 rounded-2xl p-8">
+      <div className="flex-1 flex items-center justify-center px-4 py-8 md:py-12">
+        <div className="w-full max-w-md bg-white border border-gray-100 rounded-2xl p-6 md:p-8">
 
           <div className="text-center mb-1">
-            <span className="text-2xl font-medium tracking-widest" style={{ color: '#1B4332' }}>
+            <span className="text-xl md:text-2xl font-medium tracking-widest" style={{ color: '#1B4332' }}>
               WA<span style={{ color: '#E9935A' }}>I</span>Z
             </span>
           </div>
-          <p className="text-center text-sm text-gray-400 mb-6">Create your free account</p>
+          <p className="text-center text-xs md:text-sm text-gray-400 mb-6">Create your free account</p>
 
           {/* Step indicators */}
           <div className="flex items-center gap-2 mb-6">
@@ -184,7 +184,7 @@ export default function Signup() {
           {/* STEP 1 — Choose role */}
           {step === 1 && (
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-3">Who are you?</p>
+              <p className="text-xs md:text-sm font-medium text-gray-600 mb-3">Who are you?</p>
               <div className="grid grid-cols-2 gap-3 mb-6">
                 {[
                   { value: 'household', label: 'Household', desc: 'I have recyclables to sell', icon: '🏠' },
@@ -192,7 +192,7 @@ export default function Signup() {
                 ].map(opt => (
                   <div key={opt.value}
                     onClick={() => setRole(opt.value)}
-                    className="border-2 rounded-2xl p-4 text-center cursor-pointer transition"
+                    className="border-2 rounded-2xl p-3 md:p-4 text-center cursor-pointer transition"
                     style={{
                       borderColor:     role === opt.value ? '#2D6A4F' : '#E5E7EB',
                       backgroundColor: role === opt.value ? '#D8F3DC' : '#fff'

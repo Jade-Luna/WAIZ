@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase/config'
 import { useAuth } from '../context/AuthContext'
+import Navigation from '../components/Navigation'
 
 const CATEGORIES = [
   { key: 'all',        label: 'All'        },
@@ -147,46 +148,24 @@ const submitReport = async () => {
     <div className="min-h-screen" style={{ backgroundColor: '#FEFDF8' }}>
 
       {/* NAV */}
-      <nav className="w-full h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100 sticky top-0 z-50">
-        <Link to="/" className="text-xl font-medium tracking-widest" style={{ color: '#1B4332' }}>
-          WA<span style={{ color: '#E9935A' }}>I</span>Z
-        </Link>
-        <div className="flex items-center gap-6">
-          <Link to="/browse"    className="text-sm font-medium" style={{ color: '#2D6A4F' }}>Browse</Link>
-          <Link to="/junkshops" className="text-sm text-gray-500 hover:text-gray-700 transition">Junkshops</Link>
-          <div className="w-px h-5 bg-gray-200" />
-          {user ? (
-            <Link
-              to={profile?.role === 'junkshop' ? '/dashboard/junkshop' : '/dashboard/household'}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-white"
-              style={{ backgroundColor: '#2D6A4F' }}>
-              Dashboard
-            </Link>
-          ) : (
-            <div className="flex gap-2">
-              <Link to="/login"  className="px-4 py-2 rounded-xl text-sm border border-gray-200 text-gray-600 hover:bg-gray-50 transition">Log in</Link>
-              <Link to="/signup" className="px-4 py-2 rounded-xl text-sm font-medium text-white" style={{ backgroundColor: '#2D6A4F' }}>Sign up</Link>
-            </div>
-          )}
-        </div>
-      </nav>
+      <Navigation />
           
       {/* Login prompt for non-users */}
 {!user && (
-  <div className="max-w-6xl mx-auto px-8 py-4">
-    <div className="rounded-xl px-5 py-3 flex items-center justify-between"
+  <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 md:py-4">
+    <div className="rounded-xl px-3 md:px-5 py-2.5 md:py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3"
       style={{ backgroundColor:'#D8F3DC' }}>
-      <p className="text-sm" style={{ color:'#1A4D35' }}>
+      <p className="text-xs md:text-sm" style={{ color:'#1A4D35' }}>
         🌿 Sign in to contact households and send pickup requests
       </p>
-      <div className="flex gap-2">
+      <div className="flex gap-2 shrink-0">
         <Link to="/login"
-          className="text-xs px-4 py-1.5 rounded-lg border font-medium"
+          className="text-xs px-3 md:px-4 py-1.5 rounded-lg border font-medium"
           style={{ borderColor:'#1A4D35', color:'#1A4D35' }}>
           Log in
         </Link>
         <Link to="/signup"
-          className="text-xs px-4 py-1.5 rounded-lg font-medium text-white"
+          className="text-xs px-3 md:px-4 py-1.5 rounded-lg font-medium text-white"
           style={{ backgroundColor:'#1A4D35' }}>
           Sign up
         </Link>
@@ -194,27 +173,27 @@ const submitReport = async () => {
     </div>
   </div>
 )}
-      <div className="max-w-6xl mx-auto px-8 py-10">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10">
 
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 md:mb-8">
           <div className="text-xs font-medium tracking-widest uppercase mb-1" style={{ color: '#52B788' }}>Browse Listings</div>
-          <h1 className="text-3xl font-medium text-gray-800">Available items in Baguio City</h1>
-          <p className="text-sm text-gray-400 mt-1">Find recyclables, scrap, and secondhand items posted by Baguio households</p>
+          <h1 className="text-2xl md:text-3xl font-medium text-gray-800">Available items in Baguio City</h1>
+          <p className="text-xs md:text-sm text-gray-400 mt-1">Find recyclables, scrap, and secondhand items posted by Baguio households</p>
         </div>
 
         {/* Search + Filters */}
-        <div className="bg-white border border-gray-300 rounded-2xl p-5 mb-6">
-          <div className="flex gap-3 flex-wrap">
+        <div className="bg-white border border-gray-300 rounded-2xl p-3 md:p-5 mb-6">
+          <div className="flex gap-2 md:gap-3 flex-wrap">
             {/* Search */}
-            <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 flex-1 min-w-48">
+            <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-2 md:px-3 py-2 flex-1 min-w-40">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                 <circle cx="7" cy="7" r="5" stroke="#9CA3AF" strokeWidth="1.3"/>
                 <path d="M11 11l2.5 2.5" stroke="#9CA3AF" strokeWidth="1.3" strokeLinecap="round"/>
               </svg>
               <input
-                className="flex-1 text-sm outline-none bg-transparent text-gray-600 placeholder-gray-300"
-                placeholder="  Search listings..."
+                className="flex-1 text-xs md:text-sm outline-none bg-transparent text-gray-600 placeholder-gray-300"
+                placeholder="Search listings..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
@@ -223,7 +202,7 @@ const submitReport = async () => {
             {/* Barangay filter */}
             <div className="relative">
   <input
-    className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 outline-none w-48"
+    className="border border-gray-200 rounded-xl px-2 md:px-3 py-2 text-xs md:text-sm text-gray-600 outline-none w-32 md:w-48"
     placeholder="All barangays..."
     value={barangayInput}
     onChange={e => {
@@ -246,7 +225,7 @@ const submitReport = async () => {
     }}
   />
   {barangayOpen && barangaySuggestions.length > 0 && (
-    <div className="absolute z-50 w-64 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
+    <div className="absolute z-50 w-40 md:w-64 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
       style={{ maxHeight:'200px', overflowY:'auto' }}>
       <button
         onClick={() => {
@@ -255,7 +234,7 @@ const submitReport = async () => {
           setBarangaySuggestions([])
           setBarangayOpen(false)
         }}
-        className="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-50 border-b border-gray-100">
+        className="w-full text-left px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm text-gray-400 hover:bg-gray-50 border-b border-gray-100">
         All barangays
       </button>
       {barangaySuggestions.map(b => (
@@ -266,7 +245,7 @@ const submitReport = async () => {
             setBarangaySuggestions([])
             setBarangayOpen(false)
           }}
-          className="w-full text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-green-50 transition">
+          className="w-full text-left px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm text-gray-600 hover:bg-green-50 transition">
           {b}
         </button>
       ))}
@@ -276,7 +255,7 @@ const submitReport = async () => {
 
             {/* Sort */}
             <select
-              className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 outline-none"
+              className="border border-gray-200 rounded-xl px-2 md:px-3 py-2 text-xs md:text-sm text-gray-600 outline-none"
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}>
               <option value="newest">Newest first</option>

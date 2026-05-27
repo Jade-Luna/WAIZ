@@ -40,24 +40,24 @@ export default function Login() {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FEFDF8' }}>
 
       {/* Nav */}
-      <nav className="w-full h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100">
-        <Link to="/" className="text-xl font-medium tracking-widest" style={{ color: '#1B4332' }}>
+      <nav className="w-full h-14 flex items-center justify-between px-4 md:px-8 bg-white border-b border-gray-100">
+        <Link to="/" className="text-lg md:text-xl font-medium tracking-widest" style={{ color: '#1B4332' }}>
           WA<span style={{ color: '#E9935A' }}>I</span>Z
         </Link>
-        <span className="text-sm text-gray-400">Baguio City's Recycling Marketplace</span>
+        <span className="text-xs md:text-sm text-gray-400 hidden md:inline">Baguio City's Recycling Marketplace</span>
       </nav>
 
       {/* Card */}
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md bg-white border border-gray-300 rounded-2xl p-8">
+      <div className="flex-1 flex items-center justify-center px-4 py-8 md:py-12">
+        <div className="w-full max-w-md bg-white border border-gray-300 rounded-2xl p-6 md:p-8">
 
           {/* Logo */}
           <div className="text-center mb-1">
-            <span className="text-2xl font-medium tracking-widest" style={{ color: '#1B4332' }}>
+            <span className="text-xl md:text-2xl font-medium tracking-widest" style={{ color: '#1B4332' }}>
               WA<span style={{ color: '#E9935A' }}>I</span>Z
             </span>
           </div>
-          <p className="text-center text-sm text-gray-400 mb-7">Welcome back. Log in to your account.</p>
+          <p className="text-center text-xs md:text-sm text-gray-400 mb-7">Welcome back. Log in to your account.</p>
 
           {/* Google */}
           <button

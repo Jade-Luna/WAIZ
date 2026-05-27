@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Navigation from '../components/Navigation'
 import ContactModal from '../components/ContactModal'
 import TermsModal    from '../components/TermsModal'
 import PrivacyModal  from '../components/PrivacyModal'
@@ -157,59 +158,14 @@ export default function Home() {
         ))}
 
         {/* NAV */}
-        <nav style={{
-          position: 'relative', zIndex: 10,
-          width: '100%', height: 56,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 32px',
-          borderBottom: '1px solid rgba(255,255,255,0.25)',
-          backdropFilter: 'blur(4px)',
-        }}>
-          <Link to="/" style={{
-            fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700,
-            color: '#a8e898', letterSpacing: '2px', textDecoration: 'none',
-          }}>
-            WA<span style={{ color: '#c8a84e' }}>I</span>Z
-          </Link>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-            <Link to="/how-it-works" style={{ fontSize: 13, color: '#74a86a', textDecoration: 'none' }}>How It Works</Link>
-            <Link to="/about"        style={{ fontSize: 13, color: '#74a86a', textDecoration: 'none' }}>About</Link>
-            <Link to="/junkshops"    style={{ fontSize: 13, color: '#74a86a', textDecoration: 'none' }}>Junkshops</Link>
-            <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.35)' }} />
-            {user ? (
-              <Link
-                to={profile?.role === 'junkshop' ? '/dashboard/junkshop' : '/dashboard/household'}
-                style={{
-                  fontSize: 13, fontWeight: 600, color: '#0a1a0c',
-                  background: '#a8e898', padding: '7px 18px',
-                  borderRadius: 99, textDecoration: 'none',
-                }}>
-                Dashboard
-              </Link>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Link to="/login" style={{
-                  fontSize: 13, color: '#a8d898',
-                  border: '1px solid rgba(255,255,255,0.4)',
-                  padding: '6px 16px', borderRadius: 99, textDecoration: 'none',
-                }}>Log in</Link>
-                <Link to="/signup" style={{
-                  fontSize: 13, fontWeight: 600, color: '#0a1a0c',
-                  background: '#a8e898', padding: '7px 18px',
-                  borderRadius: 99, textDecoration: 'none',
-                }}>Sign up</Link>
-              </div>
-            )}
-          </div>
-        </nav>
+        <Navigation />
 
         {/* hero text */}
         <div style={{
           flex: 1, position: 'relative', zIndex: 2,
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
-          textAlign: 'center', padding: '40px 24px 80px',
+          textAlign: 'center', padding: 'clamp(24px, 5vw, 40px) clamp(12px, 4vw, 24px) clamp(40px, 10vw, 80px)',
         }}>
           <p style={{
             fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase',
@@ -282,19 +238,19 @@ export default function Home() {
       </section>
 
       {/* ── HOW IT WORKS ─────────────────────────────────────────────────── */}
-      <section className="py-16 px-8">
+      <section className="py-8 md:py-16 px-4 md:px-8">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 md:mb-8">
             <div className="text-xs font-medium tracking-widest uppercase mb-2" style={{ color: '#52B788' }}>How It Works</div>
-            <h2 className="text-3xl font-medium text-gray-800">Simple, fast, and completely free</h2>
-            <p className="text-sm text-gray-400 mt-2">Three steps — for households and junkshops alike</p>
+            <h2 className="text-2xl md:text-3xl font-medium text-gray-800">Simple, fast, and completely free</h2>
+            <p className="text-xs md:text-sm text-gray-400 mt-2">Three steps — for households and junkshops alike</p>
           </div>
 
-          <div className="flex border border-gray-200 rounded-xl overflow-hidden w-fit mx-auto mb-8">
+          <div className="flex flex-col md:flex-row border border-gray-200 rounded-xl overflow-hidden w-fit mx-auto mb-6 md:mb-8">
             {['household', 'junkshop'].map(t => (
               <button key={t}
                 onClick={() => setActiveTab(t)}
-                className="px-6 py-2 text-sm font-medium transition"
+                className="px-4 md:px-6 py-2 text-xs md:text-sm font-medium transition"
                 style={{
                   backgroundColor: activeTab === t ? '#2D6A4F' : 'transparent',
                   color: activeTab === t ? '#fff' : '#6B7280',
@@ -304,14 +260,14 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {STEPS[activeTab].map(step => (
-              <div key={step.n} className="rounded-2xl p-6 text-center" style={{ backgroundColor: '#D8F3DC' }}>
+              <div key={step.n} className="rounded-2xl p-4 md:p-6 text-center" style={{ backgroundColor: '#D8F3DC' }}>
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white mx-auto mb-4"
                   style={{ backgroundColor: '#2D6A4F' }}>
                   {step.n}
                 </div>
-                <h3 className="text-sm font-medium mb-2" style={{ color: '#1B4332' }}>{step.title}</h3>
+                <h3 className="text-xs md:text-sm font-medium mb-2" style={{ color: '#1B4332' }}>{step.title}</h3>
                 <p className="text-xs leading-relaxed" style={{ color: '#2D6A4F' }}>{step.desc}</p>
               </div>
             ))}
@@ -320,24 +276,24 @@ export default function Home() {
       </section>
 
       {/* ── CATEGORIES ───────────────────────────────────────────────────── */}
-      <section className="py-16 px-8 bg-white">
+      <section className="py-8 md:py-16 px-4 md:px-8 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 md:mb-8">
             <div className="text-xs font-medium tracking-widest uppercase mb-2" style={{ color: '#52B788' }}>Browse by Category</div>
-            <h2 className="text-3xl font-medium text-gray-800">What are you recycling today?</h2>
-            <p className="text-sm text-gray-400 mt-2">From scrap metal to secondhand clothes — WAIZ covers all recyclables</p>
+            <h2 className="text-2xl md:text-3xl font-medium text-gray-800">What are you recycling today?</h2>
+            <p className="text-xs md:text-sm text-gray-400 mt-2">From scrap metal to secondhand clothes — WAIZ covers all recyclables</p>
           </div>
-          <div className="grid grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
             {CATEGORIES.map(cat => (
               <Link to={`/browse?category=${cat.key}`} key={cat.key}
-                className="rounded-2xl p-4 text-center border border-gray-100 hover:border-green-300 transition cursor-pointer"
+                className="rounded-2xl p-3 md:p-4 text-center border border-gray-100 hover:border-green-300 transition cursor-pointer"
                 style={{ backgroundColor: cat.bg }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2 text-xs font-medium"
+                <div className="w-8 md:w-10 h-8 md:h-10 rounded-xl flex items-center justify-center mx-auto mb-2 text-xs font-medium"
                   style={{ backgroundColor: cat.iconBg, color: cat.iconColor }}>
                   {cat.abbr}
                 </div>
-                <div className="text-sm font-medium text-gray-700">{cat.label}</div>
-                <div className="text-xs text-gray-400 mt-1">{cat.sub}</div>
+                <div className="text-xs md:text-sm font-medium text-gray-700">{cat.label}</div>
+                <div className="text-xs text-gray-400 mt-1 hidden md:block">{cat.sub}</div>
               </Link>
             ))}
           </div>
@@ -345,26 +301,26 @@ export default function Home() {
       </section>
 
       {/* ── JUNKSHOP DIRECTORY ───────────────────────────────────────────── */}
-      <section className="py-16 px-8 bg-white">
+      <section className="py-8 md:py-16 px-4 md:px-8 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 md:mb-8">
             <div className="text-xs font-medium tracking-widest uppercase mb-2" style={{ color: '#52B788' }}>Junkshop Directory</div>
-            <h2 className="text-3xl font-medium text-gray-800">Verified junkshops in Baguio City</h2>
-            <p className="text-sm text-gray-400 mt-2">Compare buying rates and find the best junkshop for your materials</p>
+            <h2 className="text-2xl md:text-3xl font-medium text-gray-800">Verified junkshops in Baguio City</h2>
+            <p className="text-xs md:text-sm text-gray-400 mt-2">Compare buying rates and find the best junkshop for your materials</p>
           </div>
 
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100">
+              <div key={i} className="bg-white rounded-2xl p-4 md:p-5 border border-gray-100">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#D8F3DC' }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#D8F3DC' }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A4D35" strokeWidth="1.5" strokeLinecap="round">
                       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                       <polyline points="9 22 9 12 15 12 15 22" />
                     </svg>
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-400">Verified Junkshop</div>
+                  <div className="min-w-0">
+                    <div className="text-xs md:text-sm font-medium text-gray-400">Verified Junkshop</div>
                     <div className="text-xs text-gray-300">Baguio City</div>
                   </div>
                 </div>
@@ -375,9 +331,9 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="text-center mt-8">
+          <div className="text-center mt-6 md:mt-8">
             <Link to="/signup"
-              className="px-6 py-2.5 rounded-xl text-sm font-medium text-white"
+              className="px-6 py-2.5 rounded-xl text-xs md:text-sm font-medium text-white inline-block"
               style={{ backgroundColor: '#1A4D35' }}>
               Sign up to view all junkshops
             </Link>
@@ -386,45 +342,45 @@ export default function Home() {
       </section>
 
       {/* ── JOIN CTA ─────────────────────────────────────────────────────── */}
-      <section className="py-16 px-8" style={{ backgroundColor: '#D8F3DC' }}>
+      <section className="py-8 md:py-16 px-4 md:px-8" style={{ backgroundColor: '#D8F3DC' }}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 md:mb-8">
             <div className="text-xs font-medium tracking-widest uppercase mb-2" style={{ color: '#52B788' }}>Join WAIZ</div>
-            <h2 className="text-3xl font-medium" style={{ color: '#1B4332' }}>Who are you?</h2>
-            <p className="text-sm mt-2" style={{ color: '#2D6A4F' }}>Free registration — open to all Baguio City residents and junkshops</p>
+            <h2 className="text-2xl md:text-3xl font-medium" style={{ color: '#1B4332' }}>Who are you?</h2>
+            <p className="text-xs md:text-sm mt-2" style={{ color: '#2D6A4F' }}>Free registration — open to all Baguio City residents and junkshops</p>
           </div>
-          <div className="grid grid-cols-2 gap-5">
-            <div className="rounded-2xl p-8" style={{ backgroundColor: '#2D6A4F' }}>
-              <h3 className="text-xl font-medium text-white mb-3">I'm a Household</h3>
-              <p className="text-sm leading-relaxed mb-6" style={{ color: '#B7E4C7' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+            <div className="rounded-2xl p-6 md:p-8" style={{ backgroundColor: '#2D6A4F' }}>
+              <h3 className="text-lg md:text-xl font-medium text-white mb-3">I'm a Household</h3>
+              <p className="text-xs md:text-sm leading-relaxed mb-6" style={{ color: '#B7E4C7' }}>
                 Have scrap metal, old appliances, or recyclables piling up? Post them for free and let verified junkshops come to you. Earn cash and help keep Baguio clean.
               </p>
               <Link to="/signup"
-                className="inline-block px-5 py-2.5 rounded-xl text-sm font-medium bg-white"
-                style={{ color: '#2D6A4F' }}>
+                className="inline-block px-5 py-2.5 rounded-xl text-xs md:text-sm font-medium bg-white"
+                style={{ color: '#2D6A4F', textDecoration: 'none' }}>
                 Sign up as a Household
               </Link>
             </div>
-            <div className="rounded-2xl p-8" style={{ backgroundColor: '#1B4332' }}>
-              <h3 className="text-xl font-medium text-white mb-3">I'm a Junkshop</h3>
-              <p className="text-sm leading-relaxed mb-6" style={{ color: '#74C69D' }}>
+            <div className="rounded-2xl p-6 md:p-8" style={{ backgroundColor: '#1B4332' }}>
+              <h3 className="text-lg md:text-xl font-medium text-white mb-3">I'm a Junkshop</h3>
+              <p className="text-xs md:text-sm leading-relaxed mb-6" style={{ color: '#74C69D' }}>
                 Browse available recyclables across all of Baguio City. Set your buying rates, accept pickup requests, and grow your collection volume from one dashboard.
               </p>
               <Link to="/signup?role=junkshop"
-  className="inline-block px-5 py-2.5 rounded-xl text-sm font-medium"
-  style={{ backgroundColor:'#E9935A', color:'#fff' }}>
-  Sign up as a Junkshop
-</Link>
+                className="inline-block px-5 py-2.5 rounded-xl text-xs md:text-sm font-medium"
+                style={{ backgroundColor:'#E9935A', color:'#fff', textDecoration: 'none' }}>
+                Sign up as a Junkshop
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
-      <footer style={{ backgroundColor: '#1B4332' }} className="px-8 py-12">
-        <div className="max-w-6xl mx-auto grid grid-cols-4 gap-10 mb-10">
+      <footer style={{ backgroundColor: '#1B4332' }} className="px-4 md:px-8 py-8 md:py-12">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10 mb-8 md:mb-10">
           <div>
-            <div className="text-xl font-medium tracking-widest mb-3" style={{ fontFamily: 'Georgia, serif', color: '#D8F3DC' }}>
+            <div className="text-lg md:text-xl font-medium tracking-widest mb-3" style={{ fontFamily: 'Georgia, serif', color: '#D8F3DC' }}>
               WA<span style={{ color: '#E9935A' }}>I</span>Z
             </div>
             <p className="text-xs leading-relaxed" style={{ color: '#74C69D' }}>
@@ -438,53 +394,50 @@ export default function Home() {
               { label: 'Sign up',            path: '/signup'       },
               { label: 'Log in',             path: '/login'        },
             ]},
-          
-
           ].map(col => (
             <div key={col.title}>
               <div className="text-xs font-medium tracking-widest uppercase mb-4" style={{ color: '#D8F3DC' }}>{col.title}</div>
               {col.links.map(l => (
                 <Link key={l.label} to={l.path}
                   className="block text-xs mb-2 hover:opacity-80 transition"
-                  style={{ color: '#74C69D' }}>
+                  style={{ color: '#74C69D', textDecoration: 'none' }}>
                   {l.label}
                 </Link>
               ))}
             </div>
           ))}
 
-           <div>
-  <div className="text-xs font-medium tracking-widest uppercase mb-4" style={{ color: '#D8F3DC' }}>Company</div>
-  <Link to="/about" className="block text-xs mb-2 hover:opacity-80 transition" style={{ color: '#74C69D' }}>
-    About WAIZ
-  </Link>
-  <button
-    onClick={() => setShowContact(true)}
-    className="block text-xs mb-2 hover:opacity-80 transition text-left"
-    style={{ color: '#74C69D', background: 'none', border: 'none', cursor: 'pointer' }}>
-    Contact us
-  </button>
-</div> 
+          <div>
+            <div className="text-xs font-medium tracking-widest uppercase mb-4" style={{ color: '#D8F3DC' }}>Company</div>
+            <Link to="/about" className="block text-xs mb-2 hover:opacity-80 transition" style={{ color: '#74C69D', textDecoration: 'none' }}>
+              About WAIZ
+            </Link>
+            <button
+              onClick={() => setShowContact(true)}
+              className="block text-xs mb-2 hover:opacity-80 transition text-left"
+              style={{ color: '#74C69D', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Contact us
+            </button>
+          </div>
 
-            <div>
-  <div className="text-xs font-medium tracking-widest uppercase mb-4"
-    style={{ color:'#D8F3DC' }}>Legal</div>
-  <button
-    onClick={() => setShowPrivacy(true)}
-    className="block text-xs mb-2 hover:opacity-80 transition text-left"
-    style={{ color:'#74C69D', background:'none', border:'none', cursor:'pointer' }}>
-    Privacy Policy
-  </button>
-  <button
-    onClick={() => setShowTerms(true)}
-    className="block text-xs mb-2 hover:opacity-80 transition text-left"
-    style={{ color:'#74C69D', background:'none', border:'none', cursor:'pointer' }}>
-    Terms of Use
-  </button>
-</div>
-
+          <div>
+            <div className="text-xs font-medium tracking-widest uppercase mb-4"
+              style={{ color:'#D8F3DC' }}>Legal</div>
+            <button
+              onClick={() => setShowPrivacy(true)}
+              className="block text-xs mb-2 hover:opacity-80 transition text-left"
+              style={{ color:'#74C69D', background:'none', border:'none', cursor:'pointer' }}>
+              Privacy Policy
+            </button>
+            <button
+              onClick={() => setShowTerms(true)}
+              className="block text-xs mb-2 hover:opacity-80 transition text-left"
+              style={{ color:'#74C69D', background:'none', border:'none', cursor:'pointer' }}>
+              Terms of Use
+            </button>
+          </div>
         </div>
-        <div className="border-t pt-6 flex justify-between items-center" style={{ borderColor: '#2D6A4F' }}>
+        <div className="border-t pt-4 md:pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left" style={{ borderColor: '#2D6A4F' }}>
           <span className="text-xs" style={{ color: '#74C69D' }}>© 2025 WAIZ · Baguio City, Philippines</span>
           <span className="text-xs" style={{ color: '#74C69D' }}>Making recycling rewarding for every Baguio home</span>
         </div>

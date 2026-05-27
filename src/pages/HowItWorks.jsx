@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Navigation from '../components/Navigation'
 const HOUSEHOLD_STEPS = [
   {
     n: 1,
@@ -110,56 +111,18 @@ export default function HowItWorks() {
     <div className="min-h-screen" style={{ backgroundColor:'#FEFDF8' }}>
 
       {/* NAV */}
-      <nav className="w-full h-14 flex items-center justify-between px-8 bg-white border-b border-gray-100 sticky top-0 z-50">
-        <Link to="/" className="text-xl font-medium tracking-widest" style={{ color:'#0D2B1F' }}>
-          WA<span style={{ color:'#C97A3A' }}>I</span>Z
-        </Link>
-        <div className="flex items-center gap-6">
-          <Link to="/" className="text-sm text-gray-500 hover:text-gray-700 transition">
-            Home
-          </Link>
-          <Link to="/how-it-works" className="text-sm font-medium" style={{ color:'#1A4D35' }}>
-            How It Works
-          </Link>
-          <Link to="/about" className="text-sm font-medium" style={{ color:'#1A4D35' }}>
-            About
-          </Link>
-          <Link to="/junkshops" className="text-sm text-gray-500 hover:text-gray-700 transition">
-            Junkshops
-          </Link>
-          <div className="w-px h-5 bg-gray-200" />
-          {user ? (
-            <Link to={dashLink}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-white"
-              style={{ backgroundColor:'#1A4D35' }}>
-              Dashboard
-            </Link>
-          ) : (
-            <div className="flex gap-2">
-              <Link to="/login"
-                className="px-4 py-2 rounded-xl text-sm border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
-                Log in
-              </Link>
-              <Link to="/signup"
-                className="px-4 py-2 rounded-xl text-sm font-medium text-white"
-                style={{ backgroundColor:'#1A4D35' }}>
-                Sign up
-              </Link>
-            </div>
-          )}
-        </div>
-      </nav>
+      <Navigation />
 
       {/* HERO */}
-      <section className="px-8 py-16 text-center" style={{ backgroundColor:'#D8F3DC' }}>
+      <section className="px-4 md:px-8 py-8 md:py-16 text-center" style={{ backgroundColor:'#D8F3DC' }}>
         <div className="max-w-2xl mx-auto">
           <div className="text-xs font-medium tracking-widest uppercase mb-3" style={{ color:'#2D6A4F' }}>
             How WAIZ Works
           </div>
-          <h1 className="text-4xl font-medium mb-4" style={{ color:'#0D2B1F' }}>
+          <h1 className="text-2xl md:text-4xl font-medium mb-4" style={{ color:'#0D2B1F' }}>
             Recycling made simple for Baguio City
           </h1>
-          <p className="text-sm leading-relaxed" style={{ color:'#2D6A4F' }}>
+          <p className="text-xs md:text-sm leading-relaxed" style={{ color:'#2D6A4F' }}>
             WAIZ connects households that have recyclables with verified junkshops that want to buy them.
             No middlemen, no hidden fees — just a cleaner, greener Baguio.
           </p>
@@ -167,32 +130,32 @@ export default function HowItWorks() {
       </section>
 
       {/* STEPS — HOUSEHOLD */}
-      <section className="px-8 py-16">
+      <section className="px-4 md:px-8 py-8 md:py-16">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-4 mb-10">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+          <div className="flex items-center gap-4 mb-6 md:mb-10">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
               style={{ backgroundColor:'#D8F3DC' }}>🏠</div>
-            <div>
-              <h2 className="text-2xl font-medium text-gray-800">For Households</h2>
-              <p className="text-sm text-gray-400 mt-0.5">Turn your scrap into cash in four simple steps</p>
+            <div className="min-w-0">
+              <h2 className="text-xl md:text-2xl font-medium text-gray-800">For Households</h2>
+              <p className="text-xs md:text-sm text-gray-400 mt-0.5">Turn your scrap into cash in four simple steps</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
             {HOUSEHOLD_STEPS.map((step, i) => (
               <div key={step.n} className="relative">
                 {i < HOUSEHOLD_STEPS.length - 1 && (
                   <div className="absolute top-8 left-full w-5 h-px z-10 hidden lg:block"
                     style={{ backgroundColor:'#B7E4C7' }} />
                 )}
-                <div className="rounded-2xl p-5 h-full"
+                <div className="rounded-2xl p-4 md:p-5 h-full"
                   style={{ backgroundColor: step.color }}>
-                  <div className="text-2xl mb-3">{step.icon}</div>
+                  <div className="text-xl md:text-2xl mb-3">{step.icon}</div>
                   <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white mb-3"
                     style={{ backgroundColor:'#1A4D35' }}>
                     {step.n}
                   </div>
-                  <h3 className="text-sm font-medium text-gray-800 mb-2">{step.title}</h3>
+                  <h3 className="text-xs md:text-sm font-medium text-gray-800 mb-2">{step.title}</h3>
                   <p className="text-xs leading-relaxed text-gray-500 mb-3">{step.desc}</p>
                   <div className="text-xs p-2.5 rounded-xl"
                     style={{ backgroundColor:'rgba(255,255,255,0.6)', color:'#1A4D35' }}>
@@ -203,9 +166,9 @@ export default function HowItWorks() {
             ))}
           </div>
 
-          <div className="text-center mt-8">
+          <div className="text-center mt-6 md:mt-8">
             <Link to="/signup"
-              className="inline-block px-6 py-3 rounded-xl text-sm font-medium text-white"
+              className="inline-block px-4 md:px-6 py-2.5 md:py-3 rounded-xl text-xs md:text-sm font-medium text-white"
               style={{ backgroundColor:'#1A4D35' }}>
               Sign up as a Household
             </Link>
@@ -214,35 +177,35 @@ export default function HowItWorks() {
       </section>
 
       {/* DIVIDER */}
-      <div className="h-px mx-8" style={{ backgroundColor:'#E5E7EB' }} />
+      <div className="h-px mx-4 md:mx-8" style={{ backgroundColor:'#E5E7EB' }} />
 
       {/* STEPS — JUNKSHOP */}
-      <section className="px-8 py-16 bg-white">
+      <section className="px-4 md:px-8 py-8 md:py-16 bg-white">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-4 mb-10">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+          <div className="flex items-center gap-4 mb-6 md:mb-10">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
               style={{ backgroundColor:'#FAEEDA' }}>🏪</div>
-            <div>
-              <h2 className="text-2xl font-medium text-gray-800">For Junkshops</h2>
-              <p className="text-sm text-gray-400 mt-0.5">Find more suppliers and grow your collection volume</p>
+            <div className="min-w-0">
+              <h2 className="text-xl md:text-2xl font-medium text-gray-800">For Junkshops</h2>
+              <p className="text-xs md:text-sm text-gray-400 mt-0.5">Find more suppliers and grow your collection volume</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
             {JUNKSHOP_STEPS.map((step, i) => (
               <div key={step.n} className="relative">
                 {i < JUNKSHOP_STEPS.length - 1 && (
                   <div className="absolute top-8 left-full w-5 h-px z-10 hidden lg:block"
                     style={{ backgroundColor:'#FAC775' }} />
                 )}
-                <div className="rounded-2xl p-5 h-full"
+                <div className="rounded-2xl p-4 md:p-5 h-full"
                   style={{ backgroundColor: step.color }}>
-                  <div className="text-2xl mb-3">{step.icon}</div>
+                  <div className="text-xl md:text-2xl mb-3">{step.icon}</div>
                   <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white mb-3"
                     style={{ backgroundColor:'#C97A3A' }}>
                     {step.n}
                   </div>
-                  <h3 className="text-sm font-medium text-gray-800 mb-2">{step.title}</h3>
+                  <h3 className="text-xs md:text-sm font-medium text-gray-800 mb-2">{step.title}</h3>
                   <p className="text-xs leading-relaxed text-gray-500 mb-3">{step.desc}</p>
                   <div className="text-xs p-2.5 rounded-xl"
                     style={{ backgroundColor:'rgba(255,255,255,0.6)', color:'#C97A3A' }}>
