@@ -774,20 +774,20 @@ const filtered = shops.filter(s => {
                   {s.custom_rates.slice(0,2).map(r => `${r.label} ₱${r.price}/kg`).join(' · ')}
                 </div>
               )}
+              {s.pickup_mode && s.pickup_mode !== 'pickup' && (
+                <div className="text-xs mt-2 px-2 py-1 rounded-lg"
+                  style={{ backgroundColor:'#E6F1FB', color:'#042C53' }}>
+                  {s.pickup_mode === 'dropoff' ? '📍 Drop-off only' : '📍 Pickup & drop-off'}
+                </div>
+              )}
+              {s.min_pickup_kg && (
+                <div className="text-xs mt-1 px-2 py-1 rounded-lg"
+                  style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
+                  ⚠️ Min. {s.min_pickup_kg} kg for pickup
+                </div>
+              )}
             </div>
           ))}
-          {s.pickup_mode && s.pickup_mode !== 'pickup' && (
-  <div className="text-xs mt-2 px-2 py-1 rounded-lg"
-    style={{ backgroundColor:'#E6F1FB', color:'#042C53' }}>
-    {s.pickup_mode === 'dropoff' ? '📍 Drop-off only' : '📍 Pickup & drop-off'}
-  </div>
-)}
-{s.min_pickup_kg && (
-  <div className="text-xs mt-1 px-2 py-1 rounded-lg"
-    style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
-    ⚠️ Min. {s.min_pickup_kg} kg for pickup
-  </div>
-)}
         </div>
       )}
     </div>

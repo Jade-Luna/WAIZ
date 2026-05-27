@@ -93,19 +93,7 @@ const [reportSent,    setReportSent]    = useState(false)
   'South Drive','Teodora Alonzo','Trancoville','Victoria Village',
 ]
 
-  const fetchListings = async () => {
-  setLoading(true)
-  let query = supabase
-    .from('listings')
-    .select('*, profiles(full_name)')
-    .in('status', ['available', 'pending'])
-
-  if (category !== 'all') query = query.eq('category', category)
-  if (barangay !== 'All barangays') query = query.eq('barangay', barangay)
-  if (sortBy === 'newest')   query = query.order('created_at',      { ascending: false })
-  if (sortBy === 'heaviest') query = query.order('weight_estimate',  { ascending: false })
-
-  const handleReport = (id) => {
+ const handleReport = (id) => {
   setReportId(id)
   setReportReason('')
   setReportSent(false)
@@ -123,6 +111,19 @@ const submitReport = async () => {
   setReportSent(true)
   setTimeout(() => { setReportId(null); setReportSent(false) }, 2000)
 }
+
+  const fetchListings = async () => {
+  setLoading(true)
+  let query = supabase
+    .from('listings')
+    .select('*, profiles(full_name)')
+    .in('status', ['available', 'pending'])
+
+  if (category !== 'all') query = query.eq('category', category)
+  if (barangay !== 'All barangays') query = query.eq('barangay', barangay)
+  if (sortBy === 'newest')   query = query.order('created_at',      { ascending: false })
+  if (sortBy === 'heaviest') query = query.order('weight_estimate',  { ascending: false })
+
 
   const { data } = await query
    console.log('sample listing:', data?.[0])  
@@ -180,10 +181,20 @@ const submitReport = async () => {
           <div className="text-xs font-medium tracking-widest uppercase mb-1" style={{ color: '#52B788' }}>Browse Listings</div>
           <h1 className="text-2xl md:text-3xl font-medium text-gray-800">Available items in Baguio City</h1>
           <p className="text-xs md:text-sm text-gray-400 mt-1">Find recyclables, scrap, and secondhand items posted by Baguio households</p>
+<div className="flex items-center gap-4 mt-4">
+  <span className="text-xs px-3 py-1.5 rounded-full font-medium"
+    style={{ backgroundColor:'#D8F3DC', color:'#1A4D35' }}>
+     Baguio City
+  </span>
+  <span className="text-xs px-3 py-1.5 rounded-full font-medium"
+    style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
+     {filtered.length} items available
+  </span>
+</div>
         </div>
 
         {/* Search + Filters */}
-        <div className="bg-white border border-gray-300 rounded-2xl p-3 md:p-5 mb-6">
+        <div className="rounded-2xl p-4 md:p-5 mb-6" style={{ backgroundColor:'#fff', border:'1.5px solid #d1e8c8', boxShadow:'0 2px 12px rgba(45,90,39,0.07)' }}>
           <div className="flex gap-2 md:gap-3 flex-wrap">
             {/* Search */}
             <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-2 md:px-3 py-2 flex-1 min-w-40">
@@ -320,12 +331,15 @@ const statusLabel = {
 
   return (
     <div key={listing.id}
-      onClick={() => navigate(`/listing/${listing.id}`)}
-      className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-green-200 hover:shadow-sm transition cursor-pointer">
+  onClick={() => navigate(`/listing/${listing.id}`)}
+  className="bg-white rounded-2xl overflow-hidden transition cursor-pointer"
+  style={{ border:'1.5px solid #e4eede', boxShadow:'0 2px 10px rgba(45,90,39,0.07)' }}
+  onMouseEnter={e => e.currentTarget.style.boxShadow='0 6px 24px rgba(45,90,39,0.13)'}
+  onMouseLeave={e => e.currentTarget.style.boxShadow='0 2px 10px rgba(45,90,39,0.07)'}>
 
       {/* Image */}
-      <div className="h-40 relative overflow-hidden"
-        style={{ backgroundColor: catColor.bg }}>
+      <div className="h-44 relative overflow-hidden"
+  style={{ backgroundColor: catColor.bg }}>
         {listing.photos && listing.photos.length > 0 ? (
           <img src={listing.photos[0]} alt={listing.title}
             className="w-full h-full object-cover" />
@@ -348,7 +362,7 @@ const statusLabel = {
         )}
       </div>
 
-      <div className="p-4">
+      <div className="p-4" style={{ backgroundColor:'#fff' }}>
         <div className="text-xs font-medium uppercase tracking-wide mb-1"
           style={{ color: catColor.color }}>
           {listing.category}
@@ -370,7 +384,7 @@ const statusLabel = {
           <p className="text-xs text-gray-400 mb-3">~{listing.weight_estimate} kg</p>
         )}
 
-        <div className="flex items-center justify-between border-t border-gray-50 pt-3">
+        <div className="flex items-center justify-between pt-3 mt-2" style={{ borderTop:'1.5px solid #f0f7ec' }}>
           <span className="text-xs text-gray-300">{timeAgo(listing.created_at)}</span>
           <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
   {/* Message button for junkshops */}
@@ -417,10 +431,65 @@ const statusLabel = {
           </div>
         )}
       </div>
+
+      {reportId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ backgroundColor:'rgba(0,0,0,0.4)' }}
+          onClick={() => setReportId(null)}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm"
+            onClick={e => e.stopPropagation()}>
+            {reportSent ? (
+              <div className="text-center py-4">
+                <div className="text-4xl mb-3">✅</div>
+                <p className="text-sm font-medium text-gray-700">Report submitted</p>
+                <p className="text-xs text-gray-400 mt-1">We'll review this listing shortly</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-gray-800">Report listing</h3>
+                  <button onClick={() => setReportId(null)}
+                    className="text-gray-300 hover:text-gray-500 text-lg">✕</button>
+                </div>
+                <p className="text-xs text-gray-400 mb-3">
+                  Help us keep WAIZ safe. Tell us why you're reporting this listing.
+                </p>
+                <div className="space-y-2 mb-4">
+                  {['Spam or misleading', 'Inappropriate content', 'Already sold/unavailable', 'Wrong category', 'Other'].map(r => (
+                    <button key={r}
+                      onClick={() => setReportReason(r)}
+                      className="w-full text-left px-3 py-2.5 rounded-xl text-xs border transition"
+                      style={{
+                        borderColor:     reportReason === r ? '#DC2626' : '#E5E7EB',
+                        backgroundColor: reportReason === r ? '#FEF2F2' : '#fff',
+                        color:           reportReason === r ? '#DC2626' : '#6B7280',
+                      }}>
+                      {r}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => setReportId(null)}
+                    className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">
+                    Cancel
+                  </button>
+                  <button onClick={submitReport} disabled={reportSending || !reportReason}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
+                    style={{ backgroundColor: reportReason ? '#DC2626' : '#9CA3AF' }}>
+                    {reportSending ? 'Sending...' : 'Submit report'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   )
+}
 
-  function DropdownMenu({ isOwner, listingId, onEdit, onReport }) {
+function DropdownMenu({ isOwner, listingId, onEdit, onReport }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -455,59 +524,6 @@ const statusLabel = {
           </button>
         </div>
       )}
-      {reportId && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
-    style={{ backgroundColor:'rgba(0,0,0,0.4)' }}
-    onClick={() => setReportId(null)}>
-    <div className="bg-white rounded-2xl p-6 w-full max-w-sm"
-      onClick={e => e.stopPropagation()}>
-      {reportSent ? (
-        <div className="text-center py-4">
-          <div className="text-4xl mb-3">✅</div>
-          <p className="text-sm font-medium text-gray-700">Report submitted</p>
-          <p className="text-xs text-gray-400 mt-1">We'll review this listing shortly</p>
-        </div>
-      ) : (
-        <>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-gray-800">Report listing</h3>
-            <button onClick={() => setReportId(null)}
-              className="text-gray-300 hover:text-gray-500 text-lg">✕</button>
-          </div>
-          <p className="text-xs text-gray-400 mb-3">
-            Help us keep WAIZ safe. Tell us why you're reporting this listing.
-          </p>
-          <div className="space-y-2 mb-4">
-            {['Spam or misleading', 'Inappropriate content', 'Already sold/unavailable', 'Wrong category', 'Other'].map(r => (
-              <button key={r}
-                onClick={() => setReportReason(r)}
-                className="w-full text-left px-3 py-2.5 rounded-xl text-xs border transition"
-                style={{
-                  borderColor:     reportReason === r ? '#DC2626' : '#E5E7EB',
-                  backgroundColor: reportReason === r ? '#FEF2F2' : '#fff',
-                  color:           reportReason === r ? '#DC2626' : '#6B7280',
-                }}>
-                {r}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-3">
-            <button onClick={() => setReportId(null)}
-              className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">
-              Cancel
-            </button>
-            <button onClick={submitReport} disabled={reportSending || !reportReason}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
-              style={{ backgroundColor: reportReason ? '#DC2626' : '#9CA3AF' }}>
-              {reportSending ? 'Sending...' : 'Submit report'}
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  </div>
-)}
     </div>
   )
-}
 }
