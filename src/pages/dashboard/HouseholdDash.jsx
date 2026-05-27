@@ -436,6 +436,11 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
         </div>
       )}
 
+{/* CALENDAR */}
+      {activeTab === 'calendar' && (
+        <PickupCalendar pickups={[...requests, ...history]} role="household" />
+      )}
+
       {/* MESSAGES */}
       {activeTab === 'messages' && <Messages />}
 
@@ -963,6 +968,197 @@ function ProfileEditor({ profile, user, onSaved }) {
           </button>
           {saved && <span className="text-sm font-medium" style={{ color:'#1A4D35' }}>✓ Updated</span>}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function PickupCalendar({ pickups, role }) {
+  const today = new Date()
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth())
+  const [currentYear, setCurrentYear]   = useState(today.getFullYear())
+
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+  const firstDay    = new Date(currentYear, currentMonth, 1).getDay()
+
+  const monthNames = ['January','February','March','April','May','June',
+    'July','August','September','October','November','December']
+
+  const prevMonth = () => {
+    if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(y => y - 1) }
+    else setCurrentMonth(m => m - 1)
+  }
+  const nextMonth = () => {
+    if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(y => y + 1) }
+    else setCurrentMonth(m => m + 1)
+  }
+
+  const getPickupsForDay = (day) => {
+    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
+    return pickups.filter(p =>
+      p.preferred_date === dateStr ||
+      p.scheduled_date === dateStr
+    )
+  }
+
+  const STATUS_COLOR = {
+    requested: '#FAEEDA',
+    offered:   '#E6F1FB',
+    accepted:  '#D8F3DC',
+    completed: '#F3F4F6',
+    cancelled: '#FAECE7',
+  }
+  const STATUS_TEXT = {
+    requested: '#7A3F08',
+    offered:   '#042C53',
+    accepted:  '#085041',
+    completed: '#6B7280',
+    cancelled: '#993C1D',
+  }
+
+  const [selected, setSelected] = useState(null)
+  const selectedPickups = selected ? getPickupsForDay(selected) : []
+
+  return (
+    <div>
+      <h2 className="text-base font-medium text-gray-700 mb-4">Pickup Calendar</h2>
+
+      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden"
+        style={{ boxShadow:'0 2px 10px rgba(45,90,39,0.07)' }}>
+
+        {/* Month header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+          <button onClick={prevMonth}
+            className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 text-gray-400 hover:bg-gray-50 transition">
+            ←
+          </button>
+          <span className="text-sm font-medium text-gray-700">
+            {monthNames[currentMonth]} {currentYear}
+          </span>
+          <button onClick={nextMonth}
+            className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 text-gray-400 hover:bg-gray-50 transition">
+            →
+          </button>
+        </div>
+
+        {/* Day labels */}
+        <div className="grid grid-cols-7 border-b border-gray-50">
+          {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+            <div key={d} className="text-center py-2 text-xs font-medium text-gray-400">
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7">
+          {/* Empty cells before first day */}
+          {Array.from({ length: firstDay }).map((_, i) => (
+            <div key={`empty-${i}`} className="h-16 border-b border-r border-gray-50" />
+          ))}
+
+          {/* Day cells */}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day      = i + 1
+            const dayPickups = getPickupsForDay(day)
+            const isToday  = day === today.getDate() &&
+              currentMonth === today.getMonth() &&
+              currentYear  === today.getFullYear()
+            const isSelected = selected === day
+
+            return (
+              <div key={day}
+                onClick={() => setSelected(isSelected ? null : day)}
+                className="h-16 border-b border-r border-gray-50 p-1 cursor-pointer transition"
+                style={{
+                  backgroundColor: isSelected ? '#f0f7ec' : 'transparent',
+                }}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium flex items-center justify-center w-6 h-6 rounded-full"
+                    style={{
+                      backgroundColor: isToday ? '#1A4D35' : 'transparent',
+                      color:           isToday ? '#fff'    : '#374151',
+                    }}>
+                    {day}
+                  </span>
+                </div>
+                <div className="space-y-0.5">
+                  {dayPickups.slice(0,2).map((p, idx) => (
+                    <div key={idx} className="text-xs px-1 rounded truncate"
+                      style={{
+                        backgroundColor: STATUS_COLOR[p.status] || '#F3F4F6',
+                        color:           STATUS_TEXT[p.status]  || '#6B7280',
+                        fontSize: 9,
+                      }}>
+                      {role === 'household'
+                        ? (p.junkshop?.shop_name || 'Junkshop')
+                        : (p.household?.full_name || 'Household')}
+                    </div>
+                  ))}
+                  {dayPickups.length > 2 && (
+                    <div className="text-xs text-gray-400" style={{ fontSize:9 }}>
+                      +{dayPickups.length - 2} more
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Selected day detail */}
+      {selected && selectedPickups.length > 0 && (
+        <div className="mt-4 space-y-3">
+          <h3 className="text-sm font-medium text-gray-600">
+            {monthNames[currentMonth]} {selected} — {selectedPickups.length} pickup{selectedPickups.length !== 1 ? 's' : ''}
+          </h3>
+          {selectedPickups.map((p, i) => (
+            <div key={i} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4"
+              style={{ boxShadow:'0 2px 8px rgba(45,90,39,0.06)' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
+                style={{ backgroundColor:'#D8F3DC', color:'#0D2B1F' }}>
+                {role === 'household'
+                  ? (p.junkshop?.shop_name || 'JS').slice(0,2).toUpperCase()
+                  : (p.household?.full_name || 'HH').slice(0,2).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-gray-700">
+                  {role === 'household'
+                    ? (p.junkshop?.shop_name || 'Junkshop')
+                    : (p.household?.full_name || 'Household')}
+                </div>
+                <div className="text-xs text-gray-400 mt-0.5">
+                  {p.listings?.title || p.material_types?.join(', ') || 'Pickup'}
+                  {p.scheduled_time && ` · ${p.scheduled_time}`}
+                </div>
+              </div>
+              <span className="text-xs px-2.5 py-1 rounded-full font-medium shrink-0"
+                style={{
+                  backgroundColor: STATUS_COLOR[p.status] || '#F3F4F6',
+                  color:           STATUS_TEXT[p.status]  || '#6B7280',
+                }}>
+                {p.status}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {selected && selectedPickups.length === 0 && (
+        <div className="mt-4 text-center py-8 text-sm text-gray-400">
+          No pickups on {monthNames[currentMonth]} {selected}
+        </div>
+      )}
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-3 mt-4">
+        {Object.entries(STATUS_COLOR).map(([status, bg]) => (
+          <div key={status} className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: bg, border:`1px solid ${STATUS_TEXT[status]}40` }} />
+            <span className="text-xs text-gray-400 capitalize">{status}</span>
+          </div>
+        ))}
       </div>
     </div>
   )
