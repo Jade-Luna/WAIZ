@@ -111,14 +111,14 @@ export default function DashboardLayout({ children, activeTab }) {
         .hide-scrollbar::-webkit-scrollbar { display:none; }
         @media (max-width: 768px) {
           .sidebar { display:none; }
+          .main-content { margin-left: 0 !important; }
         }
       `}</style>
 
       {/* ══ SIDEBAR (Desktop only) ════════════════════════════════════════════ */}
       <aside
-        className="sidebar flex flex-col h-screen overflow-hidden shrink-0 transition-all duration-200"
-        data-tour="sidebar"
-        className="flex flex-col shrink-0 transition-all duration-200"
+  className="sidebar flex flex-col shrink-0 transition-all duration-200"
+  data-tour="sidebar"
         style={{
           width:    collapsed ? '64px' : '220px',
           minWidth: collapsed ? '64px' : '220px',
@@ -233,11 +233,11 @@ export default function DashboardLayout({ children, activeTab }) {
       </aside>
 
       {/* ══ MAIN CONTENT ═════════════════════════════════════════════════════ */}
-      <main className="flex-1 min-w-0 flex flex-col"
-        style={{
-          marginLeft: collapsed ? '64px' : '220px',
-          transition: 'margin-left 0.2s ease',
-        }}>
+      <main className="flex-1 min-w-0 flex flex-col main-content"
+  style={{
+    marginLeft: collapsed ? '64px' : '220px',
+    transition: 'margin-left 0.2s ease',
+  }}>
         {/* Top bar */}
         <div className="h-14 md:h-14 flex items-center justify-between px-4 md:px-8 bg-white border-b border-gray-100 shrink-0 z-30">
           <div className="text-sm md:text-base font-bold"

@@ -53,7 +53,13 @@ const [offering,     setOffering]     = useState(false)
     const [customRates,  setCustomRates]  = useState([
   { label:'', price:'' },
 ])
+const [acceptedMaterials, setAcceptedMaterials] = useState([])
 
+const toggleMaterial = (m) => {
+  setAcceptedMaterials(prev =>
+    prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
+  )
+}
 const addRate    = () => setCustomRates(prev => [...prev, { label:'', price:'' }])
 const removeRate = (i) => setCustomRates(prev => prev.filter((_, idx) => idx !== i))
 const updateRate = (i, field, val) => setCustomRates(prev =>
@@ -64,7 +70,7 @@ const handleSaveRates = async () => {
   setSavingPrices(true)
   const validRates = customRates.filter(r => r.label.trim() && r.price)
   await supabase.from('junkshops')
-    .update({ custom_rates: validRates })
+    .update({ custom_rates: validRates, accepted_materials: acceptedMaterials })
     .eq('id', user.id)
   setSavingPrices(false)
   setPricesSaved(true)
@@ -78,6 +84,11 @@ const handleSaveRates = async () => {
   const [pricesSaved,  setPricesSaved]  = useState(false)
   const [pickupHistory, setpickupHistory] = useState([])
   const [loading,      setLoading]      = useState(false)
+  const [ratingHousehold, setRatingHousehold] = useState(null)
+  const [householdRatingScore, setHouseholdRatingScore] = useState(0)
+  const [householdRatingDone, setHouseholdRatingDone] = useState(false)
+  const [confirmPickup, setConfirmPickup] = useState(null)
+  const [confirmForm, setConfirmForm] = useState({ actual_weight_kg:'', final_price:'', completion_notes:'' })
 
   useEffect(() => {
   if (!user) return
@@ -123,8 +134,24 @@ const handleSaveRates = async () => {
   } else {
     setCustomRates([{ label: '', price: '' }])
   }
+  if (shopData.accepted_materials && shopData.accepted_materials.length > 0) {
+  setAcceptedMaterials(shopData.accepted_materials)
 }
-  setRequests(reqData || [])
+}
+  const enrichedRequests = await Promise.all((reqData || []).map(async (pickup) => {
+  const { data: householdRatings } = await supabase
+    .from('household_ratings')
+    .select('score')
+    .eq('household_id', pickup.household_id)
+
+  const avgRating = householdRatings?.length > 0
+    ? (householdRatings.reduce((s, r) => s + r.score, 0) / householdRatings.length).toFixed(1)
+    : null
+
+  return { ...pickup, household_avg_rating: avgRating, household_rating_count: householdRatings?.length || 0 }
+}))
+
+setRequests(enrichedRequests)
   setDataLoaded(true)
   setLoading(false)
 }
@@ -141,18 +168,43 @@ const handleSaveRates = async () => {
     setTimeout(() => setPricesSaved(false), 2500)
   }
 
- const handleUpdateStatus = async (id, status) => {
-  await supabase.from('pickups').update({ status }).eq('id', id)
+ const handleUpdateStatus = async (id, status, req) => {
   if (status === 'completed') {
-    const pickup = requests.find(r => r.id === id)
-    if (pickup?.listing_id) {
-      await supabase.from('listings')
-        .update({ status: 'completed' })
-        .eq('id', pickup.listing_id)
-    }
+    setRatingHousehold(req)
+    return
   }
+  await supabase.from('pickups').update({ status }).eq('id', id)
   setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r))
   fetchData()
+}
+
+const handleCompleteAndRate = async (score) => {
+  if (!ratingHousehold) return
+  const id = ratingHousehold.id
+  await supabase.from('pickups').update({
+  status: 'completed',
+  actual_weight_kg: confirmForm.actual_weight_kg ? parseFloat(confirmForm.actual_weight_kg) : null,
+  final_price: confirmForm.final_price ? parseFloat(confirmForm.final_price) : null,
+  completion_notes: confirmForm.completion_notes || null,
+}).eq('id', id)
+  if (ratingHousehold.listing_id) {
+    await supabase.from('listings').update({ status: 'completed' }).eq('id', ratingHousehold.listing_id)
+  }
+  if (score > 0) {
+    await supabase.from('household_ratings').insert({
+      pickup_id: id,
+      junkshop_id: user.id,
+      household_id: ratingHousehold.household_id,
+      score,
+    })
+  }
+  setHouseholdRatingDone(true)
+  setTimeout(() => {
+    setRatingHousehold(null)
+    setHouseholdRatingScore(0)
+    setHouseholdRatingDone(false)
+    fetchData()
+  }, 2000)
 }
 
 const handleOffer = async () => {
@@ -256,7 +308,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
           ) : (
             <div className="space-y-3">
               {requests.filter(r => r.status === 'requested').map(req => (
-                <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} showActions onView={setViewRequest} />
+                <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} showComplete onSetConfirm={(r) => { setConfirmPickup(r); setConfirmForm({ actual_weight_kg:'', final_price:'', completion_notes:'' }) }} />
               ))}
             </div>
           )}
@@ -272,7 +324,8 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
           ) : (
             <div className="space-y-3">
               {requests.filter(r => r.status === 'accepted').map(req => (
-                <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} showComplete />
+                <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} showComplete
+  onSetConfirm={(r) => { setConfirmPickup(r); setConfirmForm({ actual_weight_kg:'', final_price:'', completion_notes:'' }) }} />
               ))}
             </div>
           )}
@@ -286,6 +339,22 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
     <p className="text-sm text-gray-400 mb-5">
       Add your own material labels and set your buying price per kilo. Households will see this publicly.
     </p>
+
+<div className="bg-white border border-gray-100 rounded-2xl p-5 mb-4">
+  <p className="text-xs font-medium text-gray-600 mb-3">What materials do you accept?</p>
+  <div className="grid grid-cols-3 gap-2">
+    {['Metal', 'Paper', 'Plastic', 'E-waste', 'Glass', 'Secondhand'].map(m => (
+      <label key={m} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer py-1">
+        <input type="checkbox"
+          checked={acceptedMaterials.includes(m)}
+          onChange={() => toggleMaterial(m)}
+          style={{ accentColor:'#1A4D35', width:'16px', height:'16px' }} />
+        {m}
+      </label>
+    ))}
+  </div>
+  <p className="text-xs text-gray-400 mt-3">This shows on your public profile so households know what to bring.</p>
+</div>
 
     <div className="bg-white border border-gray-100 rounded-2xl p-6">
       <div className="space-y-3 mb-5">
@@ -422,8 +491,21 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
         <div>
           <h3 className="text-sm font-medium text-gray-800">Pickup Request</h3>
           <p className="text-xs text-gray-400 mt-0.5">
-            from {viewRequest.household?.full_name || 'Household'}
-          </p>
+  from {viewRequest.household?.full_name || 'Household'}
+</p>
+{viewRequest.household_avg_rating ? (
+  <div className="flex items-center gap-1.5 mt-1">
+    <span style={{ color:'#C97A3A', fontSize:'13px' }}>
+      {'★'.repeat(Math.round(viewRequest.household_avg_rating))}
+      {'☆'.repeat(5 - Math.round(viewRequest.household_avg_rating))}
+    </span>
+    <span className="text-xs text-gray-400">
+      {viewRequest.household_avg_rating} avg · {viewRequest.household_rating_count} pickup{viewRequest.household_rating_count !== 1 ? 's' : ''}
+    </span>
+  </div>
+) : (
+  <p className="text-xs text-gray-300 mt-1">This household has no ratings yet</p>
+)}
         </div>
         <button onClick={() => setViewRequest(null)}
           className="text-gray-300 hover:text-gray-500 text-lg">✕</button>
@@ -536,11 +618,104 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
   </div>
   </div>
 )}
+
+{confirmPickup && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+    style={{ backgroundColor:'rgba(0,0,0,0.4)' }}>
+    <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+      <h3 className="text-sm font-medium text-gray-800 mb-1">Confirm pickup details</h3>
+      <p className="text-xs text-gray-400 mb-5">Enter the actual weight and price paid to the household.</p>
+      <div className="space-y-3 mb-5">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1.5">Actual weight collected (kg)</label>
+          <input type="number" min="0" step="0.1"
+            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
+            placeholder="e.g. 12.5"
+            value={confirmForm.actual_weight_kg}
+            onChange={e => setConfirmForm(p => ({ ...p, actual_weight_kg: e.target.value }))} />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1.5">Final price paid to household (₱)</label>
+          <input type="number" min="0" step="1"
+            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
+            placeholder="e.g. 200"
+            value={confirmForm.final_price}
+            onChange={e => setConfirmForm(p => ({ ...p, final_price: e.target.value }))} />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1.5">Notes (optional)</label>
+          <input type="text"
+            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
+            placeholder="e.g. Missing some bottles"
+            value={confirmForm.completion_notes}
+            onChange={e => setConfirmForm(p => ({ ...p, completion_notes: e.target.value }))} />
+        </div>
+      </div>
+      <div className="flex gap-3">
+        <button onClick={() => setConfirmPickup(null)}
+          className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">
+          Cancel
+        </button>
+        <button onClick={() => { setRatingHousehold(confirmPickup); setConfirmPickup(null) }}
+          className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
+          style={{ backgroundColor:'#1A4D35' }}>
+          Next — rate household
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{ratingHousehold && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+    style={{ backgroundColor:'rgba(0,0,0,0.4)' }}>
+    <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+      {householdRatingDone ? (
+        <div className="text-center py-6">
+          <div className="text-4xl mb-3">✅</div>
+          <p className="text-sm font-medium text-gray-700">Pickup marked complete!</p>
+          <p className="text-xs text-gray-400 mt-1">Rating submitted</p>
+        </div>
+      ) : (
+        <>
+          <div className="text-center mb-5">
+            <h3 className="text-sm font-medium text-gray-800 mb-1">Rate this household</h3>
+            <p className="text-xs text-gray-400">
+              {ratingHousehold.household?.full_name || 'Household'} — were the items as described?
+            </p>
+          </div>
+          <div className="flex justify-center gap-3 mb-6">
+            {[1,2,3,4,5].map(star => (
+              <button key={star}
+                onClick={() => setHouseholdRatingScore(star)}
+                style={{ fontSize:'32px', color: star <= householdRatingScore ? '#C97A3A' : '#E5E7EB', transition:'color 0.15s' }}>
+                ★
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => handleCompleteAndRate(0)}
+              className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">
+              Skip rating
+            </button>
+            <button onClick={() => handleCompleteAndRate(householdRatingScore)}
+              disabled={!householdRatingScore}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
+              style={{ backgroundColor: householdRatingScore ? '#1A4D35' : '#9CA3AF' }}>
+              Mark done
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+)}
+
     </DashboardLayout>
   )
 }
 
-function RequestCard({ req, onUpdate, showActions, showComplete, onView }) {
+function RequestCard({ req, onUpdate, showActions, showComplete, onView, onSetConfirm }) {
   const [offerPrice, setOfferPrice] = useState('')
   const [offering,   setOffering]   = useState(false)
 
@@ -565,6 +740,16 @@ function RequestCard({ req, onUpdate, showActions, showComplete, onView }) {
         </div>
         <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
           <span>{name}</span>
+{req.household_avg_rating && (
+  <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+    style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
+    ★ {req.household_avg_rating}
+    <span className="opacity-60 ml-0.5">({req.household_rating_count})</span>
+  </span>
+)}
+{!req.household_avg_rating && (
+  <span className="text-xs text-gray-300">No ratings yet</span>
+)}
           <span>·</span>
           <span>{barangay}</span>
           {weight && <><span>·</span><span>~{weight} kg</span></>}
@@ -604,7 +789,7 @@ function RequestCard({ req, onUpdate, showActions, showComplete, onView }) {
   )
 )}
         {showComplete && (
-          <button onClick={() => onUpdate(req.id, 'completed')}
+  <button onClick={() => { onSetConfirm(req) }}
             className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
             style={{ backgroundColor:'#1A4D35' }}>
             Mark done
@@ -628,13 +813,15 @@ function Empty({ icon, text, sub, children }) {
 
 function JunkshopProfileEditor({ shop, user, profile }) {
   const [form, setForm] = useState({
-    shop_name:  '',
-    phone:      '',
-    barangay:   '',
-    dti_number: '',
-    latitude:   null,
-    longitude:  null,
-  })
+  shop_name:   '',
+  phone:       '',
+  barangay:    '',
+  dti_number:  '',
+  latitude:    null,
+  longitude:   null,
+  pickup_mode: 'both',
+  min_pickup_kg: '',
+})
   const [photoFile,    setPhotoFile]    = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
   const [saving,       setSaving]       = useState(false)
@@ -643,13 +830,15 @@ function JunkshopProfileEditor({ shop, user, profile }) {
   useEffect(() => {
   if (shop) {
     setForm({
-      shop_name:  shop.shop_name  || '',
-      phone:      shop.phone      || profile?.phone || '',
-      barangay:   shop.barangay   || profile?.barangay || '',
-      dti_number: shop.dti_number || '',
-      latitude:   shop.latitude   || null,
-      longitude:  shop.longitude  || null,
-    })
+  shop_name:    shop.shop_name    || '',
+  phone:        shop.phone        || profile?.phone || '',
+  barangay:     shop.barangay     || profile?.barangay || '',
+  dti_number:   shop.dti_number   || '',
+  latitude:     shop.latitude     || null,
+  longitude:    shop.longitude    || null,
+  pickup_mode:  shop.pickup_mode  || 'both',
+  min_pickup_kg: shop.min_pickup_kg || '',
+})
     setPhotoPreview(shop.photo_url || null)
   }
 }, [shop, profile])
@@ -681,12 +870,14 @@ function JunkshopProfileEditor({ shop, user, profile }) {
     }
 
     await supabase.from('junkshops').update({
-      shop_name:  form.shop_name,
-      dti_number: form.dti_number || null,
-      photo_url:  photoUrl,
-      latitude:   form.latitude,
-      longitude:  form.longitude,
-    }).eq('id', user.id)
+  shop_name:     form.shop_name,
+  dti_number:    form.dti_number    || null,
+  photo_url:     photoUrl,
+  latitude:      form.latitude,
+  longitude:     form.longitude,
+  pickup_mode:   form.pickup_mode   || 'both',
+  min_pickup_kg: form.min_pickup_kg ? parseFloat(form.min_pickup_kg) : null,
+}).eq('id', user.id)
 
     await supabase.from('profiles').update({
       full_name: form.shop_name,
@@ -771,6 +962,37 @@ function JunkshopProfileEditor({ shop, user, profile }) {
         <input className={inputClass} placeholder="DTI-XXXXXXXXX"
           value={form.dti_number} onChange={e => update('dti_number', e.target.value)} />
       </div>
+
+      <div>
+  <label className="block text-xs font-medium text-gray-500 mb-2">Pickup mode</label>
+  {[
+    { value:'pickup',  label:'I do pickups (I go to the household)' },
+    { value:'dropoff', label:'Drop-off only (household comes to me)' },
+    { value:'both',    label:'Both' },
+  ].map(opt => (
+    <label key={opt.value} className="flex items-center gap-2 mb-2 text-sm text-gray-600 cursor-pointer">
+      <input type="radio" name="pickup_mode" value={opt.value}
+        checked={form.pickup_mode === opt.value}
+        onChange={() => update('pickup_mode', opt.value)} />
+      {opt.label}
+    </label>
+  ))}
+</div>
+
+<div>
+  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+    Minimum pickup weight
+    <span className="font-normal text-gray-300 ml-1">(leave blank if no minimum)</span>
+  </label>
+  <div className="flex items-center gap-2">
+    <input
+      className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700 transition"
+      type="number" min="0" placeholder="0"
+      value={form.min_pickup_kg}
+      onChange={e => update('min_pickup_kg', e.target.value)} />
+    <span className="text-sm text-gray-400 shrink-0">kg minimum</span>
+  </div>
+</div>
 
       {/* Location picker */}
 <div>

@@ -674,7 +674,9 @@ const handleRate = async (score) => {
           { label:'Item',      value: receiptPickup.listings?.title || 'Pickup'                           },
           { label:'Junkshop',  value: receiptPickup.junkshop?.shop_name || receiptPickup.junkshop?.full_name || 'Junkshop' },
           { label:'Date',      value: receiptPickup.scheduled_date || receiptPickup.date || 'Completed'   },
-          { label:'Amount',    value: `₱${receiptPickup.offered_price || receiptPickup.agreed_price || 0}` },
+          { label:'Weight collected', value: receiptPickup.actual_weight_kg ? `${receiptPickup.actual_weight_kg} kg (confirmed)` : `~${receiptPickup.listings?.weight_estimate || '?'} kg (estimate)` },
+{ label:'Amount paid',      value: `₱${receiptPickup.final_price || receiptPickup.offered_price || 0}` },
+{ label:'Notes',            value: receiptPickup.completion_notes || '—' },
           { label:'Status',    value: 'Completed ✓'                                                       },
         ].map(row => (
           <div key={row.label} className="flex justify-between">
@@ -774,6 +776,18 @@ const filtered = shops.filter(s => {
               )}
             </div>
           ))}
+          {s.pickup_mode && s.pickup_mode !== 'pickup' && (
+  <div className="text-xs mt-2 px-2 py-1 rounded-lg"
+    style={{ backgroundColor:'#E6F1FB', color:'#042C53' }}>
+    {s.pickup_mode === 'dropoff' ? '📍 Drop-off only' : '📍 Pickup & drop-off'}
+  </div>
+)}
+{s.min_pickup_kg && (
+  <div className="text-xs mt-1 px-2 py-1 rounded-lg"
+    style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
+    ⚠️ Min. {s.min_pickup_kg} kg for pickup
+  </div>
+)}
         </div>
       )}
     </div>
