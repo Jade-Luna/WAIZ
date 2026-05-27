@@ -181,12 +181,20 @@ setRequests(enrichedRequests)
 const handleCompleteAndRate = async (score) => {
   if (!ratingHousehold) return
   const id = ratingHousehold.id
+
   await supabase.from('pickups').update({
-  status: 'completed',
-  actual_weight_kg: confirmForm.actual_weight_kg ? parseFloat(confirmForm.actual_weight_kg) : null,
-  final_price: confirmForm.final_price ? parseFloat(confirmForm.final_price) : null,
-  completion_notes: confirmForm.completion_notes || null,
-}).eq('id', id)
+    status: 'completed',
+    actual_weight_kg: confirmForm.actual_weight_kg ? parseFloat(confirmForm.actual_weight_kg) : null,
+    final_price: confirmForm.final_price ? parseFloat(confirmForm.final_price) : null,
+    completion_notes: confirmForm.completion_notes || null,
+  }).eq('id', id)
+
+  const { data: shopData } = await supabase
+    .from('junkshops').select('total_pickups').eq('id', user.id).single()
+  await supabase.from('junkshops')
+    .update({ total_pickups: (shopData?.total_pickups || 0) + 1 })
+    .eq('id', user.id)
+
   if (ratingHousehold.listing_id) {
     await supabase.from('listings').update({ status: 'completed' }).eq('id', ratingHousehold.listing_id)
   }
@@ -581,7 +589,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
     </div>
     <div className="flex gap-2 mt-2">
       <button
-        onClick={() => { onUpdate(viewRequest.id, 'cancelled'); setViewRequest(null) }}
+        onClick={() => { handleUpdateStatus(viewRequest.id, 'cancelled'); setViewRequest(null) }}
         className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">
         Decline
       </button>

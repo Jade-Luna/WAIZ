@@ -276,8 +276,9 @@ const handleAnnouncement = async () => {
   setTimeout(() => setAnnounceSent(false), 3000)
 }
 
-const handleDeleteRating = async (id, junkshopId) => {
-  await supabase.from('ratings').delete().eq('id', id)
+const handleDeleteRating = async (id, junkshopId, type) => {
+  const table = type === 'household_rated' ? 'household_ratings' : 'ratings'
+  await supabase.from(table).delete().eq('id', id)
   setRatings(prev => prev.filter(r => r.id !== id))
 
   // Recalculate average
@@ -575,14 +576,14 @@ const handleDeleteRating = async (id, junkshopId) => {
               </div>
               <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
                 <div className="grid text-xs font-medium text-gray-400 px-5 py-3 border-b border-gray-50"
-                  style={{ gridTemplateColumns:'1fr 2fr 2fr 1fr 1fr' }}>
-                  <span>Name</span><span>Role</span><span>Barangay</span>
-                  <span>Verified</span><span>Joined</span><span>Actions</span>
+  style={{ gridTemplateColumns:'2fr 1fr 2fr 1fr 1fr 1fr' }}>
+  <span>Name</span><span>Role</span><span>Barangay</span>
+  <span>Verified</span><span>Joined</span><span>Actions</span>
                 </div>
                 {filteredUsers.map(u => (
                   <div key={u.id}
                     className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition"
-                    style={{ gridTemplateColumns:'1fr 2fr 2fr 1fr 1fr' }}>
+                    style={{ gridTemplateColumns:'2fr 1fr 2fr 1fr 1fr 1fr' }}>
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium shrink-0"
                         style={{

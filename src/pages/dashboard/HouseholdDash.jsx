@@ -224,10 +224,8 @@ const handleRate = async (score) => {
   }, 2000)
 }
 
-  const totalKg        = listings.filter(l => l.status === 'completed').reduce((s, l) => s + (l.weight_estimate || 0), 0)
-  const totalEarned = history.reduce((s, h) => {
-  return s + parseFloat(h.offered_price || 0)
-}, 0)
+  const totalKg = history.reduce((s, h) => s + parseFloat(h.actual_weight_kg || h.listings?.weight_estimate || 0), 0)
+const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.offered_price || 0), 0)
   const activeCount    = listings.filter(l => l.status === 'available').length
   const pendingCount   = listings.filter(l => l.status === 'pending').length
   const completedCount = listings.filter(l => l.status === 'completed').length
@@ -318,12 +316,12 @@ const handleRate = async (score) => {
                         <span>{l.barangay}</span>
                         {l.weight_estimate && <><span className="hidden sm:inline">·</span><span>~{l.weight_estimate} kg</span></>}
                         <span className="hidden sm:inline">·</span><span>{timeAgo(l.created_at)}</span>
-                        {l.pickup_requests > 0 && (
-                          <><span className="hidden sm:inline">·</span>
-                          <span className="font-medium" style={{ color:'#160e07' }}>
-                            {l.pickup_requests} request{l.pickup_requests > 1 ? 's' : ''}
-                          </span></>
-                        )}
+                        {requests.filter(r => r.listing_id === l.id).length > 0 && (
+  <><span className="hidden sm:inline">·</span>
+  <span className="font-medium" style={{ color:'#1A4D35' }}>
+    {requests.filter(r => r.listing_id === l.id).length} request{requests.filter(r => r.listing_id === l.id).length > 1 ? 's' : ''}
+  </span></>
+)}
                       </div>
                     </div>
 <div className="flex gap-2 shrink-0 w-full sm:w-auto flex-wrap sm:flex-nowrap">

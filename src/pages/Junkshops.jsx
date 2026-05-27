@@ -117,12 +117,6 @@ const handleRequest = async () => {
     status:         'requested',
   })
 
-  console.log('insert error:', JSON.stringify(insertError))
-
-  await supabase.from('junkshops')
-    .update({ total_pickups: (requestShop.total_pickups || 0) + 1 })
-    .eq('id', requestShop.id)
-
   setRequesting(false)
   setRequested(true)
   setTimeout(() => {
@@ -439,9 +433,9 @@ const [requestForm, setRequestForm] = useState({
                 What materials do you have? <span className="text-red-400">*</span>
               </label>
               <div className="flex flex-wrap gap-2">
-                {MATERIALS.map(m => (
-                  <button key={m}
-                    onClick={() => toggleMaterial(m)}
+                {MATERIALS.filter(m => m !== 'All').map(m => (
+  <button key={m}
+    onClick={() => toggleMaterial(m)}
                     className="px-3 py-1.5 rounded-full text-xs font-medium transition border"
                     style={{
                       backgroundColor: requestForm.material_types.includes(m) ? '#1A4D35' : '#F9FAFB',
