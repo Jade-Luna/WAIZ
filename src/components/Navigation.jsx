@@ -9,6 +9,7 @@ export default function Navigation() {
   const location = useLocation()
 
   const isActive = (path) => location.pathname === path
+const isHome = location.pathname === '/'
 
   return (
     <nav style={{
@@ -20,9 +21,9 @@ export default function Navigation() {
       justifyContent: 'space-between',
       padding: '0 24px',
       minHeight: '56px',
-      borderBottom: '1px solid rgba(255,255,255,0.25)',
+      borderBottom: isHome ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e8f0e4',
       backdropFilter: 'blur(4px)',
-      backgroundColor: 'rgba(10,26,12,0.8)',
+      backgroundColor: isHome ? 'rgba(10,26,12,0.8)' : '#cce0d6',
     }}>
 
       <style>{`
@@ -39,7 +40,7 @@ export default function Navigation() {
         fontFamily: 'Georgia, serif',
         fontSize: 'clamp(18px, 4vw, 22px)',
         fontWeight: 700,
-        color: '#a8e898',
+        color: isHome ? '#a8e898' : '#1A4D35',
         letterSpacing: '2px',
         textDecoration: 'none',
         flexShrink: 0,
@@ -51,18 +52,25 @@ export default function Navigation() {
       <div className="nav-desktop" style={{ alignItems: 'center', gap: 24 }}>
         <Link to="/how-it-works" style={{
           fontSize: 13, fontWeight: 500, textDecoration: 'none',
-          color: isActive('/how-it-works') ? '#fff' : '#a8d898',
+          color: isActive('/how-it-works') ? (isHome ? '#fff' : '#1A4D35') : (isHome ? '#a8d898' : '#4B5563'),
         }}>How It Works</Link>
 
         <Link to="/about" style={{
           fontSize: 13, fontWeight: 500, textDecoration: 'none',
-          color: isActive('/about') ? '#fff' : '#a8d898',
+          color: isActive('/about') ? (isHome ? '#fff' : '#1A4D35') : (isHome ? '#a8d898' : '#4B5563'),
         }}>About</Link>
 
-        <Link to="/junkshops" style={{
-          fontSize: 13, fontWeight: 500, textDecoration: 'none',
-          color: isActive('/junkshops') ? '#fff' : '#a8d898',
-        }}>Junkshops</Link>
+        {isActive('/junkshops') ? (
+          <Link to="/browse" style={{
+            fontSize: 13, fontWeight: 500, textDecoration: 'none',
+            color: isHome ? '#a8d898' : '#4B5563',
+          }}>Marketplace</Link>
+        ) : (
+          <Link to="/junkshops" style={{
+            fontSize: 13, fontWeight: 500, textDecoration: 'none',
+            color: isActive('/junkshops') ? (isHome ? '#fff' : '#1A4D35') : (isHome ? '#a8d898' : '#4B5563'),
+          }}>Junkshops</Link>
+        )}
 
         <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.35)' }} />
 
@@ -99,7 +107,7 @@ export default function Navigation() {
         style={{
           alignItems: 'center', justifyContent: 'center',
           background: 'none', border: 'none', cursor: 'pointer',
-          color: '#a8e898', padding: '8px', marginRight: '-8px',
+          color: isHome ? '#a8e898' : '#1A4D35', padding: '8px', marginRight: '-8px',
         }}>
         {menuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -108,8 +116,8 @@ export default function Navigation() {
       {menuOpen && (
         <div style={{
           position: 'absolute', top: '56px', left: 0, right: 0,
-          backgroundColor: 'rgba(10,26,12,0.95)',
-          borderBottom: '1px solid rgba(255,255,255,0.25)',
+          backgroundColor: isHome ? 'rgba(10,26,12,0.95)' : '#ffffff',
+          borderBottom: isHome ? '1px solid rgba(255,255,255,0.25)' : '1px solid #e8f0e4',
           flexDirection: 'column',
           display: 'flex',
           padding: '16px',
@@ -118,17 +126,24 @@ export default function Navigation() {
           zIndex: 100,
         }}>
           <Link to="/how-it-works" onClick={() => setMenuOpen(false)}
-            style={{ color: '#a8d898', textDecoration: 'none', padding: '10px 16px', borderRadius: 8, fontSize: 14 }}>
+            style={{ color: isHome ? '#a8d898' : '#374151', textDecoration: 'none', padding: '10px 16px', borderRadius: 8, fontSize: 14 }}>
             How It Works
           </Link>
           <Link to="/about" onClick={() => setMenuOpen(false)}
-            style={{ color: '#a8d898', textDecoration: 'none', padding: '10px 16px', borderRadius: 8, fontSize: 14 }}>
+            style={{ color: isHome ? '#a8d898' : '#374151', textDecoration: 'none', padding: '10px 16px', borderRadius: 8, fontSize: 14 }}>
             About
           </Link>
-          <Link to="/junkshops" onClick={() => setMenuOpen(false)}
-            style={{ color: '#a8d898', textDecoration: 'none', padding: '10px 16px', borderRadius: 8, fontSize: 14 }}>
-            Junkshops
-          </Link>
+          {isActive('/junkshops') ? (
+            <Link to="/browse" onClick={() => setMenuOpen(false)}
+              style={{ color: isHome ? '#a8d898' : '#374151', textDecoration: 'none', padding: '10px 16px', borderRadius: 8, fontSize: 14 }}>
+              Marketplace
+            </Link>
+          ) : (
+            <Link to="/junkshops" onClick={() => setMenuOpen(false)}
+              style={{ color: isHome ? '#a8d898' : '#374151', textDecoration: 'none', padding: '10px 16px', borderRadius: 8, fontSize: 14 }}>
+              Junkshops
+            </Link>
+          )}
 
           <div style={{ height: 1, background: 'rgba(255,255,255,0.25)', margin: '4px 0' }} />
 

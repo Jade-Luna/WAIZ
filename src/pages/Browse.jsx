@@ -146,7 +146,7 @@ const submitReport = async () => {
   )
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FEFDF8' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#EEF4EA', backgroundImage: 'radial-gradient(circle at 1px 1px, #d4e6ce 1px, transparent 0)', backgroundSize: '24px 24px' }}>
 
       {/* NAV */}
       <Navigation />
@@ -332,10 +332,10 @@ const statusLabel = {
   return (
     <div key={listing.id}
   onClick={() => navigate(`/listing/${listing.id}`)}
-  className="bg-white rounded-2xl overflow-hidden transition cursor-pointer"
-  style={{ border:'1.5px solid #e4eede', boxShadow:'0 2px 10px rgba(45,90,39,0.07)' }}
-  onMouseEnter={e => e.currentTarget.style.boxShadow='0 6px 24px rgba(45,90,39,0.13)'}
-  onMouseLeave={e => e.currentTarget.style.boxShadow='0 2px 10px rgba(45,90,39,0.07)'}>
+  className="rounded-2xl overflow-hidden cursor-pointer"
+  style={{ background:'#fff', border:'1.5px solid #e4ede0', boxShadow:'0 2px 8px rgba(45,90,39,0.06)', transition:'all 0.2s' }}
+  onMouseEnter={e => { e.currentTarget.style.boxShadow='0 8px 28px rgba(45,90,39,0.13)'; e.currentTarget.style.borderColor=catColor.color+'55'; e.currentTarget.style.transform='translateY(-2px)' }}
+  onMouseLeave={e => { e.currentTarget.style.boxShadow='0 2px 8px rgba(45,90,39,0.06)'; e.currentTarget.style.borderColor='#e4ede0'; e.currentTarget.style.transform='translateY(0)' }}>
 
       {/* Image */}
       <div className="h-44 relative overflow-hidden"
@@ -344,13 +344,21 @@ const statusLabel = {
           <img src={listing.photos[0]} alt={listing.title}
             className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="w-14 h-14 rounded-xl flex items-center justify-center text-sm font-medium"
-              style={{ backgroundColor: catColor.bg, color: catColor.color, border:`2px solid ${catColor.color}22` }}>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold"
+              style={{ backgroundColor: catColor.color+'18', color: catColor.color, border:`1.5px solid ${catColor.color}30` }}>
               {listing.category?.slice(0,2).toUpperCase()}
             </div>
+            <span className="text-xs font-medium" style={{ color: catColor.color+'99' }}>No photo</span>
           </div>
         )}
+        <div className="absolute bottom-0 left-0 right-0 px-3 py-2 flex items-center justify-between"
+          style={{ background:'linear-gradient(to top, rgba(0,0,0,0.45), transparent)' }}>
+          <span className="text-xs font-semibold text-white uppercase tracking-wide">{listing.category}</span>
+          {listing.weight_estimate && (
+            <span className="text-xs font-medium text-white opacity-90">~{listing.weight_estimate} kg</span>
+          )}
+        </div>
         <span className="absolute top-3 right-3 text-xs font-medium px-2.5 py-1 rounded-full"
           style={{ backgroundColor: statusStyle.bg, color: statusStyle.color }}>
           {statusLabel}
@@ -362,12 +370,8 @@ const statusLabel = {
         )}
       </div>
 
-      <div className="p-4" style={{ backgroundColor:'#fff' }}>
-        <div className="text-xs font-medium uppercase tracking-wide mb-1"
-          style={{ color: catColor.color }}>
-          {listing.category}
-        </div>
-        <h3 className="text-sm font-medium text-gray-700 mb-1 leading-snug">{listing.title}</h3>
+      <div className="p-4">
+        <h3 className="text-sm font-semibold text-gray-800 mb-2 leading-snug">{listing.title}</h3>
 
         {/* Seller info */}
         <div className="flex items-center gap-2 mb-2">
@@ -380,11 +384,9 @@ const statusLabel = {
           </span>
         </div>
 
-        {listing.weight_estimate && (
-          <p className="text-xs text-gray-400 mb-3">~{listing.weight_estimate} kg</p>
-        )}
+    
 
-        <div className="flex items-center justify-between pt-3 mt-2" style={{ borderTop:'1.5px solid #f0f7ec' }}>
+        <div className="flex items-center justify-between pt-3 mt-2" style={{ borderTop:`1.5px solid ${catColor.bg}` }}>
           <span className="text-xs text-gray-300">{timeAgo(listing.created_at)}</span>
           <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
   {/* Message button for junkshops */}

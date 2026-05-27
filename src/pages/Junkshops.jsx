@@ -173,7 +173,7 @@ const [requestForm, setRequestForm] = useState({
   const regular  = filtered.filter(s => !s.is_featured)
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FEFDF8' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#EEF4EA', backgroundImage: 'radial-gradient(circle at 1px 1px, #d4e6ce 1px, transparent 0)', backgroundSize: '24px 24px' }}>
 
       {/* NAV */}
       <Navigation />
@@ -535,51 +535,113 @@ const [requestForm, setRequestForm] = useState({
 }
 
 function ShopCard({ shop, onSelect }) {
+  const hasRates = PRICE_FIELDS.some(f => shop[f.key] != null)
+  const topRates = PRICE_FIELDS.filter(f => shop[f.key] != null).slice(0, 3)
+  const pickupLabel = {
+    pickup:  { icon:'🚗', text:'Does pickups',      bg:'#D8F3DC', color:'#085041' },
+    dropoff: { icon:'📍', text:'Drop-off only',     bg:'#E6F1FB', color:'#042C53' },
+    both:    { icon:'🔄', text:'Pickup & drop-off', bg:'#EAF3DE', color:'#173404' },
+  }[shop.pickup_mode] || { icon:'🚗', text:'Does pickups', bg:'#D8F3DC', color:'#085041' }
+
   return (
     <div
       onClick={() => onSelect(shop)}
-      className="bg-white rounded-2xl p-5 cursor-pointer hover:shadow-sm transition"
-      style={{ border: shop.is_featured ? '2px solid #2D6A4F' : '1px solid #F3F4F6' }}>
+      className="rounded-2xl overflow-hidden cursor-pointer"
+      style={{
+        background: '#fff',
+        border: shop.is_featured ? '2px solid #2D6A4F' : '1.5px solid #e4ede0',
+        boxShadow: shop.is_featured ? '0 4px 16px rgba(45,106,79,0.15)' : '0 2px 8px rgba(45,90,39,0.06)',
+        transition: 'all 0.2s',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow='0 8px 28px rgba(45,90,39,0.13)'; e.currentTarget.style.transform='translateY(-2px)' }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow=shop.is_featured?'0 4px 16px rgba(45,106,79,0.15)':'0 2px 8px rgba(45,90,39,0.06)'; e.currentTarget.style.transform='translateY(0)' }}>
 
-      {shop.is_featured && (
-        <span className="text-xs font-medium px-3 py-1 rounded-full inline-block mb-3"
-          style={{ backgroundColor: '#D8F3DC', color: '#1A4D35' }}>
-          Featured on WAIZ
-        </span>
-      )}
-
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-medium shrink-0"
-          style={{ backgroundColor: shop.avatarBg || '#D8F3DC', color: shop.avatarColor || '#0D2B1F' }}>
-          {shop.initials || shop.shop_name?.slice(0,2).toUpperCase()}
-        </div>
-        <div className="min-w-0">
-          <div className="text-sm font-medium text-gray-700 truncate">{shop.shop_name}</div>
-          <div className="flex items-center gap-1 mt-0.5">
-            <Stars rating={shop.rating || 0} />
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3" style={{ borderBottom:'1.5px solid #f0f7ec', background: shop.is_featured ? '#f5fbf3' : '#fff' }}>
+        {shop.is_featured && (
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full inline-block mb-2.5"
+            style={{ backgroundColor:'#D8F3DC', color:'#1A4D35' }}>
+            ★ Featured on WAIZ
+          </span>
+        )}
+        <div className="flex items-start gap-3">
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
+            style={{ backgroundColor:'#1A4D35', color:'#fff' }}>
+            {shop.shop_name?.slice(0,2).toUpperCase()}
           </div>
-          <div className="text-xs text-gray-400 mt-0.5">{shop.barangay}</div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+              <span className="text-sm font-semibold text-gray-800 truncate">{shop.shop_name}</span>
+              {shop.is_verified && (
+                <span className="text-xs font-medium" style={{ color:'#1A4D35' }}>✓</span>
+              )}
+            </div>
+            <div className="text-xs text-gray-400">{shop.barangay}</div>
+            {shop.rating > 0 && (
+              <div className="flex items-center gap-1 mt-0.5">
+                <span style={{ color:'#C97A3A', fontSize:11 }}>
+                  {'★'.repeat(Math.round(shop.rating))}{'☆'.repeat(5 - Math.round(shop.rating))}
+                </span>
+                <span className="text-xs text-gray-400">{shop.rating}</span>
+              </div>
+            )}
+          </div>
         </div>
-        {shop.is_verified && (
-          <span className="ml-auto text-xs px-2 py-0.5 rounded-full shrink-0"
-            style={{ backgroundColor: '#D8F3DC', color: '#1A4D35' }}>✓</span>
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          <span className="text-xs px-2 py-1 rounded-lg font-medium"
+            style={{ backgroundColor: pickupLabel.bg, color: pickupLabel.color }}>
+            {pickupLabel.icon} {pickupLabel.text}
+          </span>
+          {shop.min_pickup_kg && (
+            <span className="text-xs px-2 py-1 rounded-lg font-medium"
+              style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
+              Min {shop.min_pickup_kg} kg
+            </span>
+          )}
+          <span className="text-xs px-2 py-1 rounded-lg font-medium"
+            style={{ backgroundColor:'#F3F4F6', color:'#6B7280' }}>
+            {shop.total_pickups || 0} pickups
+          </span>
+        </div>
+      </div>
+
+      {/* Rates */}
+      <div className="px-4 py-3">
+        {hasRates ? (
+          <div className="grid grid-cols-3 gap-1.5">
+            {topRates.map(f => (
+              <div key={f.key} className="rounded-lg px-2 py-1.5 text-center"
+                style={{ backgroundColor:'#f5fbf3' }}>
+                <div className="text-xs font-bold" style={{ color:'#1A4D35' }}>₱{shop[f.key]}</div>
+                <div className="text-gray-400" style={{ fontSize:10 }}>{f.label}/kg</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-gray-300 text-center py-1">Rates not published yet</p>
+        )}
+        {shop.accepted_materials?.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2.5">
+            {shop.accepted_materials.slice(0,4).map(m => (
+              <span key={m} className="text-xs px-1.5 py-0.5 rounded-md font-medium"
+                style={{ backgroundColor:'#E8F5E2', color:'#2D6A4F', fontSize:10 }}>
+                {m}
+              </span>
+            ))}
+            {shop.accepted_materials.length > 4 && (
+              <span className="text-xs px-1.5 py-0.5 rounded-md"
+                style={{ backgroundColor:'#F3F4F6', color:'#9CA3AF', fontSize:10 }}>
+                +{shop.accepted_materials.length - 4} more
+              </span>
+            )}
+          </div>
         )}
       </div>
 
-      <div className="border-t border-gray-300 pt-3 grid grid-cols-2 gap-y-1.5">
-        {PRICE_FIELDS.map(f => shop[f.key] != null && (
-          <div key={f.key} className="text-xs">
-            <span className="text-gray-400">{f.label} </span>
-            <span className="font-medium" style={{ color: '#1A4D35' }}>₱{shop[f.key]}/kg</span>
-          </div>
-        ))}
+      {/* Footer */}
+      <div className="px-4 pb-3 flex justify-end">
+        <span className="text-xs font-semibold" style={{ color:'#C97A3A' }}>View details →</span>
       </div>
-
-      <div className="mt-3 pt-3 border-t border-gray-300 flex justify-between items-center">
-        <span className="text-xs text-gray-300">{shop.total_pickups || 0} pickups completed</span>
-        <span className="text-xs font-medium" style={{ color: '#C97A3A' }}>View details →</span>
-      </div>
-
     </div>
   )
 }
