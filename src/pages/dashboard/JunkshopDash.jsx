@@ -283,7 +283,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
       )}
 
       {/* STAT CARDS */}
-      {!['messages', 'priceboard', 'profile'].includes(activeTab) && (
+      {!['messages', 'priceboard', 'profile', 'calendar'].includes(activeTab) && (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
           { label:'Pending requests', value: pendingCount,           bg:'#FAEEDA', color:'#7A3F08', sub:'awaiting action'   },
@@ -1210,30 +1210,31 @@ function PickupCalendar({ pickups, role }) {
 
   return (
     <div>
-      <h2 className="text-base font-medium text-gray-700 mb-4">Pickup Calendar</h2>
-
       <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden"
-        style={{ boxShadow:'0 2px 10px rgba(45,90,39,0.07)' }}>
+        style={{ boxShadow:'0 2px 12px rgba(45,90,39,0.08)' }}>
 
         {/* Month header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100"
+          style={{ background:'linear-gradient(135deg, #1A4D35 0%, #0D2B1F 100%)' }}>
           <button onClick={prevMonth}
-            className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 text-gray-400 hover:bg-gray-50 transition">
+            className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/30 text-white hover:bg-white/20 transition duration-150"
+            title="Previous month">
             ←
           </button>
-          <span className="text-sm font-medium text-gray-700">
-            {monthNames[currentMonth]} {currentYear}
+          <span className="text-base font-semibold text-white">
+            {monthNames[currentMonth]} <span className="text-green-200">{currentYear}</span>
           </span>
           <button onClick={nextMonth}
-            className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 text-gray-400 hover:bg-gray-50 transition">
+            className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/30 text-white hover:bg-white/20 transition duration-150"
+            title="Next month">
             →
           </button>
         </div>
 
         {/* Day labels */}
-        <div className="grid grid-cols-7 border-b border-gray-50">
+        <div className="grid grid-cols-7 border-b border-gray-100" style={{ backgroundColor:'#D8F3DC' }}>
           {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-            <div key={d} className="text-center py-2 text-xs font-medium text-gray-400">
+            <div key={d} className="text-center py-2 text-xs font-bold text-green-900 tracking-wide">
               {d}
             </div>
           ))}
@@ -1243,7 +1244,7 @@ function PickupCalendar({ pickups, role }) {
         <div className="grid grid-cols-7">
           {/* Empty cells before first day */}
           {Array.from({ length: firstDay }).map((_, i) => (
-            <div key={`empty-${i}`} className="h-16 border-b border-r border-gray-50" />
+            <div key={`empty-${i}`} className="h-20 border-b border-r border-gray-100" style={{ backgroundColor:'#f9fafb' }} />
           ))}
 
           {/* Day cells */}
@@ -1258,35 +1259,43 @@ function PickupCalendar({ pickups, role }) {
             return (
               <div key={day}
                 onClick={() => setSelected(isSelected ? null : day)}
-                className="h-16 border-b border-r border-gray-50 p-1 cursor-pointer transition"
+                className="h-20 border-b border-r border-gray-100 p-2 cursor-pointer transition duration-150 relative group"
                 style={{
-                  backgroundColor: isSelected ? '#f0f7ec' : 'transparent',
-                }}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium flex items-center justify-center w-6 h-6 rounded-full"
+                  backgroundColor: isSelected ? '#D8F3DC' : isToday ? '#EAF3DE' : 'white',
+                }}
+                onMouseEnter={(e) => !isSelected && !isToday && (e.currentTarget.style.backgroundColor = '#f0f7ec')}
+                onMouseLeave={(e) => !isSelected && !isToday && (e.currentTarget.style.backgroundColor = 'white')}>
+                {isSelected && (
+                  <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor:'#1A4D35' }} />
+                )}
+                <div className="flex items-center justify-start mb-1">
+                  <span className="text-xs font-bold flex items-center justify-center w-6 h-6 rounded-full transition-colors"
                     style={{
                       backgroundColor: isToday ? '#1A4D35' : 'transparent',
-                      color:           isToday ? '#fff'    : '#374151',
+                      color:           isToday ? '#fff'    : '#6B7280',
                     }}>
                     {day}
                   </span>
                 </div>
                 <div className="space-y-0.5">
-                  {dayPickups.slice(0,2).map((p, idx) => (
-                    <div key={idx} className="text-xs px-1 rounded truncate"
+                  {dayPickups.slice(0,1).map((p, idx) => (
+                    <div key={idx} className="text-xs px-1.5 py-0.5 rounded font-bold truncate transition-all"
                       style={{
                         backgroundColor: STATUS_COLOR[p.status] || '#F3F4F6',
                         color:           STATUS_TEXT[p.status]  || '#6B7280',
-                        fontSize: 9,
-                      }}>
-                      {role === 'household'
+                        fontSize: '11px',
+                      }}
+                      title={role === 'household'
                         ? (p.junkshop?.shop_name || 'Junkshop')
-                        : (p.household?.full_name || 'Household')}
+                        : (p.household?.full_name || 'Household')}>
+                      {role === 'household'
+                        ? (p.junkshop?.shop_name || 'Junkshop')?.slice(0,8)
+                        : (p.household?.full_name || 'Household')?.slice(0,8)}
                     </div>
                   ))}
-                  {dayPickups.length > 2 && (
-                    <div className="text-xs text-gray-400" style={{ fontSize:9 }}>
-                      +{dayPickups.length - 2} more
+                  {dayPickups.length > 1 && (
+                    <div className="text-xs text-gray-600 font-bold px-1">
+                      +{dayPickups.length - 1}
                     </div>
                   )}
                 </div>
@@ -1297,57 +1306,76 @@ function PickupCalendar({ pickups, role }) {
       </div>
 
       {/* Selected day detail */}
-      {selected && selectedPickups.length > 0 && (
-        <div className="mt-4 space-y-3">
-          <h3 className="text-sm font-medium text-gray-600">
-            {monthNames[currentMonth]} {selected} — {selectedPickups.length} pickup{selectedPickups.length !== 1 ? 's' : ''}
-          </h3>
-          {selectedPickups.map((p, i) => (
-            <div key={i} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4"
-              style={{ boxShadow:'0 2px 8px rgba(45,90,39,0.06)' }}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
-                style={{ backgroundColor:'#D8F3DC', color:'#0D2B1F' }}>
-                {role === 'household'
-                  ? (p.junkshop?.shop_name || 'JS').slice(0,2).toUpperCase()
-                  : (p.household?.full_name || 'HH').slice(0,2).toUpperCase()}
+      {selected && (
+        <div className="mt-5">
+          <div className="rounded-2xl p-4 mb-3 border border-gray-100"
+            style={{ background:'linear-gradient(135deg, #D8F3DC 0%, #EAF3DE 100%)' }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-green-900">
+                  📅 {monthNames[currentMonth]} {selected}
+                </h3>
+                <p className="text-xs text-green-700 mt-1 font-semibold">
+                  {selectedPickups.length} pickup{selectedPickups.length !== 1 ? 's' : ''}
+                </p>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-700">
-                  {role === 'household'
-                    ? (p.junkshop?.shop_name || 'Junkshop')
-                    : (p.household?.full_name || 'Household')}
-                </div>
-                <div className="text-xs text-gray-400 mt-0.5">
-                  {p.listings?.title || p.material_types?.join(', ') || 'Pickup'}
-                  {p.scheduled_time && ` · ${p.scheduled_time}`}
-                </div>
-              </div>
-              <span className="text-xs px-2.5 py-1 rounded-full font-medium shrink-0"
-                style={{
-                  backgroundColor: STATUS_COLOR[p.status] || '#F3F4F6',
-                  color:           STATUS_TEXT[p.status]  || '#6B7280',
-                }}>
-                {p.status}
-              </span>
+              <button onClick={() => setSelected(null)}
+                className="text-green-600 hover:text-green-800 text-xl transition font-bold">
+                ✕
+              </button>
             </div>
-          ))}
-        </div>
-      )}
-
-      {selected && selectedPickups.length === 0 && (
-        <div className="mt-4 text-center py-8 text-sm text-gray-400">
-          No pickups on {monthNames[currentMonth]} {selected}
+          </div>
+          {selectedPickups.length > 0 ? (
+            <div className="space-y-2">
+              {selectedPickups.map((p, i) => (
+                <div key={i} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3 hover:shadow-md transition duration-150"
+                  style={{ boxShadow:'0 2px 8px rgba(45,90,39,0.06)', borderLeft:`3px solid ${STATUS_COLOR[p.status] || '#F3F4F6'}` }}>
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
+                    style={{ backgroundColor:'#D8F3DC', color:'#1A4D35' }}>
+                    {role === 'household'
+                      ? (p.junkshop?.shop_name || 'JS').slice(0,2).toUpperCase()
+                      : (p.household?.full_name || 'HH').slice(0,2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold text-gray-800">
+                      {role === 'household'
+                        ? (p.junkshop?.shop_name || 'Junkshop')
+                        : (p.household?.full_name || 'Household')}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      {p.listings?.title || p.material_types?.join(', ') || 'Pickup'}
+                    </div>
+                  </div>
+                  <span className="text-xs px-2 py-1 rounded font-bold shrink-0 whitespace-nowrap"
+                    style={{
+                      backgroundColor: STATUS_COLOR[p.status] || '#F3F4F6',
+                      color:           STATUS_TEXT[p.status]  || '#6B7280',
+                    }}>
+                    {p.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6 bg-white border border-gray-100 rounded-xl text-sm text-gray-500 font-semibold">
+              No pickups scheduled
+            </div>
+          )}
         </div>
       )}
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-3 mt-4">
-        {Object.entries(STATUS_COLOR).map(([status, bg]) => (
-          <div key={status} className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: bg, border:`1px solid ${STATUS_TEXT[status]}40` }} />
-            <span className="text-xs text-gray-400 capitalize">{status}</span>
-          </div>
-        ))}
+      <div className="mt-5 rounded-2xl p-4 border border-gray-100"
+        style={{ background:'linear-gradient(135deg, #E6F1FB 0%, #EAF3DE 100%)' }}>
+        <p className="text-xs font-bold text-gray-700 uppercase tracking-widest mb-3">Legend</p>
+        <div className="grid grid-cols-3 gap-2">
+          {Object.entries(STATUS_COLOR).map(([status, bg]) => (
+            <div key={status} className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full shrink-0 border-2" style={{ backgroundColor: bg, borderColor:STATUS_TEXT[status] }} />
+              <span className="text-xs text-gray-700 font-semibold capitalize">{status}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
