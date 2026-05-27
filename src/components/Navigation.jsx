@@ -87,8 +87,8 @@ const isHome = location.pathname === '/'
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Link to="/login" style={{
-              fontSize: 13, color: '#a8d898',
-              border: '1px solid rgba(255,255,255,0.4)',
+              fontSize: 13, color: isHome ? '#a8d898' : '#1A4D35',
+              border: isHome ? '1px solid rgba(255,255,255,0.4)' : '1px solid #1A4D35',
               padding: '6px 16px', borderRadius: 99, textDecoration: 'none',
             }}>Log in</Link>
             <Link to="/signup" style={{

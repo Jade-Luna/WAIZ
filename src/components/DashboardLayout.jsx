@@ -32,21 +32,23 @@ export default function DashboardLayout({ children, activeTab }) {
   }
 
   const HOUSEHOLD_NAV = [
-    { key:'listings',  label:'My Listings',     icon:<ListIcon />,   path:'/dashboard/household'              },
-    { key:'map',       label:'Nearby Junkshops', icon:<MapPinIcon />, path:'/dashboard/household?tab=map'      },
-    { key:'requests',  label:'Pickup Requests',  icon:<TruckIcon />,  path:'/dashboard/household?tab=requests' },
-    { key:'history',   label:'Pickup History',   icon:<ClockIcon />,  path:'/dashboard/household?tab=history'  },
-    { key:'messages',  label:'Messages',         icon:<ChatIcon />,   path:'/dashboard/household?tab=messages' },
-    { key:'profile',   label:'Profile',          icon:<UserIcon />,   path:'/dashboard/household?tab=profile'  },
+    { key:'listings',  label:'My Listings',      icon:<ListIcon />,     path:'/dashboard/household'                },
+    { key:'requests',  label:'Pickup Requests',   icon:<TruckIcon />,   path:'/dashboard/household?tab=requests'   },
+    { key:'calendar',  label:'Calendar',          icon:<CalendarIcon />,path:'/dashboard/household?tab=calendar'   },
+    { key:'history',   label:'Pickup History',    icon:<ClockIcon />,   path:'/dashboard/household?tab=history'    },
+    { key:'messages',  label:'Messages',          icon:<ChatIcon />,    path:'/dashboard/household?tab=messages'   },
+    { key:'map',       label:'Nearby Junkshops',  icon:<MapPinIcon />,  path:'/dashboard/household?tab=map'        },
+    { key:'profile',   label:'Profile',           icon:<UserIcon />,    path:'/dashboard/household?tab=profile'    },
   ]
 
   const JUNKSHOP_NAV = [
-    { key:'requests',   label:'Pickup Requests', icon:<TruckIcon />,  path:'/dashboard/junkshop'                },
-    { key:'accepted',   label:'Active Pickups',  icon:<BoxIcon />,    path:'/dashboard/junkshop?tab=accepted'   },
-    { key:'history',    label:'History',         icon:<ClockIcon />,  path:'/dashboard/junkshop?tab=history'    },
-    { key:'messages',   label:'Messages',        icon:<ChatIcon />,   path:'/dashboard/junkshop?tab=messages'   },
-    { key:'priceboard', label:'Rate Board',      icon:<TagIcon />,    path:'/dashboard/junkshop?tab=priceboard' },
-    { key:'profile',    label:'Shop Profile',    icon:<UserIcon />,   path:'/dashboard/junkshop?tab=profile'    },
+    { key:'requests',   label:'Pickup Requests', icon:<TruckIcon />,    path:'/dashboard/junkshop'                  },
+    { key:'accepted',   label:'Active Pickups',  icon:<BoxIcon />,      path:'/dashboard/junkshop?tab=accepted'     },
+    { key:'calendar',   label:'Calendar',        icon:<CalendarIcon />, path:'/dashboard/junkshop?tab=calendar'     },
+    { key:'history',    label:'History',         icon:<ClockIcon />,    path:'/dashboard/junkshop?tab=history'      },
+    { key:'messages',   label:'Messages',        icon:<ChatIcon />,     path:'/dashboard/junkshop?tab=messages'     },
+    { key:'priceboard', label:'Rate Board',      icon:<TagIcon />,      path:'/dashboard/junkshop?tab=priceboard'   },
+    { key:'profile',    label:'Shop Profile',    icon:<UserIcon />,     path:'/dashboard/junkshop?tab=profile'      },
   ]
 
   const NAV = isJunk ? JUNKSHOP_NAV : HOUSEHOLD_NAV
@@ -245,29 +247,7 @@ export default function DashboardLayout({ children, activeTab }) {
             {NAV.find(n => n.key === activeTab)?.label || 'Dashboard'}
           </div>
           <div className="flex items-center gap-2 md:gap-3">
-            {!isJunk && (
-              <Link
-                to="/post-item"
-                data-tour="post-btn"
-                className="text-xs md:text-sm"
-                style={{
-                  padding:'6px 12px',
-                  borderRadius:10,
-                  fontSize:'inherit',
-                  fontWeight:600,
-                  background:'#1A4D35',
-                  color:'#fff',
-                  textDecoration:'none',
-                  display:'inline-flex',
-                  alignItems:'center',
-                  gap:4,
-                  position:'relative',
-                  zIndex: tour.tourActive && tour.step?.target === '[data-tour="post-btn"]' ? 9920 : 'auto',
-                }}
-              >
-                <span className="hidden md:inline">+</span> Post Item
-              </Link>
-            )}
+            
           </div>
         </div>
 
@@ -469,3 +449,4 @@ function SignOutIcon()   { return <svg width="16" height="16" viewBox="0 0 24 24
 function MenuCloseIcon() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> }
 function MenuOpenIcon()  { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg> }
 function MoreIcon()      { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg> }
+function CalendarIcon() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> }
