@@ -126,7 +126,6 @@ const submitReport = async () => {
 
 
   const { data } = await query
-   console.log('sample listing:', data?.[0])  
   if (!data) { setListings([]); setLoading(false); return }
 
  // Put current user's listings first

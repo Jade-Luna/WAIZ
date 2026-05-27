@@ -30,13 +30,51 @@ const userIcon = new L.DivIcon({
   iconSize:[14,14], iconAnchor:[7,7],
 })
 
-const USER_LOCATION = [16.4023, 120.5960]
+const BARANGAY_COORDS = {
+  'Abanao-Zandueta-Kayong-Chugum-Otek': [16.4120, 120.5930],
+  'Aurora Hill Proper':    [16.4144, 120.5989],
+  'Bayan Park':            [16.4058, 120.5972],
+  'Burnham-Legarda':       [16.4123, 120.5960],
+  'Cabinet Hill':          [16.4089, 120.6012],
+  'Camp 7':                [16.4231, 120.5876],
+  'Camp 8':                [16.4190, 120.5901],
+  'Dominican Hill-Mirador':[16.3991, 120.5872],
+  'Engineers Hill':        [16.4178, 120.6034],
+  'Fairview Village':      [16.4050, 120.6089],
+  'Gibraltar':             [16.3950, 120.5820],
+  'Guisad Central':        [16.4201, 120.5845],
+  'Holy Ghost Extension':  [16.3978, 120.5934],
+  'Holy Ghost Proper':     [16.3965, 120.5921],
+  'Irisan':                [16.4312, 120.5612],
+  'Kabayanihan':           [16.4089, 120.5845],
+  'Kias':                  [16.4401, 120.5723],
+  'Loakan Proper':         [16.3712, 120.5623],
+  'Lualhati':              [16.4034, 120.5956],
+  'Magsaysay Lower':       [16.4156, 120.5912],
+  'Magsaysay Upper':       [16.4167, 120.5923],
+  'Mines View Park':       [16.4289, 120.6134],
+  'New Lucban':            [16.4112, 120.5978],
+  'Pacdal':                [16.4023, 120.5845],
+  'Phil-Am':               [16.4234, 120.5956],
+  'Pinget':                [16.4312, 120.5834],
+  'Pinsao Pilot':          [16.4089, 120.5756],
+  'Pinsao Proper':         [16.4078, 120.5767],
+  'Quirino Hill East':     [16.4034, 120.5989],
+  'Quirino Hill Proper':   [16.4023, 120.5978],
+  'Rock Quarry':           [16.4156, 120.6045],
+  'Session Road':          [16.4123, 120.5989],
+  'Santo Rosario':         [16.4089, 120.5923],
+  'Trancoville':           [16.4178, 120.5912],
+  'Victoria Village':      [16.4201, 120.5978],
+}
+const DEFAULT_CENTER = [16.4023, 120.5960]
 
 export default function BaguioMap({
   height       = '400px',
   showUserPin  = false,
   userBarangay = '',
 }) {
+  const userLocation = BARANGAY_COORDS[userBarangay] || DEFAULT_CENTER
   const [shops,            setShops]            = useState([])
   const [selectedShop,     setSelectedShop]     = useState(null)
   const [showRoute,        setShowRoute]        = useState(false)
@@ -82,18 +120,18 @@ export default function BaguioMap({
           setShowRoute(true)
         },
         () => {
-          fetchRoute(USER_LOCATION[0], USER_LOCATION[1], shop.latitude, shop.longitude)
+          fetchRoute(userLocation[0], userLocation[1], shop.latitude, shop.longitude)
           setShowRoute(true)
         }
       )
     } else {
-      fetchRoute(USER_LOCATION[0], USER_LOCATION[1], shop.latitude, shop.longitude)
+      fetchRoute(userLocation[0], userLocation[1], shop.latitude, shop.longitude)
       setShowRoute(true)
     }
   }
 
   const mapsUrl = selectedShop
-    ? `https://www.google.com/maps/dir/${(userRealLocation || USER_LOCATION).join(',')}/${selectedShop.latitude},${selectedShop.longitude}`
+    ? `https://www.google.com/maps/dir/${(userRealLocation || userLocation).join(',')}/${selectedShop.latitude},${selectedShop.longitude}`
     : '#'
 
   return (
@@ -111,7 +149,7 @@ export default function BaguioMap({
       {/* Map */}
       <div style={{ height, width: '100%', borderRadius: '16px', overflow: 'hidden', zIndex: 0 }}>
         <MapContainer
-          center={[16.4023, 120.5960]}
+  center={userLocation}
           zoom={13}
           style={{ height: '100%', width: '100%' }}
           scrollWheelZoom={false}>
@@ -193,7 +231,7 @@ export default function BaguioMap({
 
           {/* User pin */}
           {showUserPin && (
-            <Marker position={USER_LOCATION} icon={userIcon}>
+            <Marker position={userLocation} icon={userIcon}>
               <Popup>
                 <div style={{ fontFamily: 'sans-serif', fontSize: '12px' }}>
                   <b>Your location</b><br />{userBarangay || 'Baguio City'}

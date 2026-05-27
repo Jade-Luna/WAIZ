@@ -245,29 +245,7 @@ export default function DashboardLayout({ children, activeTab }) {
             {NAV.find(n => n.key === activeTab)?.label || 'Dashboard'}
           </div>
           <div className="flex items-center gap-2 md:gap-3">
-            {!isJunk && (
-              <Link
-                to="/post-item"
-                data-tour="post-btn"
-                className="text-xs md:text-sm"
-                style={{
-                  padding:'6px 12px',
-                  borderRadius:10,
-                  fontSize:'inherit',
-                  fontWeight:600,
-                  background:'#1A4D35',
-                  color:'#fff',
-                  textDecoration:'none',
-                  display:'inline-flex',
-                  alignItems:'center',
-                  gap:4,
-                  position:'relative',
-                  zIndex: tour.tourActive && tour.step?.target === '[data-tour="post-btn"]' ? 9920 : 'auto',
-                }}
-              >
-                <span className="hidden md:inline">+</span> Post Item
-              </Link>
-            )}
+            
           </div>
         </div>
 

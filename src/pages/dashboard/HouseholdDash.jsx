@@ -515,9 +515,7 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
     <div className="rounded-2xl overflow-hidden border border-gray-100 mb-5">
       <MapWidget height="460px" showUserPin={true} userBarangay={profile?.barangay} />
     </div>
-    <div className="grid grid-cols-3 gap-3">
-      <ShopListFromDB />
-    </div>
+    <ShopListFromDB />
   </div>
 )}
 
@@ -755,7 +753,7 @@ const filtered = shops.filter(s => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map(s => (
             <div key={s.id} className="bg-white rounded-xl p-4"
               style={{ border: s.is_featured ? '2px solid #2D6A4F' : '1px solid #F3F4F6' }}>
