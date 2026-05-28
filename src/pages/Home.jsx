@@ -393,6 +393,8 @@ export default function Home() {
               { label: 'Junkshop directory', path: '/junkshops'    },
               { label: 'Sign up',            path: '/signup'       },
               { label: 'Log in',             path: '/login'        },
+              { label: 'Privacy Policy', path: '/privacy' },
+              { label: 'Terms of Use',   path: '/terms'   },
             ]},
           ].map(col => (
             <div key={col.title}>
