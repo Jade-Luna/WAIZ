@@ -107,14 +107,16 @@ const handleRequest = async () => {
   }
 
   const { error: insertError } = await supabase.from('pickups').insert({
-    junkshop_id:    requestShop.id,
-    household_id:   user.id,
-    material_types: requestForm.material_types,
-    est_weight_kg:  requestForm.est_weight_kg ? parseFloat(requestForm.est_weight_kg) : null,
-    preferred_date: requestForm.preferred_date || null,
-    note:           requestForm.note || null,
-    photos:         photoUrls.length > 0 ? photoUrls : null,
-    status:         'requested',
+    junkshop_id:       requestShop.id,
+    household_id:      user.id,
+    material_types:    requestForm.material_types,
+    est_weight_kg:     requestForm.est_weight_kg ? parseFloat(requestForm.est_weight_kg) : null,
+    preferred_date:    requestForm.preferred_date || null,
+    note:              requestForm.note || null,
+    photos:            photoUrls.length > 0 ? photoUrls : null,
+    pickup_type:       requestForm.pickup_type || 'pickup',
+    household_address: requestForm.pickup_type === 'pickup' ? (requestForm.household_address || null) : null,
+    status:            'requested',
   })
 
   setRequesting(false)
@@ -123,11 +125,13 @@ const handleRequest = async () => {
     setRequested(false)
     setRequestShop(null)
     setRequestForm({
-      note:           '',
-      material_types: [],
-      preferred_date: '',
-      preferred_time: '',
-      est_weight_kg:  '',
+      note:              '',
+      material_types:    [],
+      preferred_date:    '',
+      preferred_time:    '',
+      est_weight_kg:     '',
+      pickup_type:       'pickup',
+      household_address: '',
     })
     setPhotoFiles([])
     setPhotoPreviews([])
@@ -154,11 +158,13 @@ const handlePhotoChange = (e) => {
 }
 
 const [requestForm, setRequestForm] = useState({
-  note:           '',
-  material_types: [],
-  preferred_date: '',
-  preferred_time: '',
-  est_weight_kg:  '',
+  note:              '',
+  material_types:    [],
+  preferred_date:    '',
+  preferred_time:    '',
+  est_weight_kg:     '',
+  pickup_type:       'pickup',
+  household_address: '',
 })
 
 
@@ -382,7 +388,14 @@ const [requestForm, setRequestForm] = useState({
 
             {user && profile?.role === 'household' && (
               <button
-    onClick={() => { setRequestShop(selected); setSelected(null) }}
+    onClick={() => {
+      setRequestShop(selected)
+      setRequestForm(p => ({
+        ...p,
+        pickup_type: selected.pickup_mode === 'dropoff' ? 'dropoff' : 'pickup'
+      }))
+      setSelected(null)
+    }}
     className="w-full py-2.5 rounded-xl text-sm font-medium text-white"
     style={{ backgroundColor: '#C97A3A' }}>
     Request this junkshop for pickup
@@ -448,20 +461,86 @@ const [requestForm, setRequestForm] = useState({
               </div>
             </div>
 
+            {/* Pickup type */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-2">
+                How will this work?
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value:'pickup',  label:'🚚 They pick up', sub:'Junkshop comes to you', show: requestShop?.pickup_mode !== 'dropoff' },
+                  { value:'dropoff', label:'📍 I drop off',   sub:'You go to their shop',  show: requestShop?.pickup_mode !== 'pickup'  },
+                ].filter(opt => opt.show).map(opt => (
+                  <button key={opt.value}
+                    onClick={() => setRequestForm(p => ({ ...p, pickup_type: opt.value }))}
+                    className="p-3 rounded-xl border-2 text-left transition"
+                    style={{
+                      borderColor:     requestForm.pickup_type === opt.value ? '#1A4D35' : '#E5E7EB',
+                      backgroundColor: requestForm.pickup_type === opt.value ? '#F0FDF4' : '#fff',
+                    }}>
+                    <div className="text-xs font-medium text-gray-700">{opt.label}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">{opt.sub}</div>
+                  </button>
+                ))}
+              </div>
+              {requestShop?.pickup_mode === 'dropoff' && (
+                <div className="mt-2 text-xs px-3 py-2 rounded-xl"
+                  style={{ backgroundColor:'#E6F1FB', color:'#042C53' }}>
+                  📍 This junkshop only accepts drop-offs at their location
+                </div>
+              )}
+              {requestForm.pickup_type === 'dropoff' && requestShop?.barangay && (
+                <div className="mt-2 text-xs px-3 py-2 rounded-xl"
+                  style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
+                  📍 Drop off at: {requestShop.barangay}
+                  {requestShop.phone && ` · ${requestShop.phone}`}
+                </div>
+              )}
+            </div>
+
+            {/* Pickup address — only if junkshop picks up */}
+            {requestForm.pickup_type === 'pickup' && (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                  Your address / landmark
+                </label>
+                <input type="text"
+                  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
+                  placeholder="e.g. House 12, Irisan Road near the market"
+                  value={requestForm.household_address || ''}
+                  onChange={e => setRequestForm(p => ({ ...p, household_address: e.target.value }))}
+                />
+              </div>
+            )}
+
             {/* Estimated weight */}
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">
                 Estimated total weight (kg) <span className="text-gray-300 font-normal">— optional</span>
               </label>
               <input type="number" min="0" step="0.5"
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
-                placeholder="e.g. 5"
-                value={requestForm.est_weight_kg}
-                onChange={e => setRequestForm(p => ({ ...p, est_weight_kg: e.target.value }))}
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                The junkshop will confirm the final price at pickup
-              </p>
+  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
+  placeholder="e.g. 5"
+  value={requestForm.est_weight_kg}
+  onChange={e => setRequestForm(p => ({ ...p, est_weight_kg: e.target.value }))}
+/>
+{requestShop?.min_pickup_kg && requestForm.est_weight_kg &&
+  parseFloat(requestForm.est_weight_kg) < requestShop.min_pickup_kg && (
+  <div className="mt-1.5 text-xs px-3 py-2 rounded-xl"
+    style={{ backgroundColor:'#FAECE7', color:'#993C1D' }}>
+    ⚠️ This shop requires a minimum of {requestShop.min_pickup_kg} kg for pickup
+  </div>
+)}
+{requestShop?.min_pickup_kg && !requestForm.est_weight_kg && (
+  <p className="text-xs text-gray-400 mt-1">
+    Minimum {requestShop.min_pickup_kg} kg required for this shop
+  </p>
+)}
+{!requestShop?.min_pickup_kg && (
+  <p className="text-xs text-gray-400 mt-1">
+    The junkshop will confirm the final price at pickup
+  </p>
+)}
             </div>
 
             {/* Photos */}
@@ -493,6 +572,7 @@ const [requestForm, setRequestForm] = useState({
                 className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
                 value={requestForm.preferred_date}
                 min={new Date().toISOString().split('T')[0]}
+                max={new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                 onChange={e => setRequestForm(p => ({ ...p, preferred_date: e.target.value }))}
               />
             </div>
@@ -518,8 +598,10 @@ const [requestForm, setRequestForm] = useState({
               Cancel
             </button>
             <button
-              onClick={handleRequest}
-              disabled={requesting || !requestForm.material_types.length}
+  onClick={handleRequest}
+  disabled={requesting || !requestForm.material_types.length ||
+    (requestShop?.min_pickup_kg && requestForm.est_weight_kg &&
+     parseFloat(requestForm.est_weight_kg) < requestShop.min_pickup_kg)}
               className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition"
               style={{ backgroundColor: requesting || !requestForm.material_types.length ? '#9CA3AF' : '#C97A3A' }}>
               {requesting ? 'Sending...' : 'Send request'}

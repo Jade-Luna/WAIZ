@@ -316,8 +316,17 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
           ) : (
             <div className="space-y-3">
               {requests.filter(r => r.status === 'requested').map(req => (
-                <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} showComplete onSetConfirm={(r) => { setConfirmPickup(r); setConfirmForm({ actual_weight_kg:'', final_price:'', completion_notes:'' }) }} cardStyle={{borderLeft: '4px solid #C97A3A', backgroundColor: '#C97A3A08', boxShadow: '0 2px 8px rgba(45,90,39,0.06)'}} />
-              ))}
+  <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus}
+    showActions
+    onView={(r) => { setViewRequest(r); setOfferPrice('') }}
+    onSetConfirm={(r) => { setConfirmPickup(r); setConfirmForm({ actual_weight_kg:'', final_price:'', completion_notes:'' }) }} />
+))}
+{requests.filter(r => r.status === 'offered').map(req => (
+  <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus}
+    showActions
+    onView={(r) => { setViewRequest(r); setOfferPrice('') }}
+    onSetConfirm={(r) => { setConfirmPickup(r); setConfirmForm({ actual_weight_kg:'', final_price:'', completion_notes:'' }) }} />
+))}
             </div>
           )}
         </div>
@@ -325,20 +334,61 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
 
       {/* ACTIVE PICKUPS */}
       {activeTab === 'accepted' && (
-        <div>
-          <h2 className="text-base font-medium text-gray-700 mb-4">Active Pickups</h2>
-          {requests.filter(r => r.status === 'accepted').length === 0 ? (
-            <Empty icon="🚚" text="No active pickups" sub="Accepted pickups will appear here" />
-          ) : (
-            <div className="space-y-3">
-              {requests.filter(r => r.status === 'accepted').map(req => (
-                <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} showComplete
-  onSetConfirm={(r) => { setConfirmPickup(r); setConfirmForm({ actual_weight_kg:'', final_price:'', completion_notes:'' }) }} cardStyle={{borderLeft: '4px solid #1A4D35', backgroundColor: '#1A4D3508', boxShadow: '0 2px 8px rgba(45,90,39,0.06)'}} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+  <div>
+    <h2 className="text-base font-medium text-gray-700 mb-4">Active Pickups</h2>
+    {requests.filter(r => r.status === 'accepted').length === 0 ? (
+      <Empty icon="🚚" text="No active pickups" sub="Accepted pickups will appear here" />
+    ) : (
+      <div className="space-y-3">
+        {requests.filter(r => r.status === 'accepted').map(req => (
+          <div key={req.id} className="bg-white border border-gray-100 rounded-2xl p-4"
+            style={{ boxShadow:'0 2px 8px rgba(45,90,39,0.06)' }}>
+            <RequestCard req={req} onUpdate={handleUpdateStatus} showComplete
+              onSetConfirm={(r) => { setConfirmPickup(r); setConfirmForm({ actual_weight_kg:'', final_price:'', completion_notes:'' }) }} />
+
+            {/* Schedule details */}
+            {req.confirmed_date && (
+              <div className="mt-3 pt-3 border-t border-gray-50">
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span>📅</span>
+                    <span className="font-medium text-gray-700">{req.confirmed_date}</span>
+                    {req.confirmed_time && <span>at {req.confirmed_time}</span>}
+                  </div>
+                  {req.pickup_type === 'dropoff' ? (
+                    <span className="text-xs px-2.5 py-1 rounded-full font-medium"
+                      style={{ backgroundColor:'#E6F1FB', color:'#042C53' }}>
+                      📍 Household will drop off
+                    </span>
+                  ) : (
+                    <span className="text-xs px-2.5 py-1 rounded-full font-medium"
+                      style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
+                      🚚 You pick up
+                    </span>
+                  )}
+                </div>
+                {req.household_address && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    📍 {req.household_address}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* No schedule yet */}
+            {!req.confirmed_date && (
+              <div className="mt-3 pt-3 border-t border-gray-50">
+                <div className="text-xs text-gray-400 italic">
+                  ⏳ Waiting for household to confirm a schedule
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
       {/* RATE BOARD */}
       {activeTab === 'priceboard' && (
@@ -642,10 +692,20 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1.5">Actual weight collected (kg)</label>
           <input type="number" min="0" step="0.1"
-            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
-            placeholder="e.g. 12.5"
-            value={confirmForm.actual_weight_kg}
-            onChange={e => setConfirmForm(p => ({ ...p, actual_weight_kg: e.target.value }))} />
+              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
+              placeholder="e.g. 12.5"
+              value={confirmForm.actual_weight_kg}
+              onChange={e => {
+                const kg = parseFloat(e.target.value) || 0
+                const suggested = confirmPickup?.offered_price
+                  ? (kg * confirmPickup.offered_price).toFixed(0)
+                  : ''
+                setConfirmForm(p => ({
+                  ...p,
+                  actual_weight_kg: e.target.value,
+                  final_price: suggested || p.final_price,
+                }))
+              }} />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1.5">Final price paid to household (₱)</label>
@@ -1190,6 +1250,7 @@ function PickupCalendar({ pickups, role }) {
   const getPickupsForDay = (day) => {
     const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
     return pickups.filter(p =>
+      p.confirmed_date === dateStr ||
       p.preferred_date === dateStr ||
       p.scheduled_date === dateStr
     )

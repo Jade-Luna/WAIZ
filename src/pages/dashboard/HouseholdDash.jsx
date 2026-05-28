@@ -44,6 +44,14 @@ export default function HouseholdDash() {
   const activeTab         = searchParams.get('tab') || 'listings'
   const [listings, setListings]   = useState([])
   const [requests, setRequests]   = useState([])
+  const [schedulePickup, setSchedulePickup] = useState(null)
+const [scheduleForm, setScheduleForm] = useState({
+  confirmed_date: '',
+  confirmed_time: '',
+  household_address: '',
+  pickup_type: 'pickup',
+})
+const [scheduling, setScheduling] = useState(false)
   const [history,  setHistory]    = useState([])
   const [dataLoaded, setDataLoaded] = useState(false)
   const [deleteId, setDeleteId]   = useState(null)
@@ -163,22 +171,19 @@ const fetchData = async () => {
       await supabase.from('listings')
         .update({ status: 'available' })
         .eq('id', pickup.listing_id)
-    }
-    if (status === 'accepted' && pickup?.listing_id) {
-      console.log('Updating listing to pending:', pickup.listing_id)
-      await supabase.from('listings')
-        .update({ status: 'pending' })
-        .eq('id', pickup.listing_id)
-    }
-
-    if (status === 'cancelled') {
       setRequests(prev => prev.filter(r => r.id !== id))
       setActionInProgress(null)
       return
     }
 
     if (status === 'accepted') {
-      setRequests(prev => prev.filter(r => r.id !== id))
+      setSchedulePickup(pickup)
+      setScheduleForm({
+        confirmed_date: pickup.preferred_date || '',
+        confirmed_time: '',
+        household_address: '',
+        pickup_type: 'pickup',
+      })
       setActionInProgress(null)
       return
     }
@@ -191,6 +196,33 @@ const fetchData = async () => {
     alert(`Error: ${err.message}`)
     setActionInProgress(null)
   }
+}
+
+const handleConfirmSchedule = async () => {
+  if (!schedulePickup || !scheduleForm.confirmed_date) return
+  setScheduling(true)
+
+  await supabase.from('pickups').update({
+    status:            'accepted',
+    confirmed_date:    scheduleForm.confirmed_date,
+    confirmed_time:    scheduleForm.confirmed_time || null,
+    household_address: scheduleForm.household_address || null,
+    pickup_type:       scheduleForm.pickup_type,
+    date_proposed_by:  'household',
+  }).eq('id', schedulePickup.id)
+
+  if (schedulePickup.listing_id) {
+    await supabase.from('listings')
+      .update({ status: 'pending' })
+      .eq('id', schedulePickup.listing_id)
+  }
+
+  setScheduling(false)
+  setSchedulePickup(null)
+  setRequests(prev => prev.map(r =>
+  r.id === schedulePickup.id ? { ...r, status:'accepted', confirmed_date: scheduleForm.confirmed_date } : r
+))
+  fetchData()
 }
 
 const handleRate = async (score) => {
@@ -366,84 +398,118 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
             <Empty icon="📬" text="No pickup requests yet" sub="Post an item to start receiving requests" />
           ) : (
             <div className="space-y-3">
-              {requests.map(req => (
-                <div key={req.id} className="rounded-2xl p-4 flex items-center gap-4 transition hover:shadow-md"
-                  style={{
-                    backgroundColor: '#C97A3A12',
-                    boxShadow: '0 2px 8px rgba(45,90,39,0.06)'
-                  }}>
-                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
-  style={{ backgroundColor:'#FEF3ED', color:'#C97A3A' }}>
-  {(req.junkshop?.shop_name || 'JS').slice(0,2).toUpperCase()}
-</div>
-<div className="flex-1 min-w-0">
-  <div className="text-sm font-medium text-gray-800 mb-1">
-    {req.junkshop?.shop_name || 'Junkshop'}
-  </div>
-  <div className="text-xs text-gray-500">
-    For: <span className="text-gray-700 font-medium">{req.listings?.title || 'Item'}</span>
-    <span className="mx-2">·</span>
-    Offered: <span className="font-medium" style={{ color:'#C97A3A' }}>₱{req.offered_price}/kg</span>
-    {req.junkshop?.barangay && <><span className="mx-2">·</span><span className="text-gray-600">{req.junkshop.barangay}</span></>}
-  </div>
-</div>
-                  <div className="flex gap-2 shrink-0">
-  {req.listing_id ? (
-    <>
-      <button
-        onClick={() => handlePickupAction(req.id, 'cancelled')}
-        disabled={actionInProgress === req.id}
-        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 transition"
-        style={{ opacity: actionInProgress === req.id ? 0.5 : 1, cursor: actionInProgress === req.id ? 'wait' : 'pointer' }}>
-        {actionInProgress === req.id ? 'Processing...' : 'Decline'}
-      </button>
-      <button
-        onClick={() => handlePickupAction(req.id, 'accepted')}
-        disabled={actionInProgress === req.id}
-        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white transition hover:opacity-90"
-        style={{ backgroundColor: actionInProgress === req.id ? '#999' : '#C97A3A', cursor: actionInProgress === req.id ? 'wait' : 'pointer' }}>
-        {actionInProgress === req.id ? 'Processing...' : 'Accept'}
-      </button>
-    </>
-  ) : req.status === 'offered' ? (
-    <div className="flex items-center gap-2">
-      <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ color:'#C97A3A', backgroundColor:'#FEF3ED' }}>
-        ₱{req.offered_price}/kg offered
-      </span>
-      <button
-        onClick={() => handlePickupAction(req.id, 'cancelled')}
-        disabled={actionInProgress === req.id}
-        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 transition"
-        style={{ opacity: actionInProgress === req.id ? 0.5 : 1, cursor: actionInProgress === req.id ? 'wait' : 'pointer' }}>
-        {actionInProgress === req.id ? 'Processing...' : 'Decline'}
-      </button>
-      <button
-        onClick={() => handlePickupAction(req.id, 'accepted')}
-        disabled={actionInProgress === req.id}
-        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white transition hover:opacity-90"
-        style={{ backgroundColor: actionInProgress === req.id ? '#999' : '#C97A3A', cursor: actionInProgress === req.id ? 'wait' : 'pointer' }}>
-        {actionInProgress === req.id ? 'Processing...' : 'Accept'}
-      </button>
-    </div>
-  ) : req.status === 'accepted' ? (
-    <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
-      style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
-      Pickup confirmed ✓
-    </span>
-  ) : (
-    <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
-      style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
-      Awaiting junkshop offer
-    </span>
-  )}
-</div>
+             {requests.map(req => (
+                <div key={req.id} className="bg-white border border-gray-100 rounded-2xl p-4"
+                  style={{ boxShadow:'0 2px 8px rgba(45,90,39,0.06)' }}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
+                      style={{ backgroundColor:'#D8F3DC', color:'#0D2B1F' }}>
+                      {(req.junkshop?.shop_name || 'JS').slice(0,2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-700 mb-1">
+                        {req.junkshop?.shop_name || 'Junkshop'}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        For: <span className="text-gray-600">{req.listings?.title || 'Item'}</span>
+                        <span className="mx-2">·</span>
+                        Offered: <span className="font-medium" style={{ color:'#1A4D35' }}>₱{req.offered_price}/kg</span>
+                        {req.junkshop?.barangay && <><span className="mx-2">·</span>{req.junkshop.barangay}</>}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      {req.listing_id ? (
+                        <>
+                          <button
+                            onClick={() => handlePickupAction(req.id, 'cancelled')}
+                            disabled={actionInProgress === req.id}
+                            className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 transition"
+                            style={{ opacity: actionInProgress === req.id ? 0.5 : 1 }}>
+                            {actionInProgress === req.id ? 'Processing...' : 'Decline'}
+                          </button>
+                          <button
+                            onClick={() => handlePickupAction(req.id, 'accepted')}
+                            disabled={actionInProgress === req.id}
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+                            style={{ backgroundColor: actionInProgress === req.id ? '#999' : '#C97A3A' }}>
+                            {actionInProgress === req.id ? 'Processing...' : 'Accept'}
+                          </button>
+                        </>
+                      ) : req.status === 'offered' ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium" style={{ color:'#1A4D35' }}>
+                            ₱{req.offered_price}/kg offered
+                          </span>
+                          <button
+                            onClick={() => handlePickupAction(req.id, 'cancelled')}
+                            disabled={actionInProgress === req.id}
+                            className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 transition"
+                            style={{ opacity: actionInProgress === req.id ? 0.5 : 1 }}>
+                            {actionInProgress === req.id ? 'Processing...' : 'Decline'}
+                          </button>
+                          <button
+                            onClick={() => handlePickupAction(req.id, 'accepted')}
+                            disabled={actionInProgress === req.id}
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+                            style={{ backgroundColor: actionInProgress === req.id ? '#999' : '#C97A3A' }}>
+                            {actionInProgress === req.id ? 'Processing...' : 'Accept'}
+                          </button>
+                        </div>
+                      ) : req.status === 'accepted' ? (
+                        <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                          style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
+                          Pickup confirmed ✓
+                        </span>
+                      ) : (
+                        <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                          style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
+                          {req.status === 'requested' ? '⏳ Pending junkshop offer' : '⏳ Awaiting response'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Schedule details — shown after household confirms */}
+                  {req.status === 'accepted' && req.confirmed_date && (
+                    <div className="mt-3 pt-3 border-t border-gray-50 flex flex-wrap gap-3 items-center">
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span>📅</span>
+                        <span className="font-medium text-gray-700">{req.confirmed_date}</span>
+                        {req.confirmed_time && <span>at {req.confirmed_time}</span>}
+                      </div>
+                      {req.pickup_type === 'dropoff' ? (
+                        <span className="text-xs px-2.5 py-1 rounded-full font-medium"
+                          style={{ backgroundColor:'#E6F1FB', color:'#042C53' }}>
+                          📍 You are dropping off
+                        </span>
+                      ) : (
+                        <span className="text-xs px-2.5 py-1 rounded-full font-medium"
+                          style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
+                          🚚 Junkshop will pick up
+                        </span>
+                      )}
+                      {req.household_address && (
+                        <span className="text-xs text-gray-400">
+                          📍 {req.household_address}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Waiting for schedule */}
+                  {req.status === 'accepted' && !req.confirmed_date && (
+                    <div className="mt-3 pt-3 border-t border-gray-50">
+                      <div className="text-xs text-gray-400 italic">
+                        ⏳ Schedule not yet confirmed
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
         </div>
-      )}
-
+      )}      
 {/* CALENDAR */}
       {activeTab === 'calendar' && (
         <PickupCalendar pickups={[...requests, ...history]} role="household" />
@@ -592,6 +658,106 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
             <span className="text-xs" style={{ color: m.done ? '#1A4D35' : '#9CA3AF' }}>{m.label}</span>
           </div>
         ))}
+      </div>
+    </div>
+  </div>
+)}
+
+{schedulePickup && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+    style={{ backgroundColor:'rgba(0,0,0,0.4)' }}
+    onClick={() => setSchedulePickup(null)}>
+    <div className="bg-white rounded-2xl p-6 w-full max-w-sm"
+      onClick={e => e.stopPropagation()}>
+
+      <div className="text-center mb-5">
+        <div className="text-3xl mb-2">📅</div>
+        <h3 className="text-sm font-medium text-gray-800">Schedule the pickup</h3>
+        <p className="text-xs text-gray-400 mt-1">
+          Confirm when and how the junkshop should collect your items
+        </p>
+      </div>
+
+      <div className="space-y-4">
+
+        {/* Pickup type */}
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-2">
+            How will this work?
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { value:'pickup',  label:'🚚 They pick up', sub:'Junkshop comes to you' },
+              { value:'dropoff', label:'📍 I drop off',   sub:'You go to junkshop'   },
+            ].map(opt => (
+              <button key={opt.value}
+                onClick={() => setScheduleForm(p => ({ ...p, pickup_type: opt.value }))}
+                className="p-3 rounded-xl border-2 text-left transition"
+                style={{
+                  borderColor:     scheduleForm.pickup_type === opt.value ? '#1A4D35' : '#E5E7EB',
+                  backgroundColor: scheduleForm.pickup_type === opt.value ? '#F0FDF4' : '#fff',
+                }}>
+                <div className="text-xs font-medium text-gray-700">{opt.label}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{opt.sub}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Date */}
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1.5">
+            Preferred date <span className="text-red-400">*</span>
+          </label>
+          <input type="date"
+  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
+  min={new Date().toISOString().split('T')[0]}
+  max={new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+  value={scheduleForm.confirmed_date}
+  onChange={e => setScheduleForm(p => ({ ...p, confirmed_date: e.target.value }))}
+/>
+        </div>
+
+        {/* Time */}
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1.5">
+            Preferred time <span className="text-gray-300 font-normal">— optional</span>
+          </label>
+          <input type="time"
+            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
+            value={scheduleForm.confirmed_time}
+            onChange={e => setScheduleForm(p => ({ ...p, confirmed_time: e.target.value }))}
+          />
+        </div>
+
+        {/* Address — only for pickup mode */}
+        {scheduleForm.pickup_type === 'pickup' && (
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+              Your address / landmark
+            </label>
+            <input type="text"
+              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
+              placeholder="e.g. House 12, Irisan Road near the market"
+              value={scheduleForm.household_address}
+              onChange={e => setScheduleForm(p => ({ ...p, household_address: e.target.value }))}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-3 mt-5">
+        <button onClick={() => setSchedulePickup(null)}
+          className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">
+          Cancel
+        </button>
+        <button
+          onClick={handleConfirmSchedule}
+          disabled={scheduling || !scheduleForm.confirmed_date}
+          className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
+          style={{ backgroundColor: scheduleForm.confirmed_date ? '#1A4D35' : '#9CA3AF' }}>
+          {scheduling ? 'Confirming...' : 'Confirm schedule'}
+        </button>
       </div>
     </div>
   </div>
