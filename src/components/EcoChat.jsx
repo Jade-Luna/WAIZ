@@ -244,7 +244,7 @@ if (newSessionCount >= MAX_SESSION_MESSAGES) {
       { triggers:['pickup request','my requests','pending requests'], path: profile?.role === 'junkshop' ? '/dashboard/junkshop?tab=requests' : '/dashboard/household?tab=requests' },
       { triggers:['messages','my messages','open chat'], path: profile?.role === 'junkshop' ? '/dashboard/junkshop?tab=messages' : '/dashboard/household?tab=messages' },
     ]
-
+    
     let navigated = false
     for (const cmd of navCommands) {
       if (cmd.triggers.some(t => lowerText.includes(t))) {
