@@ -301,18 +301,22 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
                 const s   = STATUS_STYLE[l.status] || STATUS_STYLE.available
                 const cat = CAT_COLORS[l.category] || CAT_COLORS.metal
                 return (
-                  <div key={l.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div key={l.id} className="rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition hover:shadow-md"
+                    style={{
+                      backgroundColor: `${cat.color}12`,
+                      boxShadow: '0 2px 8px rgba(45,90,39,0.06)'
+                    }}>
                     <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
                       style={{ backgroundColor: cat.bg, color: cat.color }}>
                       {l.category?.slice(0,2).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0 w-full">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-sm font-medium text-gray-700 truncate">{l.title}</span>
+                        <span className="text-sm font-medium text-gray-800 truncate">{l.title}</span>
                         <span className="text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0"
                           style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>
                       </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs text-gray-400 flex-wrap">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs text-gray-500 flex-wrap">
                         <span>{l.barangay}</span>
                         {l.weight_estimate && <><span className="hidden sm:inline">·</span><span>~{l.weight_estimate} kg</span></>}
                         <span className="hidden sm:inline">·</span><span>{timeAgo(l.created_at)}</span>
@@ -334,14 +338,14 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
   {l.status === 'available' && (
     <button
       onClick={() => navigate(`/listing/${l.id}/edit`)}
-      className="flex-1 sm:flex-none px-2 md:px-3 py-1.5 rounded-lg text-xs border font-medium"
+      className="flex-1 sm:flex-none px-2 md:px-3 py-1.5 rounded-lg text-xs border font-medium transition hover:bg-gray-50"
       style={{ borderColor:'#1A4D35', color:'#1A4D35' }}>
       Edit
     </button>
   )}
   <button
     onClick={() => navigate(`/listing/${l.id}`)}
-    className="flex-1 sm:flex-none px-2 md:px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+    className="flex-1 sm:flex-none px-2 md:px-3 py-1.5 rounded-lg text-xs font-medium text-white transition hover:opacity-90"
     style={{ backgroundColor:'#1A4D35' }}>
     View
   </button>
@@ -363,20 +367,24 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
           ) : (
             <div className="space-y-3">
               {requests.map(req => (
-                <div key={req.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4">
+                <div key={req.id} className="rounded-2xl p-4 flex items-center gap-4 transition hover:shadow-md"
+                  style={{
+                    backgroundColor: '#C97A3A12',
+                    boxShadow: '0 2px 8px rgba(45,90,39,0.06)'
+                  }}>
                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
-  style={{ backgroundColor:'#D8F3DC', color:'#0D2B1F' }}>
+  style={{ backgroundColor:'#FEF3ED', color:'#C97A3A' }}>
   {(req.junkshop?.shop_name || 'JS').slice(0,2).toUpperCase()}
 </div>
 <div className="flex-1 min-w-0">
-  <div className="text-sm font-medium text-gray-700 mb-1">
+  <div className="text-sm font-medium text-gray-800 mb-1">
     {req.junkshop?.shop_name || 'Junkshop'}
   </div>
-  <div className="text-xs text-gray-400">
-    For: <span className="text-gray-600">{req.listings?.title || 'Item'}</span>
+  <div className="text-xs text-gray-500">
+    For: <span className="text-gray-700 font-medium">{req.listings?.title || 'Item'}</span>
     <span className="mx-2">·</span>
-    Offered: <span className="font-medium" style={{ color:'#1A4D35' }}>₱{req.offered_price}/kg</span>
-    {req.junkshop?.barangay && <><span className="mx-2">·</span>{req.junkshop.barangay}</>}
+    Offered: <span className="font-medium" style={{ color:'#C97A3A' }}>₱{req.offered_price}/kg</span>
+    {req.junkshop?.barangay && <><span className="mx-2">·</span><span className="text-gray-600">{req.junkshop.barangay}</span></>}
   </div>
 </div>
                   <div className="flex gap-2 shrink-0">
@@ -392,14 +400,14 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
       <button
         onClick={() => handlePickupAction(req.id, 'accepted')}
         disabled={actionInProgress === req.id}
-        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white transition hover:opacity-90"
         style={{ backgroundColor: actionInProgress === req.id ? '#999' : '#C97A3A', cursor: actionInProgress === req.id ? 'wait' : 'pointer' }}>
         {actionInProgress === req.id ? 'Processing...' : 'Accept'}
       </button>
     </>
   ) : req.status === 'offered' ? (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-medium" style={{ color:'#1A4D35' }}>
+      <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ color:'#C97A3A', backgroundColor:'#FEF3ED' }}>
         ₱{req.offered_price}/kg offered
       </span>
       <button
@@ -412,7 +420,7 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
       <button
         onClick={() => handlePickupAction(req.id, 'accepted')}
         disabled={actionInProgress === req.id}
-        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white transition hover:opacity-90"
         style={{ backgroundColor: actionInProgress === req.id ? '#999' : '#C97A3A', cursor: actionInProgress === req.id ? 'wait' : 'pointer' }}>
         {actionInProgress === req.id ? 'Processing...' : 'Accept'}
       </button>
@@ -453,41 +461,47 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
           ) : (
             <div className="space-y-3">
               {history.map(h => (
-  <div key={h.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4">
+  <div key={h.id} className="rounded-2xl p-4 flex items-center gap-4 transition hover:shadow-md"
+    style={{
+      backgroundColor: '#08504112',
+      boxShadow: '0 2px 8px rgba(45,90,39,0.06)'
+    }}>
     <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
-      style={{ backgroundColor:'#D8F3DC', color:'#0D2B1F' }}>
+      style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
       {(h.junkshop?.shop_name || h.junkshop?.full_name || 'JS').slice(0,2).toUpperCase()}
     </div>
     <div className="flex-1 min-w-0">
-      <div className="text-sm font-medium text-gray-700">
+      <div className="text-sm font-medium text-gray-800">
         {h.listings?.title || h.listing_title || 'Pickup'}
       </div>
-      <div className="text-xs text-gray-400 mt-0.5">
+      <div className="text-xs text-gray-500 mt-0.5">
         {h.junkshop?.shop_name || h.junkshop?.full_name || 'Junkshop'} · {h.scheduled_date || h.date || 'Completed'}
       </div>
     </div>
-    <div className="text-right shrink-0 flex flex-col items-end gap-1">
-      <div className="text-sm font-medium" style={{ color:'#1A4D35' }}>
+    <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
+      <div className="text-sm font-medium" style={{ color:'#085041' }}>
         ₱{h.offered_price || h.agreed_price || 0}
       </div>
-      <span className="text-xs px-2 py-0.5 rounded-full"
+      <span className="text-xs px-2.5 py-1 rounded-full font-medium"
         style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
-        Completed
+        ✓ Completed
       </span>
-      <button
-  onClick={() => setReceiptPickup(h)}
-  className="text-xs px-2.5 py-1 rounded-lg border mt-1"
-  style={{ borderColor:'#1A4D35', color:'#1A4D35' }}>
-  View receipt
-</button>
+      <div className="flex gap-1.5 mt-1">
+        <button
+    onClick={() => setReceiptPickup(h)}
+    className="text-xs px-2.5 py-1 rounded-lg border transition hover:bg-gray-50"
+    style={{ borderColor:'#085041', color:'#085041' }}>
+    Receipt
+  </button>
 {!h.rated && (
   <button
     onClick={() => setRatingPickup(h)}
-    className="text-xs px-2.5 py-1 rounded-lg border mt-1"
+    className="text-xs px-2.5 py-1 rounded-lg border transition hover:bg-yellow-50"
     style={{ borderColor:'#C97A3A', color:'#C97A3A' }}>
-    ★ Rate pickup
+    ★ Rate
   </button>
 )}
+      </div>
     </div>
   </div>
 ))}

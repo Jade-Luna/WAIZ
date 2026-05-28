@@ -316,7 +316,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
           ) : (
             <div className="space-y-3">
               {requests.filter(r => r.status === 'requested').map(req => (
-                <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} showComplete onSetConfirm={(r) => { setConfirmPickup(r); setConfirmForm({ actual_weight_kg:'', final_price:'', completion_notes:'' }) }} />
+                <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} showComplete onSetConfirm={(r) => { setConfirmPickup(r); setConfirmForm({ actual_weight_kg:'', final_price:'', completion_notes:'' }) }} cardStyle={{borderLeft: '4px solid #C97A3A', backgroundColor: '#C97A3A08', boxShadow: '0 2px 8px rgba(45,90,39,0.06)'}} />
               ))}
             </div>
           )}
@@ -333,7 +333,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
             <div className="space-y-3">
               {requests.filter(r => r.status === 'accepted').map(req => (
                 <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} showComplete
-  onSetConfirm={(r) => { setConfirmPickup(r); setConfirmForm({ actual_weight_kg:'', final_price:'', completion_notes:'' }) }} />
+  onSetConfirm={(r) => { setConfirmPickup(r); setConfirmForm({ actual_weight_kg:'', final_price:'', completion_notes:'' }) }} cardStyle={{borderLeft: '4px solid #1A4D35', backgroundColor: '#1A4D3508', boxShadow: '0 2px 8px rgba(45,90,39,0.06)'}} />
               ))}
             </div>
           )}
@@ -439,7 +439,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
             <div className="space-y-3">
               {requests
                 .filter(r => r.status === 'completed' || r.status === 'cancelled')
-                .map(req => <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} />)}
+                .map(req => <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} cardStyle={{borderLeft: '4px solid #085041', backgroundColor: '#08504108', boxShadow: '0 2px 8px rgba(45,90,39,0.06)'}} />)}
             </div>
           )}
         </div>
@@ -728,7 +728,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
   )
 }
 
-function RequestCard({ req, onUpdate, showActions, showComplete, onView, onSetConfirm }) {
+function RequestCard({ req, onUpdate, showActions, showComplete, onView, onSetConfirm, cardStyle }) {
   const [offerPrice, setOfferPrice] = useState('')
   const [offering,   setOffering]   = useState(false)
 
@@ -740,18 +740,23 @@ function RequestCard({ req, onUpdate, showActions, showComplete, onView, onSetCo
 
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4">
+    <div className="rounded-2xl p-4 flex items-center gap-4 transition hover:shadow-md"
+      style={{
+        backgroundColor: '#C97A3A12',
+        boxShadow: '0 2px 8px rgba(45,90,39,0.06)',
+        ...cardStyle
+      }}>
       <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
         style={{ backgroundColor:'#D8F3DC', color:'#0D2B1F' }}>
         {name?.slice(0,2).toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span className="text-sm font-medium text-gray-700 truncate">{title}</span>
+          <span className="text-sm font-medium text-gray-800 truncate">{title}</span>
           <span className="text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0"
             style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
+        <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
           <span>{name}</span>
 {req.household_avg_rating && (
   <span className="text-xs px-2 py-0.5 rounded-full font-medium"
@@ -777,7 +782,7 @@ function RequestCard({ req, onUpdate, showActions, showComplete, onView, onSetCo
           {req.preferred_date && (
             <><span>·</span>
             <span>Prefers {req.preferred_date}</span></>
-          )}  
+          )}
         </div>
       </div>
       <div className="flex gap-2 shrink-0">
@@ -803,7 +808,7 @@ function RequestCard({ req, onUpdate, showActions, showComplete, onView, onSetCo
 )}
         {showComplete && (
   <button onClick={() => { onSetConfirm(req) }}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium text-white transition hover:opacity-90"
             style={{ backgroundColor:'#1A4D35' }}>
             Mark done
           </button>
