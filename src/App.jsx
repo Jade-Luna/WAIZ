@@ -19,6 +19,8 @@ import ChooseRole from './pages/ChooseRole'
 import ContactModal from './components/ContactModal'
 import { useState } from 'react'
 import About from './pages/About'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 
 const RoleGuard = () => {
   const { user, profile, loading } = useAuth()
@@ -137,6 +139,8 @@ const dashRedirect = profile?.role === 'junkshop'
       <Route path="/signup" element={<Signup />} />
       <Route path="/choose-role" element={<ChooseRole />} />
       <Route path="/junkshop/:id" element={<JunkshopProfile />} />
+      <Route path="/privacy" element={<Privacy />} />
+<Route path="/terms" element={<Terms />} />
       <Route path="/post-item" element={
         <ProtectedRoute allowedRole="household"><PostItem /></ProtectedRoute>
       } />
