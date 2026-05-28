@@ -441,7 +441,11 @@ export default function Home() {
         </div>
         <div className="border-t pt-4 md:pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left" style={{ borderColor: '#2D6A4F' }}>
           <span className="text-xs" style={{ color: '#74C69D' }}>© 2025 WAIZ · Baguio City, Philippines</span>
-          <span className="text-xs" style={{ color: '#74C69D' }}>Making recycling rewarding for every Baguio home</span>
+          <div className="flex items-center gap-4">
+            <Link to="/privacy" className="text-xs hover:opacity-80 transition" style={{ color: '#74C69D', textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link to="/terms" className="text-xs hover:opacity-80 transition" style={{ color: '#74C69D', textDecoration: 'none' }}>Terms of Use</Link>
+            <span className="text-xs" style={{ color: '#74C69D' }}>Making recycling rewarding for every Baguio home</span>
+          </div>
         </div>
       </footer>
           {showContact && <ContactModal onClose={() => setShowContact(false)} />}
