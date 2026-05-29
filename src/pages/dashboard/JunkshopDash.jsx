@@ -852,18 +852,29 @@ function RequestCard({ req, onUpdate, showActions, showComplete, onView, onSetCo
       style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
       Awaiting household
     </span>
-  ) : (
-    req.status === 'offered' ? (
+  ) : req.status === 'offered' ? (
+    <div className="flex gap-2">
       <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
         style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
         Offer sent ✓
       </span>
-    ) : (
-      <button onClick={() => onView(req)}
-        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-500 hover:bg-gray-50 transition">
-        View details
+      <button onClick={() => onUpdate(req.id, 'cancelled')}
+        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition">
+        Cancel
       </button>
-    )
+    </div>
+  ) : (
+    <div className="flex gap-2">
+      <button onClick={() => onView(req)}
+        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+        style={{ backgroundColor:'#1A4D35' }}>
+        View & offer
+      </button>
+      <button onClick={() => onUpdate(req.id, 'cancelled')}
+        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition">
+        Cancel
+      </button>
+    </div>
   )
 )}
         {showComplete && (

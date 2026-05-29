@@ -167,11 +167,18 @@ const fetchData = async () => {
 
     console.log('Pickup updated successfully, status now:', status)
 
-    if (status === 'cancelled' && pickup?.listing_id) {
-      await supabase.from('listings')
-        .update({ status: 'available' })
-        .eq('id', pickup.listing_id)
-      setRequests(prev => prev.filter(r => r.id !== id))
+    if (status === 'cancelled') {
+      if (pickup?.listing_id) {
+        await supabase.from('listings')
+          .update({ status: 'available' })
+          .eq('id', pickup.listing_id)
+      }
+      await supabase.from('pickups')
+        .update({ status: 'requested', offered_price: null })
+        .eq('id', id)
+      setRequests(prev => prev.map(r =>
+        r.id === id ? { ...r, status: 'requested', offered_price: null } : r
+      ))
       setActionInProgress(null)
       return
     }
