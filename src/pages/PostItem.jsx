@@ -2,15 +2,16 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase/config'
 import { useAuth } from '../context/AuthContext'
+import { Wrench, FileText, FlaskConical, MonitorSmartphone, GlassWater, Shirt, MoreHorizontal } from 'lucide-react'
 
 const CATEGORIES = [
-  { key:'metal',      label:'Metal',      sub:'Scrap, pipes, cans',     bg:'#E1F5EE', iconBg:'#B7E4C7', color:'#085041', abbr:'Fe' },
-  { key:'paper',      label:'Paper',      sub:'Cardboard, books',        bg:'#EAF3DE', iconBg:'#C0DD97', color:'#173404', abbr:'Pa' },
-  { key:'plastic',    label:'Plastic',    sub:'Bottles, containers',     bg:'#E6F1FB', iconBg:'#B5D4F4', color:'#042C53', abbr:'Pl' },
-  { key:'ewaste',     label:'E-waste',    sub:'Electronics, cables',     bg:'#FAEEDA', iconBg:'#FAC775', color:'#412402', abbr:'EW' },
-  { key:'glass',      label:'Glass',      sub:'Bottles, jars',           bg:'#EEEDFE', iconBg:'#CECBF6', color:'#26215C', abbr:'Gl' },
-  { key:'secondhand', label:'Secondhand', sub:'Clothes, appliances',     bg:'#FBEAF0', iconBg:'#F4C0D1', color:'#4B1528', abbr:'Uk' },
-  { key:'others', label:'Others', sub:'Mixed or uncategorized', bg:'#F1EFE8', iconBg:'#D3D1C7', color:'#2C2C2A', abbr:'++' },
+  { key:'metal',      label:'Metal',      sub:'Scrap, pipes, cans',       bg:'#E1F5EE', iconBg:'#B7E4C7', color:'#085041', icon:<Wrench size={18} /> },
+  { key:'paper',      label:'Paper',      sub:'Cardboard, books',          bg:'#EAF3DE', iconBg:'#C0DD97', color:'#173404', icon:<FileText size={18} /> },
+  { key:'plastic',    label:'Plastic',    sub:'Bottles, containers',       bg:'#E6F1FB', iconBg:'#B5D4F4', color:'#042C53', icon:<FlaskConical size={18} /> },
+  { key:'ewaste',     label:'E-waste',    sub:'Electronics, cables',       bg:'#FAEEDA', iconBg:'#FAC775', color:'#412402', icon:<MonitorSmartphone size={18} /> },
+  { key:'glass',      label:'Glass',      sub:'Bottles, jars',             bg:'#EEEDFE', iconBg:'#CECBF6', color:'#26215C', icon:<GlassWater size={18} /> },
+  { key:'secondhand', label:'Secondhand', sub:'Clothes, appliances',       bg:'#FBEAF0', iconBg:'#F4C0D1', color:'#4B1528', icon:<Shirt size={18} /> },
+  { key:'others',     label:'Others',     sub:'Mixed or uncategorized',    bg:'#F1EFE8', iconBg:'#D3D1C7', color:'#2C2C2A', icon:<MoreHorizontal size={18} /> },
 ]
 
 const BARANGAYS = [
@@ -207,10 +208,10 @@ for (const file of photoFileList) {
                       backgroundColor: form.category === cat.key ? cat.bg      : '#fff',
                       borderColor:     form.category === cat.key ? '#1A4D35'   : '#F3F4F6',
                     }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2 text-xs font-medium"
-                      style={{ backgroundColor: cat.iconBg, color: cat.color }}>
-                      {cat.abbr}
-                    </div>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2"
+  style={{ backgroundColor: cat.iconBg, color: cat.color }}>
+  {cat.icon}
+</div>
                     <div className="text-sm font-medium text-gray-700">{cat.label}</div>
                     <div className="text-xs text-gray-400 mt-1">{cat.sub}</div>
                   </div>

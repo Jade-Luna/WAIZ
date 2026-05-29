@@ -21,9 +21,9 @@ const isHome = location.pathname === '/'
       justifyContent: 'space-between',
       padding: '0 24px',
       minHeight: '56px',
-      borderBottom: isHome ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e8f0e4',
+      borderBottom: isHome ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e8ede4',
       backdropFilter: 'blur(4px)',
-      backgroundColor: isHome ? 'rgba(10,26,12,0.8)' : '#cce0d6',
+      backgroundColor: isHome ? 'rgba(10,26,12,0.8)' : 'rgba(255,255,255,0.95)',
     }}>
 
       <style>{`

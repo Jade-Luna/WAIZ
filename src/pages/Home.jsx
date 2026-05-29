@@ -5,16 +5,16 @@ import Navigation from '../components/Navigation'
 import ContactModal from '../components/ContactModal'
 import TermsModal    from '../components/TermsModal'
 import PrivacyModal  from '../components/PrivacyModal'
-
+import { Wrench, FileText, FlaskConical, MonitorSmartphone, GlassWater, Shirt } from 'lucide-react'
 // ─── data ────────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { key: 'metal',      label: 'Metal',      sub: 'Scrap, pipes, cans',   bg: '#E1F5EE', iconBg: '#B7E4C7', iconColor: '#085041', abbr: 'Fe' },
-  { key: 'paper',      label: 'Paper',      sub: 'Cardboard, books',      bg: '#EAF3DE', iconBg: '#C0DD97', iconColor: '#173404', abbr: 'Pa' },
-  { key: 'plastic',    label: 'Plastic',    sub: 'Bottles, containers',   bg: '#E6F1FB', iconBg: '#B5D4F4', iconColor: '#042C53', abbr: 'Pl' },
-  { key: 'ewaste',     label: 'E-waste',    sub: 'Electronics, cables',   bg: '#FAEEDA', iconBg: '#FAC775', iconColor: '#412402', abbr: 'EW' },
-  { key: 'glass',      label: 'Glass',      sub: 'Bottles, jars',         bg: '#EEEDFE', iconBg: '#CECBF6', iconColor: '#26215C', abbr: 'Gl' },
-  { key: 'secondhand', label: 'Secondhand', sub: 'Clothes, appliances',   bg: '#FBEAF0', iconBg: '#F4C0D1', iconColor: '#4B1528', abbr: 'Uk' },
+  { key: 'metal',      label: 'Metal',      sub: 'Scrap, pipes, cans',   bg: '#E1F5EE', iconBg: '#B7E4C7', iconColor: '#085041', icon: <Wrench size={20} /> },
+  { key: 'paper',      label: 'Paper',      sub: 'Cardboard, books',     bg: '#EAF3DE', iconBg: '#C0DD97', iconColor: '#173404', icon: <FileText size={20} /> },
+  { key: 'plastic',    label: 'Plastic',    sub: 'Bottles, containers',  bg: '#E6F1FB', iconBg: '#B5D4F4', iconColor: '#042C53', icon: <FlaskConical size={20} /> },
+  { key: 'ewaste',     label: 'E-waste',    sub: 'Electronics, cables',  bg: '#FAEEDA', iconBg: '#FAC775', iconColor: '#412402', icon: <MonitorSmartphone size={20} /> },
+  { key: 'glass',      label: 'Glass',      sub: 'Bottles, jars',        bg: '#EEEDFE', iconBg: '#CECBF6', iconColor: '#26215C', icon: <GlassWater size={20} /> },
+  { key: 'secondhand', label: 'Secondhand', sub: 'Clothes, appliances',  bg: '#FBEAF0', iconBg: '#F4C0D1', iconColor: '#4B1528', icon: <Shirt size={20} /> },
 ]
 
 const STEPS = {
@@ -288,10 +288,10 @@ export default function Home() {
               <Link to={`/browse?category=${cat.key}`} key={cat.key}
                 className="rounded-2xl p-3 md:p-4 text-center border border-gray-100 hover:border-green-300 transition cursor-pointer"
                 style={{ backgroundColor: cat.bg }}>
-                <div className="w-8 md:w-10 h-8 md:h-10 rounded-xl flex items-center justify-center mx-auto mb-2 text-xs font-medium"
-                  style={{ backgroundColor: cat.iconBg, color: cat.iconColor }}>
-                  {cat.abbr}
-                </div>
+                <div className="w-8 md:w-10 h-8 md:h-10 rounded-xl flex items-center justify-center mx-auto mb-2"
+  style={{ backgroundColor: cat.iconBg, color: cat.iconColor }}>
+  {cat.icon}
+</div>
                 <div className="text-xs md:text-sm font-medium text-gray-700">{cat.label}</div>
                 <div className="text-xs text-gray-400 mt-1 hidden md:block">{cat.sub}</div>
               </Link>
