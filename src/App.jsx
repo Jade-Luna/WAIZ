@@ -79,31 +79,50 @@ const ProtectedRoute = ({ children, allowedRole }) => {
 
 function ContactSupport() {
   const [show, setShow] = useState(false)
+  
   return (
     <>
       <div style={{
-        textAlign:       'center',
-        padding:         '12px',
-        fontSize:        '12px',
-        color:           '#9CA3AF',
-        backgroundColor: '#FEFDF8',
-        borderTop:       '1px solid #F3F4F6',
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        zIndex: 40,
       }}>
-        Need help?{' '}
+        {/* Subtle help button */}
         <button
           onClick={() => setShow(true)}
+          title="Support"
           style={{
-            color:      '#1A4D35',
-            background: 'none',
-            border:     'none',
-            cursor:     'pointer',
-            fontSize:   '12px',
-            padding:    '0',
-            textDecoration: 'underline',
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(26, 77, 53, 0.8)',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#a8e898',
+            fontSize: '20px',
+            fontWeight: 'bold',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.2s ease',
+            opacity: 0.7,
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.opacity = '1'
+            e.target.style.backgroundColor = '#1A4D35'
+            e.target.style.boxShadow = '0 4px 12px rgba(26, 77, 53, 0.2)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.opacity = '0.7'
+            e.target.style.backgroundColor = 'rgba(26, 77, 53, 0.8)'
+            e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)'
           }}>
-          Contact support
+          ?
         </button>
       </div>
+      
       {show && <ContactModal onClose={() => setShow(false)} />}
     </>
   )

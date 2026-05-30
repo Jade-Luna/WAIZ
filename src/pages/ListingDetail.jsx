@@ -329,7 +329,7 @@ const photos = listing?.photos?.filter(Boolean) || []
             <div className="flex items-center gap-3 text-sm text-gray-400 mb-4">
               {listing.weight_estimate && <span>~{listing.weight_estimate} kg</span>}
               {listing.weight_estimate && <span>·</span>}
-              <span>📍 {listing.profiles?.barangay || listing.barangay}</span>
+              <span>📍 {listing.barangay}</span>
               <span>·</span>
               <span>{timeAgo(listing.created_at)}</span>
             </div>
