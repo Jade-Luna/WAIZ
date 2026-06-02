@@ -89,6 +89,10 @@ const [photoPreviews, setPhotoPreviews] = useState([])
 
 const handleRequest = async () => {
   if (!requestForm.material_types.length) return
+  if (requestForm.preferred_date && !isValidPickupDate(requestForm.preferred_date)) {
+    alert('Please choose a pickup date between today and one year from now.')
+    return
+  }
   setRequesting(true)
 
   let photoUrls = []
@@ -167,6 +171,15 @@ const [requestForm, setRequestForm] = useState({
   household_address: '',
 })
 
+const minPickupDate = new Date().toISOString().split('T')[0]
+const maxPickupDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+const isValidPickupDate = (dateStr) => {
+  if (!dateStr) return true
+  const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return false
+  const iso = date.toISOString().split('T')[0]
+  return iso >= minPickupDate && iso <= maxPickupDate
+}
 
   const filtered = shops.filter(s => {
     const matchSearch   = s.shop_name.toLowerCase().includes(search.toLowerCase())
@@ -571,10 +584,15 @@ const [requestForm, setRequestForm] = useState({
               <input type="date"
                 className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
                 value={requestForm.preferred_date}
-                min={new Date().toISOString().split('T')[0]}
-                max={new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                min={minPickupDate}
+                max={maxPickupDate}
                 onChange={e => setRequestForm(p => ({ ...p, preferred_date: e.target.value }))}
               />
+              {requestForm.preferred_date && !isValidPickupDate(requestForm.preferred_date) && (
+                <p className="text-xs text-red-500 mt-1">
+                  Please select a date from today up to one year from now.
+                </p>
+              )}
             </div>
 
             {/* Note */}
@@ -600,6 +618,7 @@ const [requestForm, setRequestForm] = useState({
             <button
   onClick={handleRequest}
   disabled={requesting || !requestForm.material_types.length ||
+    (requestForm.preferred_date && !isValidPickupDate(requestForm.preferred_date)) ||
     (requestShop?.min_pickup_kg && requestForm.est_weight_kg &&
      parseFloat(requestForm.est_weight_kg) < requestShop.min_pickup_kg)}
               className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition"

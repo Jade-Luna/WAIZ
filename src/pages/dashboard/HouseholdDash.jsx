@@ -52,6 +52,15 @@ const [scheduleForm, setScheduleForm] = useState({
   pickup_type: 'pickup',
 })
 const [scheduling, setScheduling] = useState(false)
+const minScheduleDate = new Date().toISOString().split('T')[0]
+const maxScheduleDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+const isValidScheduledDate = (dateStr) => {
+  if (!dateStr) return false
+  const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return false
+  const iso = date.toISOString().split('T')[0]
+  return iso >= minScheduleDate && iso <= maxScheduleDate
+}
   const [history,  setHistory]    = useState([])
   const [dataLoaded, setDataLoaded] = useState(false)
   const [deleteId, setDeleteId]   = useState(null)
@@ -207,6 +216,10 @@ const fetchData = async () => {
 
 const handleConfirmSchedule = async () => {
   if (!schedulePickup || !scheduleForm.confirmed_date) return
+  if (!isValidScheduledDate(scheduleForm.confirmed_date)) {
+    alert('Please choose a valid pickup date between today and one year from now.')
+    return
+  }
   setScheduling(true)
 
   await supabase.from('pickups').update({
@@ -718,11 +731,16 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
           </label>
           <input type="date"
   className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700"
-  min={new Date().toISOString().split('T')[0]}
-  max={new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+  min={minScheduleDate}
+  max={maxScheduleDate}
   value={scheduleForm.confirmed_date}
   onChange={e => setScheduleForm(p => ({ ...p, confirmed_date: e.target.value }))}
 />
+          {!isValidScheduledDate(scheduleForm.confirmed_date) && scheduleForm.confirmed_date && (
+            <p className="text-xs text-red-500 mt-1">
+              Please select a valid date from today up to one year from now.
+            </p>
+          )}
         </div>
 
         {/* Time */}
@@ -760,7 +778,7 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
         </button>
         <button
           onClick={handleConfirmSchedule}
-          disabled={scheduling || !scheduleForm.confirmed_date}
+          disabled={scheduling || !scheduleForm.confirmed_date || !isValidScheduledDate(scheduleForm.confirmed_date)}
           className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
           style={{ backgroundColor: scheduleForm.confirmed_date ? '#1A4D35' : '#9CA3AF' }}>
           {scheduling ? 'Confirming...' : 'Confirm schedule'}
