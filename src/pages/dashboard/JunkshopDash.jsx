@@ -489,7 +489,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
             <div className="space-y-3">
               {requests
                 .filter(r => r.status === 'completed' || r.status === 'cancelled')
-                .map(req => <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} cardStyle={{borderLeft: '4px solid #085041', backgroundColor: '#08504108', boxShadow: '0 2px 8px rgba(45,90,39,0.06)'}} />)}
+                .map(req => <RequestCard key={req.id} req={req} onUpdate={handleUpdateStatus} />)}
             </div>
           )}
         </div>
@@ -800,24 +800,25 @@ function RequestCard({ req, onUpdate, showActions, showComplete, onView, onSetCo
 
 
   return (
-    <div className="rounded-2xl p-4 flex items-center gap-4 transition hover:shadow-md"
+    <div className="rounded-2xl p-4 flex flex-col gap-4 transition hover:shadow-md"
       style={{
         backgroundColor: '#C97A3A12',
         boxShadow: '0 2px 8px rgba(45,90,39,0.06)',
         ...cardStyle
       }}>
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
-        style={{ backgroundColor:'#D8F3DC', color:'#0D2B1F' }}>
-        {name?.slice(0,2).toUpperCase()}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span className="text-sm font-medium text-gray-800 truncate">{title}</span>
-          <span className="text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0"
-            style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-medium shrink-0"
+          style={{ backgroundColor:'#D8F3DC', color:'#0D2B1F' }}>
+          {name?.slice(0,2).toUpperCase()}
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
-          <span>{name}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="text-sm font-medium text-gray-800 truncate">{title}</span>
+            <span className="text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0"
+              style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+            <span>{name}</span>
 {req.household_avg_rating && (
   <span className="text-xs px-2 py-0.5 rounded-full font-medium"
     style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
@@ -828,63 +829,72 @@ function RequestCard({ req, onUpdate, showActions, showComplete, onView, onSetCo
 {!req.household_avg_rating && (
   <span className="text-xs text-gray-300">No ratings yet</span>
 )}
-          <span>·</span>
-          <span>{barangay}</span>
-          {weight && <><span>·</span><span>~{weight} kg</span></>}
-          {req.material_types?.length > 0 && (
-            <><span>·</span><span>{req.material_types.join(', ')}</span></>
-          )}
-          {req.offered_price && (
-            <><span>·</span>
-            <span className="font-medium" style={{ color:'#1A4D35' }}>₱{req.offered_price}/kg</span></>
-          )}
-          {/* Request details for household-initiated pickups */}
-          {req.preferred_date && (
-            <><span>·</span>
-            <span>Prefers {req.preferred_date}</span></>
+            <span>·</span>
+            <span>{barangay}</span>
+            {weight && <><span>·</span><span>~{weight} kg</span></>}
+            {req.material_types?.length > 0 && (
+              <><span>·</span><span>{req.material_types.join(', ')}</span></>
+            )}
+            {req.offered_price && (
+              <><span>·</span>
+              <span className="font-medium" style={{ color:'#1A4D35' }}>₱{req.offered_price}/kg</span></>
+            )}
+            {/* Request details for household-initiated pickups */}
+            {req.preferred_date && (
+              <><span>·</span>
+              <span>Prefers {req.preferred_date}</span></>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          {showActions && (
+    req.listing_id ? (
+      <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
+        style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
+        Awaiting household
+      </span>
+    ) : req.status === 'offered' ? (
+      <div className="flex gap-2">
+        <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
+          style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
+          Offer sent ✓
+        </span>
+        <button onClick={() => onUpdate(req.id, 'cancelled')}
+          className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition">
+          Cancel
+        </button>
+      </div>
+    ) : (
+      <div className="flex gap-2">
+        <button onClick={() => onView(req)}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+          style={{ backgroundColor:'#1A4D35' }}>
+          View & offer
+        </button>
+        <button onClick={() => onUpdate(req.id, 'cancelled')}
+          className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition">
+          Cancel
+        </button>
+      </div>
+    )
+  )}
+          {showComplete && (
+    <button onClick={() => { onSetConfirm(req) }}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-white transition hover:opacity-90"
+              style={{ backgroundColor:'#1A4D35' }}>
+              Mark done
+            </button>
           )}
         </div>
       </div>
-      <div className="flex gap-2 shrink-0">
-        {showActions && (
-  req.listing_id ? (
-    <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
-      style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
-      Awaiting household
-    </span>
-  ) : req.status === 'offered' ? (
-    <div className="flex gap-2">
-      <span className="text-xs px-3 py-1.5 rounded-lg font-medium"
-        style={{ backgroundColor:'#D8F3DC', color:'#085041' }}>
-        Offer sent ✓
-      </span>
-      <button onClick={() => onUpdate(req.id, 'cancelled')}
-        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition">
-        Cancel
-      </button>
-    </div>
-  ) : (
-    <div className="flex gap-2">
-      <button onClick={() => onView(req)}
-        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white"
-        style={{ backgroundColor:'#1A4D35' }}>
-        View & offer
-      </button>
-      <button onClick={() => onUpdate(req.id, 'cancelled')}
-        className="px-3 py-1.5 rounded-lg text-xs border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition">
-        Cancel
-      </button>
-    </div>
-  )
-)}
-        {showComplete && (
-  <button onClick={() => { onSetConfirm(req) }}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium text-white transition hover:opacity-90"
-            style={{ backgroundColor:'#1A4D35' }}>
-            Mark done
-          </button>
-        )}
-      </div>
+
+      {req.status === 'cancelled' && req.decline_reason && (
+        <div className="pt-3 border-t border-gray-100">
+          <p className="text-xs text-gray-500">
+            <span className="font-medium">📋 Reason for decline:</span> {req.decline_reason}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

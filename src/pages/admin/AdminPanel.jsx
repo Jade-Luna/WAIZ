@@ -77,7 +77,9 @@ const [pickups,   setPickups]   = useState([])
   const [search,    setSearch]    = useState('')
   const [userRoleFilter, setUserRoleFilter] = useState('all')
   const [userBarangayFilter, setUserBarangayFilter] = useState('all')
+  const [junkshopSortBy, setJunkshopSortBy] = useState('rating_high')
   const [loading,   setLoading]   = useState(false)
+  const [ratingTab, setRatingTab] = useState('junkshop')
   const [reports,       setReports]       = useState([])
 const [announcement,  setAnnouncement]  = useState('')
 const [sending,       setSending]       = useState(false)
@@ -310,6 +312,19 @@ const handleDeleteRating = async (id, junkshopId, type) => {
   const filteredListings = listings
   .filter(l => l.title?.toLowerCase().includes(search.toLowerCase()))
   .sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+
+  const sortedJunkshops = [...junkshops].sort((a, b) => {
+    if (junkshopSortBy === 'rating_high') {
+      return (b.rating || 0) - (a.rating || 0)
+    } else if (junkshopSortBy === 'rating_low') {
+      return (a.rating || 0) - (b.rating || 0)
+    } else if (junkshopSortBy === 'no_rating') {
+      const aHasRating = a.rating && a.rating > 0 ? 1 : 0
+      const bHasRating = b.rating && b.rating > 0 ? 1 : 0
+      return aHasRating - bHasRating
+    }
+    return 0
+  })
 
   const totalKg = MATERIAL_DATA.reduce((s, m) => s + m.kg, 0)
 
@@ -1443,10 +1458,42 @@ const handleDeleteRating = async (id, junkshopId, type) => {
         <h2 className="text-xl font-medium text-gray-800">Ratings management</h2>
         <p className="text-sm text-gray-400 mt-0.5">{ratings.length} total ratings</p>
       </div>
-      <span className="text-xs px-3 py-1.5 rounded-full font-medium"
-        style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
-        ★ {ratings.length > 0 ? (ratings.reduce((s,r) => s + r.score, 0) / ratings.length).toFixed(1) : '—'} avg
-      </span>
+      <div className="flex items-center gap-3">
+        {/* Tabs */}
+        <div className="flex gap-2 border border-gray-200 rounded-xl p-1">
+          <button
+            onClick={() => setRatingTab('junkshop')}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium transition"
+            style={{
+              backgroundColor: ratingTab === 'junkshop' ? '#1A4D35' : 'transparent',
+              color: ratingTab === 'junkshop' ? '#fff' : '#6B7280',
+            }}>
+            Junkshop ratings
+          </button>
+          <button
+            onClick={() => setRatingTab('household')}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium transition"
+            style={{
+              backgroundColor: ratingTab === 'household' ? '#1A4D35' : 'transparent',
+              color: ratingTab === 'household' ? '#fff' : '#6B7280',
+            }}>
+            Household ratings
+          </button>
+        </div>
+
+        <select
+          value={junkshopSortBy}
+          onChange={e => setJunkshopSortBy(e.target.value)}
+          className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-600 outline-none">
+          <option value="rating_high">Highest rating first</option>
+          <option value="rating_low">Lowest rating first</option>
+          <option value="no_rating">No ratings yet</option>
+        </select>
+        <span className="text-xs px-3 py-1.5 rounded-full font-medium"
+          style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
+          ★ {ratings.length > 0 ? (ratings.reduce((s,r) => s + r.score, 0) / ratings.length).toFixed(1) : '—'} avg
+        </span>
+      </div>
     </div>
     {ratings.length === 0 ? (
       <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
@@ -1456,49 +1503,70 @@ const handleDeleteRating = async (id, junkshopId, type) => {
       </div>
     ) : (
       <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-        <div className="grid px-5 py-3 border-b border-gray-100"
-          style={{ gridTemplateColumns:'2fr 2fr 1fr 1fr auto' }}>
-          {['Type','From','To','Score','Date',].map(h => (
-            <span key={h} className="text-xs font-medium uppercase tracking-wide"
-              style={{ color:'#9CA3AF', letterSpacing:'0.05em' }}>{h}</span>
-          ))}
-        </div>
-        {ratings.map(r => (
-          <div key={r.id}
-            className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50"
-            style={{ gridTemplateColumns:'2fr 2fr 1fr 1fr auto' }}>
-            <span className="text-xs px-2 py-0.5 rounded-full font-medium w-fit"
-  style={{
-    backgroundColor: r.type === 'household_rated' ? '#E6F1FB' : '#D8F3DC',
-    color:           r.type === 'household_rated' ? '#042C53' : '#085041',
-  }}>
-  {r.type === 'household_rated' ? 'Household' : 'Junkshop'}
-</span>
-
-<span className="text-sm text-gray-700">
-  {r.type === 'household_rated'
-    ? (r.junkshop?.full_name || '—')
-    : (r.household?.full_name || '—')}
-</span>
-
-<span className="text-sm text-gray-500">
-  {r.type === 'household_rated'
-    ? (r.household?.full_name || '—')
-    : (r.junkshops?.shop_name || '—')}
-</span>
-
-<span style={{ color:'#C97A3A', fontSize:'14px' }}>
-  {'★'.repeat(r.score)}{'☆'.repeat(5 - r.score)}
-  <span className="text-xs text-gray-400 ml-1">{r.score}/5</span>
-</span>
-
-<span className="text-xs text-gray-400">
-  {new Date(r.created_at).toLocaleDateString('en-PH')}
-</span>
-
-
-          </div>
-        ))}
+        {ratingTab === 'junkshop' ? (
+          <>
+            <div className="grid px-5 py-3 border-b border-gray-100"
+              style={{ gridTemplateColumns:'2fr 2fr 1fr 1fr auto' }}>
+              {['Shop Name','Featured Status','Average Rating','Pickups',''].map(h => (
+                <span key={h} className="text-xs font-medium uppercase tracking-wide"
+                  style={{ color:'#9CA3AF', letterSpacing:'0.05em' }}>{h}</span>
+              ))}
+            </div>
+            {sortedJunkshops.map((shop, idx) => (
+              <div key={`${shop.id}-${idx}`}
+                className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50"
+                style={{ gridTemplateColumns:'2fr 2fr 1fr 1fr auto' }}>
+                <span className="text-sm font-medium text-gray-700">
+                  {shop.shop_name || '—'}
+                </span>
+                <span className="text-sm text-gray-500">
+                  {shop.is_featured ? '⭐ Featured' : 'Regular'}
+                </span>
+                <span style={{ color:'#C97A3A', fontSize:'14px' }}>
+                  {'★'.repeat(Math.round(shop.rating || 0))}{'☆'.repeat(5 - Math.round(shop.rating || 0))}
+                  <span className="text-xs text-gray-400 ml-1">{shop.rating || '0'}/5</span>
+                </span>
+                <span className="text-xs text-gray-500">
+                  {shop.total_pickups || 0}
+                </span>
+                <span></span>
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <div className="grid px-5 py-3 border-b border-gray-100"
+              style={{ gridTemplateColumns:'2fr 2fr 1fr 1fr auto' }}>
+              {['Type','From','To','Score','Date',].map(h => (
+                <span key={h} className="text-xs font-medium uppercase tracking-wide"
+                  style={{ color:'#9CA3AF', letterSpacing:'0.05em' }}>{h}</span>
+              ))}
+            </div>
+            {ratings.filter(r => r.type === 'household_rated').map(r => (
+              <div key={r.id}
+                className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50"
+                style={{ gridTemplateColumns:'2fr 2fr 1fr 1fr auto' }}>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium w-fit"
+                  style={{ backgroundColor:'#E6F1FB', color:'#042C53' }}>
+                  Household
+                </span>
+                <span className="text-sm text-gray-700">
+                  {r.junkshop?.full_name || '—'}
+                </span>
+                <span className="text-sm text-gray-500">
+                  {r.household?.full_name || '—'}
+                </span>
+                <span style={{ color:'#C97A3A', fontSize:'14px' }}>
+                  {'★'.repeat(r.score)}{'☆'.repeat(5 - r.score)}
+                  <span className="text-xs text-gray-400 ml-1">{r.score}/5</span>
+                </span>
+                <span className="text-xs text-gray-400">
+                  {new Date(r.created_at).toLocaleDateString('en-PH')}
+                </span>
+              </div>
+            ))}
+          </>
+        )}
       </div>
     )}
   </div>

@@ -70,6 +70,10 @@ const isValidScheduledDate = (dateStr) => {
   const [ratingPickup, setRatingPickup] = useState(null)
 const [ratingScore,  setRatingScore]  = useState(0)
 const [ratingDone,   setRatingDone]   = useState(false)
+const [declinePickup, setDeclinePickup] = useState(null)
+const [declineReason, setDeclineReason] = useState('')
+const [declineOther, setDeclineOther] = useState('')
+const [decliningPickup, setDecliningPickup] = useState(false)
 
   useEffect(() => {
   if (!user) return
@@ -160,6 +164,14 @@ const fetchData = async () => {
       return
     }
 
+    if (status === 'cancelled') {
+      setDeclinePickup(pickup)
+      setDeclineReason('')
+      setDeclineOther('')
+      setActionInProgress(null)
+      return
+    }
+
     console.log('Updating pickup:', { id, status, pickup })
 
     const { error: updateError } = await supabase
@@ -176,22 +188,6 @@ const fetchData = async () => {
 
     console.log('Pickup updated successfully, status now:', status)
 
-    if (status === 'cancelled') {
-      if (pickup?.listing_id) {
-        await supabase.from('listings')
-          .update({ status: 'available' })
-          .eq('id', pickup.listing_id)
-      }
-      await supabase.from('pickups')
-        .update({ status: 'requested', offered_price: null })
-        .eq('id', id)
-      setRequests(prev => prev.map(r =>
-        r.id === id ? { ...r, status: 'requested', offered_price: null } : r
-      ))
-      setActionInProgress(null)
-      return
-    }
-
     if (status === 'accepted') {
       setSchedulePickup(pickup)
       setScheduleForm({
@@ -204,7 +200,6 @@ const fetchData = async () => {
       return
     }
 
-    // For other statuses, update local state
     setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r))
     setActionInProgress(null)
   } catch (err) {
@@ -274,6 +269,54 @@ const handleRate = async (score) => {
     setRatingDone(false)
     fetchData()
   }, 2000)
+}
+
+const handleDeclineConfirm = async () => {
+  if (!declinePickup || !declineReason) {
+    alert('Please select a reason for declining')
+    return
+  }
+
+  const finalReason = declineReason === 'other' ? declineOther : declineReason
+  if (!finalReason.trim()) {
+    alert('Please provide a reason')
+    return
+  }
+
+  setDecliningPickup(true)
+
+  try {
+    const { error: updateError } = await supabase
+      .from('pickups')
+      .update({ status: 'cancelled', decline_reason: finalReason })
+      .eq('id', declinePickup.id)
+
+    if (updateError) {
+      console.error('Decline error:', updateError)
+      alert(`Error: ${updateError.message}`)
+      setDecliningPickup(false)
+      return
+    }
+
+    if (declinePickup?.listing_id) {
+      await supabase.from('listings')
+        .update({ status: 'available' })
+        .eq('id', declinePickup.listing_id)
+    }
+
+    setRequests(prev => prev.map(r =>
+      r.id === declinePickup.id ? { ...r, status: 'cancelled', decline_reason: finalReason } : r
+    ))
+    setDecliningPickup(false)
+    setDeclinePickup(null)
+    setDeclineReason('')
+    setDeclineOther('')
+    fetchData()
+  } catch (err) {
+    console.error('handleDeclineConfirm error:', err)
+    alert(`Error: ${err.message}`)
+    setDecliningPickup(false)
+  }
 }
 
   const totalKg = history.reduce((s, h) => s + parseFloat(h.actual_weight_kg || h.listings?.weight_estimate || 0), 0)
@@ -438,7 +481,7 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
                       </div>
                     </div>
                     <div className="flex gap-2 shrink-0">
-                      {req.listing_id ? (
+                      {req.listing_id && req.status !== 'accepted' ? (
                         <>
                           <button
                             onClick={() => handlePickupAction(req.id, 'cancelled')}
@@ -455,7 +498,7 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
                             {actionInProgress === req.id ? 'Processing...' : 'Accept'}
                           </button>
                         </>
-                      ) : req.status === 'offered' ? (
+                      ) : req.status === 'offered' && req.status !== 'accepted' ? (
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-medium" style={{ color:'#1A4D35' }}>
                             ₱{req.offered_price}/kg offered
@@ -902,6 +945,73 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
         style={{ backgroundColor:'#1A4D35' }}>
         Close
       </button>
+    </div>
+  </div>
+)}
+
+{declinePickup && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+    style={{ backgroundColor:'rgba(0,0,0,0.4)' }}
+    onClick={() => setDeclinePickup(null)}>
+    <div className="bg-white rounded-2xl p-5 w-full max-w-xs"
+      onClick={e => e.stopPropagation()}>
+
+      <div className="text-center mb-4">
+        <div className="text-2xl mb-2">👋</div>
+        <h3 className="text-xs font-medium text-gray-800">Why are you declining?</h3>
+        <p className="text-xs text-gray-400 mt-0.5">
+          This helps junkshops improve their offers
+        </p>
+      </div>
+
+      <div className="space-y-2 mb-4">
+        {[
+          { value: 'price_low', label: 'Price too low' },
+          { value: 'location', label: 'Location inconvenient' },
+          { value: 'already_sold', label: 'Already sold' },
+          { value: 'changed_mind', label: 'Changed my mind' },
+          { value: 'not_ready', label: "Don't have items ready yet" },
+          { value: 'other', label: 'Other (please specify)' },
+        ].map(option => (
+          <label key={option.value} className="flex items-start gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition border-2"
+            style={{ borderColor: declineReason === option.value ? '#1A4D35' : '#E5E7EB' }}>
+            <input type="radio"
+              name="decline_reason"
+              value={option.value}
+              checked={declineReason === option.value}
+              onChange={e => setDeclineReason(e.target.value)}
+              className="mt-0.5 shrink-0"
+              style={{ accentColor: '#1A4D35' }} />
+            <span className="text-xs text-gray-700">{option.label}</span>
+          </label>
+        ))}
+      </div>
+
+      {declineReason === 'other' && (
+        <div className="mb-4">
+          <textarea
+            className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl outline-none focus:border-green-700 transition resize-none"
+            placeholder="Please tell us why..."
+            rows="2"
+            value={declineOther}
+            onChange={e => setDeclineOther(e.target.value)}
+          />
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <button onClick={() => setDeclinePickup(null)}
+          className="flex-1 py-2 rounded-xl text-xs border border-gray-200 text-gray-500">
+          Cancel
+        </button>
+        <button
+          onClick={handleDeclineConfirm}
+          disabled={decliningPickup || !declineReason}
+          className="flex-1 py-2 rounded-xl text-xs font-medium text-white transition"
+          style={{ backgroundColor: declineReason && !decliningPickup ? '#DC2626' : '#9CA3AF' }}>
+          {decliningPickup ? 'Declining...' : 'Confirm decline'}
+        </button>
+      </div>
     </div>
   </div>
 )}

@@ -156,10 +156,6 @@ console.log('User ID:', user.id)
 console.log('Listing posted_by:', listing.posted_by)
 
   if (!error) {
-  await supabase.from('listings')
-    .update({ status: 'pending' })
-    .eq('id', listing.id)
-
   await supabase.from('messages').insert({
     sender_id:   user.id,
     receiver_id: listing.posted_by,
