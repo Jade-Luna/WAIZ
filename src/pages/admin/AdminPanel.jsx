@@ -318,13 +318,60 @@ const handleDeleteRating = async (id, junkshopId, type) => {
       return (b.rating || 0) - (a.rating || 0)
     } else if (junkshopSortBy === 'rating_low') {
       return (a.rating || 0) - (b.rating || 0)
-    } else if (junkshopSortBy === 'no_rating') {
-      const aHasRating = a.rating && a.rating > 0 ? 1 : 0
-      const bHasRating = b.rating && b.rating > 0 ? 1 : 0
-      return aHasRating - bHasRating
     }
     return 0
   })
+
+  const filteredJunkshopsForRatings = (() => {
+    if (junkshopSortBy === 'all') {
+      return sortedJunkshops
+    } else if (junkshopSortBy === 'rating_high') {
+      const maxRating = Math.max(...junkshops.map(s => s.rating || 0))
+      return sortedJunkshops.filter(s => (s.rating || 0) === maxRating)
+    } else if (junkshopSortBy === 'rating_low') {
+      const minRating = Math.min(...junkshops.map(s => s.rating || 0))
+      return sortedJunkshops.filter(s => (s.rating || 0) === minRating)
+    }
+    return sortedJunkshops
+  })()
+
+  const filteredHouseholdRatings = (() => {
+    const householdRatings = ratings.filter(r => r.type === 'household_rated')
+
+    // Group ratings by household
+    const groupedByHousehold = {}
+    householdRatings.forEach(r => {
+      const householdId = r.household_id
+      if (!groupedByHousehold[householdId]) {
+        groupedByHousehold[householdId] = {
+          household: r.household,
+          ratings: [],
+          avgScore: 0,
+          totalScore: 0
+        }
+      }
+      groupedByHousehold[householdId].ratings.push(r)
+      groupedByHousehold[householdId].totalScore += r.score
+    })
+
+    // Calculate averages
+    const combined = Object.values(groupedByHousehold).map(item => ({
+      ...item,
+      avgScore: (item.totalScore / item.ratings.length).toFixed(1)
+    }))
+
+    // Apply filters
+    if (junkshopSortBy === 'all') {
+      return combined.sort((a, b) => b.avgScore - a.avgScore)
+    } else if (junkshopSortBy === 'rating_high') {
+      const maxScore = Math.max(...combined.map(c => c.avgScore || 0))
+      return combined.filter(c => parseFloat(c.avgScore || 0) === maxScore).sort((a, b) => b.avgScore - a.avgScore)
+    } else if (junkshopSortBy === 'rating_low') {
+      const minScore = Math.min(...combined.map(c => c.avgScore || 0))
+      return combined.filter(c => parseFloat(c.avgScore || 0) === minScore).sort((a, b) => a.avgScore - b.avgScore)
+    }
+    return combined
+  })()
 
   const totalKg = MATERIAL_DATA.reduce((s, m) => s + m.kg, 0)
 
@@ -1485,9 +1532,9 @@ const handleDeleteRating = async (id, junkshopId, type) => {
           value={junkshopSortBy}
           onChange={e => setJunkshopSortBy(e.target.value)}
           className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-600 outline-none">
-          <option value="rating_high">Highest rating first</option>
-          <option value="rating_low">Lowest rating first</option>
-          <option value="no_rating">No ratings yet</option>
+          <option value="all">All ratings</option>
+          <option value="rating_high">Highest rating</option>
+          <option value="rating_low">Lowest rating</option>
         </select>
         <span className="text-xs px-3 py-1.5 rounded-full font-medium"
           style={{ backgroundColor:'#FAEEDA', color:'#7A3F08' }}>
@@ -1512,7 +1559,7 @@ const handleDeleteRating = async (id, junkshopId, type) => {
                   style={{ color:'#9CA3AF', letterSpacing:'0.05em' }}>{h}</span>
               ))}
             </div>
-            {sortedJunkshops.map((shop, idx) => (
+            {filteredJunkshopsForRatings.map((shop, idx) => (
               <div key={`${shop.id}-${idx}`}
                 className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50"
                 style={{ gridTemplateColumns:'2fr 2fr 1fr 1fr auto' }}>
@@ -1537,32 +1584,29 @@ const handleDeleteRating = async (id, junkshopId, type) => {
           <>
             <div className="grid px-5 py-3 border-b border-gray-100"
               style={{ gridTemplateColumns:'2fr 2fr 1fr 1fr auto' }}>
-              {['Type','From','To','Score','Date',].map(h => (
+              {['Household Name','Junkshops','Average Rating','Total Ratings',''].map(h => (
                 <span key={h} className="text-xs font-medium uppercase tracking-wide"
                   style={{ color:'#9CA3AF', letterSpacing:'0.05em' }}>{h}</span>
               ))}
             </div>
-            {ratings.filter(r => r.type === 'household_rated').map(r => (
-              <div key={r.id}
+            {filteredHouseholdRatings.map((item, idx) => (
+              <div key={`${item.household?.id}-${idx}`}
                 className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50"
                 style={{ gridTemplateColumns:'2fr 2fr 1fr 1fr auto' }}>
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium w-fit"
-                  style={{ backgroundColor:'#E6F1FB', color:'#042C53' }}>
-                  Household
-                </span>
-                <span className="text-sm text-gray-700">
-                  {r.junkshop?.full_name || '—'}
+                <span className="text-sm font-medium text-gray-700">
+                  {item.household?.full_name || '—'}
                 </span>
                 <span className="text-sm text-gray-500">
-                  {r.household?.full_name || '—'}
+                  {item.ratings.length} junkshop{item.ratings.length !== 1 ? 's' : ''}
                 </span>
                 <span style={{ color:'#C97A3A', fontSize:'14px' }}>
-                  {'★'.repeat(r.score)}{'☆'.repeat(5 - r.score)}
-                  <span className="text-xs text-gray-400 ml-1">{r.score}/5</span>
+                  {'★'.repeat(Math.round(item.avgScore))}{'☆'.repeat(5 - Math.round(item.avgScore))}
+                  <span className="text-xs text-gray-400 ml-1">{item.avgScore}/5</span>
                 </span>
-                <span className="text-xs text-gray-400">
-                  {new Date(r.created_at).toLocaleDateString('en-PH')}
+                <span className="text-xs text-gray-500">
+                  {item.ratings.length}
                 </span>
+                <span></span>
               </div>
             ))}
           </>
