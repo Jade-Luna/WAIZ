@@ -62,7 +62,7 @@ export default function PostItem() {
     description: '',
     weight_estimate: '',
     condition: 'mixed',
-    barangay: '',
+    barangay: profile?.barangay || '',
     address_note: '',
     preferred_day: '',
     preferred_time: '',

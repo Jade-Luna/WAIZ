@@ -478,6 +478,7 @@ const totalEarned = history.reduce((s, h) => s + parseFloat(h.final_price || h.o
                         <span className="mx-2">·</span>
                         Offered: <span className="font-medium" style={{ color:'#1A4D35' }}>₱{req.offered_price}/kg</span>
                         {req.junkshop?.barangay && <><span className="mx-2">·</span>{req.junkshop.barangay}</>}
+                        {req.junkshop_note && <><span className="mx-2">·</span>Note: <span className="text-gray-600">{req.junkshop_note}</span></>}
                       </div>
                     </div>
                     <div className="flex gap-2 shrink-0">

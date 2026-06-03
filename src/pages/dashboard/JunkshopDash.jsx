@@ -48,6 +48,7 @@ export default function JunkshopDash() {
   const [searchParams]    = useSearchParams()
   const [viewRequest,  setViewRequest]  = useState(null)
 const [offerPrice,   setOfferPrice]   = useState('')
+const [offerNote,    setOfferNote]    = useState('')
 const [offering,     setOffering]     = useState(false)
   const activeTab         = searchParams.get('tab') || 'requests'
     const [customRates,  setCustomRates]  = useState([
