@@ -144,7 +144,7 @@ if (combined.length > 0) setRatings(combined)
 
     const { data: pickupData } = await supabase
   .from('pickups')
-  .select('*, listings(title), profiles!household_id(full_name), junkshops(shop_name)')
+  .select('*, listings(title), profiles!household_id(full_name), junkshop_id')
   .order('created_at', { ascending: false })
 
     if (usersData)              setUsers(usersData.length     > 0 ? usersData    : [])
@@ -420,11 +420,10 @@ const handleDeleteRating = async (id, junkshopId, type) => {
         ['WAIZ - Pickup Transactions Report'],
         [`Generated: ${new Date().toLocaleDateString('en-PH')}`],
         [''],
-        ['Transaction ID', 'Household/User Name', 'Junkshop Name', 'Pickup Date', 'Waste Type', 'Weight', 'Amount', 'Status'],
+        ['Transaction ID', 'Household/User Name', 'Pickup Date', 'Waste Type', 'Weight', 'Amount', 'Status'],
         ...reportData.map(p => [
           p.id,
           p.profiles?.full_name || '—',
-          p.junkshops?.shop_name || '—',
           p.created_at?.slice(0, 10) || '—',
           p.material_types?.join(', ') || '—',
           p.est_weight_kg ? `${p.est_weight_kg} kg` : '—',
