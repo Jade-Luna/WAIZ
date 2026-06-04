@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../supabase/config'
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext"
+import jsPDF from 'jspdf'
+import * as XLSX from 'xlsx'
 
 const NAV = [
   { key:'overview',      label:'Overview',       icon:<DashIcon />    },
@@ -87,6 +89,51 @@ const [announceSent,  setAnnounceSent]  = useState(false)
 const [ratings, setRatings] = useState([])
 const [pickupYearFilter, setPickupYearFilter] = useState('all')
 const [pickupArchiveFilter, setPickupArchiveFilter] = useState('active')
+
+// Utility functions for year filtering
+const getYearFromDate = (dateStr) => {
+  return dateStr ? new Date(dateStr).getFullYear() : null
+}
+
+const getAvailableYears = () => {
+  const years = new Set()
+  years.add(2026)
+  pickups.forEach(p => {
+    if (p.created_at) years.add(getYearFromDate(p.created_at))
+  })
+  return Array.from(years).sort((a, b) => b - a)
+}
+
+// Filter pickups based on year and archive status
+const filteredPickups = pickups.filter(p => {
+  if (pickupYearFilter !== 'all') {
+    const pickupYear = getYearFromDate(p.created_at)
+    if (pickupYear !== parseInt(pickupYearFilter)) return false
+  }
+
+  if (pickupArchiveFilter === 'active') return !p.is_archived
+  if (pickupArchiveFilter === 'archived') return p.is_archived
+
+  return true
+})
+
+// Archive/Restore function
+const handleArchivePickup = async (pickupId, isArchiving) => {
+  const { error } = await supabase
+    .from('pickups')
+    .update({
+      is_archived: isArchiving,
+      archived_at: isArchiving ? new Date().toISOString() : null
+    })
+    .eq('id', pickupId)
+
+  if (error) {
+    console.error('Archive error:', error)
+    alert('Failed to archive transaction: ' + error.message)
+  } else {
+    fetchData()
+  }
+}
 
   useEffect(() => {
   if (!user) return
@@ -375,43 +422,6 @@ const handleDeleteRating = async (id, junkshopId, type) => {
     return combined
   })()
 
-  const getYearFromDate = (dateStr) => {
-    return dateStr ? new Date(dateStr).getFullYear() : null
-  }
-
-  const getAvailableYears = () => {
-    const years = new Set()
-    years.add(2026)
-    pickups.forEach(p => {
-      if (p.created_at) years.add(getYearFromDate(p.created_at))
-    })
-    return Array.from(years).sort().reverse()
-  }
-
-  const filteredPickups = pickups.filter(p => {
-    if (pickupYearFilter !== 'all') {
-      const pickupYear = getYearFromDate(p.created_at)
-      if (pickupYear !== parseInt(pickupYearFilter)) return false
-    }
-
-    if (pickupArchiveFilter === 'active') return !p.is_archived
-    if (pickupArchiveFilter === 'archived') return p.is_archived
-
-    return true
-  })
-
-  const handleArchivePickup = async (pickupId, isArchiving) => {
-    const { error } = await supabase
-      .from('pickups')
-      .update({
-        is_archived: isArchiving,
-        archived_at: isArchiving ? new Date().toISOString() : null
-      })
-      .eq('id', pickupId)
-
-    if (!error) fetchData()
-  }
-
   const downloadPickupsReport = (format) => {
     const reportData = filteredPickups
 
@@ -442,6 +452,100 @@ const handleDeleteRating = async (id, junkshopId, type) => {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+    } else if (format === 'pdf') {
+      const doc = new jsPDF()
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      let yPosition = 15
+
+      // Header
+      doc.setFontSize(14)
+      doc.setTextColor(26, 77, 53)
+      doc.text('WAIZ - Pickup Transactions Report', 14, yPosition)
+      yPosition += 8
+
+      doc.setFontSize(10)
+      doc.setTextColor(107, 114, 128)
+      doc.text(`Generated: ${new Date().toLocaleDateString('en-PH')}`, 14, yPosition)
+      yPosition += 10
+
+      // Table headers
+      doc.setFontSize(9)
+      doc.setTextColor(26, 77, 53)
+      doc.setFont(undefined, 'bold')
+      const headers = ['ID', 'Household', 'Date', 'Waste Type', 'Weight', 'Amount', 'Status']
+      const colWidths = [15, 25, 18, 35, 18, 18, 18]
+      let xPosition = 14
+
+      headers.forEach((header, i) => {
+        doc.text(header, xPosition, yPosition)
+        xPosition += colWidths[i]
+      })
+      yPosition += 8
+
+      // Table data
+      doc.setFont(undefined, 'normal')
+      doc.setFontSize(8)
+      doc.setTextColor(55, 65, 81)
+
+      reportData.forEach(p => {
+        if (yPosition > pageHeight - 20) {
+          doc.addPage()
+          yPosition = 15
+
+          // Repeat headers on new page
+          doc.setFontSize(9)
+          doc.setTextColor(26, 77, 53)
+          doc.setFont(undefined, 'bold')
+          xPosition = 14
+          headers.forEach((header, i) => {
+            doc.text(header, xPosition, yPosition)
+            xPosition += colWidths[i]
+          })
+          yPosition += 8
+          doc.setFont(undefined, 'normal')
+          doc.setFontSize(8)
+          doc.setTextColor(55, 65, 81)
+        }
+
+        xPosition = 14
+        const row = [
+          p.id.slice(0, 8),
+          (p.profiles?.full_name || '—').slice(0, 15),
+          p.created_at?.slice(0, 10) || '—',
+          (p.material_types?.join(', ') || '—').slice(0, 20),
+          p.est_weight_kg ? `${p.est_weight_kg}kg` : '—',
+          p.offered_price ? `₱${p.offered_price}` : '—',
+          p.status.slice(0, 8)
+        ]
+
+        row.forEach((cell, i) => {
+          doc.text(String(cell), xPosition, yPosition)
+          xPosition += colWidths[i]
+        })
+        yPosition += 6
+      })
+
+      doc.save(`PickupTransactions_${new Date().getTime()}.pdf`)
+    } else if (format === 'excel') {
+      const wb = XLSX.utils.book_new()
+      const wsData = [
+        ['Transaction ID', 'Household/User Name', 'Pickup Date', 'Waste Type', 'Weight', 'Amount', 'Status'],
+        ...reportData.map(p => [
+          p.id,
+          p.profiles?.full_name || '—',
+          p.created_at?.slice(0, 10) || '—',
+          p.material_types?.join(', ') || '—',
+          p.est_weight_kg ? `${p.est_weight_kg} kg` : '—',
+          p.offered_price ? `₱${p.offered_price}` : '—',
+          p.status
+        ])
+      ]
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData)
+      ws['!cols'] = [{ wch: 12 }, { wch: 20 }, { wch: 12 }, { wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 12 }]
+      XLSX.utils.book_append_sheet(wb, ws, 'Pickup Transactions')
+      XLSX.writeFile(wb, `PickupTransactions_${new Date().getTime()}.xlsx`)
     }
   }
 
@@ -921,6 +1025,28 @@ const handleDeleteRating = async (id, junkshopId, type) => {
                       <line x1="12" y1="15" x2="12" y2="3"/>
                     </svg>
                     CSV
+                  </button>
+                  <button
+                    onClick={() => downloadPickupsReport('pdf')}
+                    className="px-3 py-2 rounded-lg text-xs font-medium text-white flex items-center gap-1.5 transition hover:shadow-lg"
+                    style={{ backgroundColor: '#DC2626', boxShadow: '0 2px 8px rgba(220, 38, 38, 0.2)' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    PDF
+                  </button>
+                  <button
+                    onClick={() => downloadPickupsReport('excel')}
+                    className="px-3 py-2 rounded-lg text-xs font-medium text-white flex items-center gap-1.5 transition hover:shadow-lg"
+                    style={{ backgroundColor: '#16A34A', boxShadow: '0 2px 8px rgba(22, 163, 74, 0.2)' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Excel
                   </button>
                 </div>
               </div>
