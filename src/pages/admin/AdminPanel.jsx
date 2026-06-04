@@ -89,6 +89,9 @@ const [announceSent,  setAnnounceSent]  = useState(false)
 const [ratings, setRatings] = useState([])
 const [pickupYearFilter, setPickupYearFilter] = useState('all')
 const [pickupArchiveFilter, setPickupArchiveFilter] = useState('active')
+const [archivingId, setArchivingId] = useState(null)
+const [selectedPickups, setSelectedPickups] = useState(new Set())
+const [archivingBulk, setArchivingBulk] = useState(false)
 
 // Utility functions for year filtering
 const getYearFromDate = (dateStr) => {
@@ -119,19 +122,91 @@ const filteredPickups = pickups.filter(p => {
 
 // Archive/Restore function
 const handleArchivePickup = async (pickupId, isArchiving) => {
-  const { error } = await supabase
-    .from('pickups')
-    .update({
+  setArchivingId(pickupId)
+  console.log('Archiving pickup:', pickupId, 'isArchiving:', isArchiving)
+  try {
+    const updateData = {
       is_archived: isArchiving,
       archived_at: isArchiving ? new Date().toISOString() : null
-    })
-    .eq('id', pickupId)
+    }
+    console.log('Update data:', updateData)
 
-  if (error) {
-    console.error('Archive error:', error)
-    alert('Failed to archive transaction: ' + error.message)
+    const { data, error } = await supabase
+      .from('pickups')
+      .update(updateData)
+      .eq('id', pickupId)
+      .select()
+
+    console.log('Update response - Data:', data, 'Error:', error)
+
+    if (error) {
+      console.error('Archive error:', error)
+      alert('Failed to update transaction: ' + error.message)
+    } else {
+      console.log('Archive successful, fetching data...')
+      await fetchData()
+    }
+  } catch (err) {
+    console.error('Archive exception:', err)
+    alert('Error: ' + err.message)
+  } finally {
+    setArchivingId(null)
+  }
+}
+
+// Toggle individual checkbox
+const togglePickupSelection = (pickupId) => {
+  const newSet = new Set(selectedPickups)
+  if (newSet.has(pickupId)) {
+    newSet.delete(pickupId)
   } else {
-    fetchData()
+    newSet.add(pickupId)
+  }
+  setSelectedPickups(newSet)
+}
+
+// Select all checkboxes
+const toggleSelectAll = () => {
+  if (selectedPickups.size === filteredPickups.length) {
+    setSelectedPickups(new Set())
+  } else {
+    setSelectedPickups(new Set(filteredPickups.map(p => p.id)))
+  }
+}
+
+// Bulk archive selected pickups
+const bulkArchivePickups = async (shouldArchive) => {
+  if (selectedPickups.size === 0) {
+    alert('Please select transactions to archive')
+    return
+  }
+
+  setArchivingBulk(true)
+  try {
+    const picksupIds = Array.from(selectedPickups)
+    console.log('Bulk archiving:', picksupIds, 'shouldArchive:', shouldArchive)
+
+    const { error } = await supabase
+      .from('pickups')
+      .update({
+        is_archived: shouldArchive,
+        archived_at: shouldArchive ? new Date().toISOString() : null
+      })
+      .in('id', picksupIds)
+
+    if (error) {
+      console.error('Bulk archive error:', error)
+      alert('Failed to archive transactions: ' + error.message)
+    } else {
+      console.log('Bulk archive successful')
+      setSelectedPickups(new Set())
+      await fetchData()
+    }
+  } catch (err) {
+    console.error('Bulk archive exception:', err)
+    alert('Error: ' + err.message)
+  } finally {
+    setArchivingBulk(false)
   }
 }
 
@@ -191,7 +266,7 @@ if (combined.length > 0) setRatings(combined)
 
     const { data: pickupData } = await supabase
   .from('pickups')
-  .select('*, listings(title), profiles!household_id(full_name), junkshop_id')
+  .select('*, listings(title), profiles!household_id(full_name), junkshop_id, is_archived, archived_at')
   .order('created_at', { ascending: false })
 
     if (usersData)              setUsers(usersData.length     > 0 ? usersData    : [])
@@ -987,7 +1062,33 @@ const handleDeleteRating = async (id, junkshopId, type) => {
                 </div>
 
                 {/* Download Buttons */}
-                <div className="flex gap-2 ml-auto">
+                <div className="flex gap-2 ml-auto items-center">
+                  {selectedPickups.size > 0 && (
+                    <>
+                      <span className="text-xs text-gray-600 font-medium">
+                        {selectedPickups.size} selected
+                      </span>
+                      {pickupArchiveFilter !== 'archived' && (
+                        <button
+                          onClick={() => bulkArchivePickups(true)}
+                          disabled={archivingBulk}
+                          className="px-3 py-2 rounded-lg text-xs font-medium text-white flex items-center gap-1.5 transition hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ backgroundColor: '#F97316' }}>
+                          Bulk Archive
+                        </button>
+                      )}
+                      {pickupArchiveFilter !== 'active' && (
+                        <button
+                          onClick={() => bulkArchivePickups(false)}
+                          disabled={archivingBulk}
+                          className="px-3 py-2 rounded-lg text-xs font-medium text-white flex items-center gap-1.5 transition hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ backgroundColor: '#8B5CF6' }}>
+                          Bulk Restore
+                        </button>
+                      )}
+                      <div className="w-px h-6 bg-gray-300" />
+                    </>
+                  )}
                   <button
                     onClick={() => downloadPickupsReport('pdf')}
                     className="px-3 py-2 rounded-lg text-xs font-medium text-white flex items-center gap-1.5 transition hover:shadow-lg"
@@ -1015,7 +1116,13 @@ const handleDeleteRating = async (id, junkshopId, type) => {
 
               <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
                 <div className="grid text-xs font-medium text-gray-400 px-5 py-3 border-b border-gray-50"
-                  style={{ gridTemplateColumns:'2fr 1.5fr 1fr 1fr 1fr 0.8fr' }}>
+                  style={{ gridTemplateColumns:'0.5fr 2fr 1.5fr 1fr 1fr 1fr 0.8fr' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedPickups.size === filteredPickups.length && filteredPickups.length > 0}
+                    onChange={toggleSelectAll}
+                    className="cursor-pointer"
+                  />
                   <span>Listing / Materials</span><span>Household</span>
                   <span>Weight</span><span>Amount</span><span>Status</span><span>Action</span>
                 </div>
@@ -1029,7 +1136,13 @@ const handleDeleteRating = async (id, junkshopId, type) => {
                     return (
                       <div key={p.id}
                         className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50"
-                        style={{ gridTemplateColumns:'2fr 1.5fr 1fr 1fr 1fr 0.8fr' }}>
+                        style={{ gridTemplateColumns:'0.5fr 2fr 1.5fr 1fr 1fr 1fr 0.8fr' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedPickups.has(p.id)}
+                          onChange={() => togglePickupSelection(p.id)}
+                          className="cursor-pointer"
+                        />
                         <div className="min-w-0 pr-3">
                           <div className="text-sm font-medium text-gray-700 truncate">
                             {p.listings?.title || 'Direct request'}
@@ -1063,12 +1176,15 @@ const handleDeleteRating = async (id, junkshopId, type) => {
                         </span>
                         <button
                           onClick={() => handleArchivePickup(p.id, !p.is_archived)}
-                          className="px-2 py-1 rounded text-xs font-medium transition"
+                          disabled={archivingId === p.id}
+                          className="px-2 py-1 rounded text-xs font-medium transition hover:opacity-80 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{
                             backgroundColor: p.is_archived ? '#FEE2E2' : '#EFF6FF',
-                            color: p.is_archived ? '#991B1B' : '#1E40AF'
+                            color: p.is_archived ? '#991B1B' : '#1E40AF',
+                            cursor: archivingId === p.id ? 'not-allowed' : 'pointer',
+                            border: 'none'
                           }}>
-                          {p.is_archived ? 'Restore' : 'Archive'}
+                          {archivingId === p.id ? 'Loading...' : (p.is_archived ? 'Restore' : 'Archive')}
                         </button>
                       </div>
                     )
