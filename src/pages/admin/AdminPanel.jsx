@@ -85,6 +85,8 @@ const [announcement,  setAnnouncement]  = useState('')
 const [sending,       setSending]       = useState(false)
 const [announceSent,  setAnnounceSent]  = useState(false)
 const [ratings, setRatings] = useState([])
+const [pickupYearFilter, setPickupYearFilter] = useState('all')
+const [pickupArchiveFilter, setPickupArchiveFilter] = useState('active')
 
   useEffect(() => {
   if (!user) return
@@ -142,7 +144,7 @@ if (combined.length > 0) setRatings(combined)
 
     const { data: pickupData } = await supabase
   .from('pickups')
-  .select('*, listings(title), profiles!household_id(full_name)')
+  .select('*, listings(title), profiles!household_id(full_name), junkshops(shop_name)')
   .order('created_at', { ascending: false })
 
     if (usersData)              setUsers(usersData.length     > 0 ? usersData    : [])
@@ -372,6 +374,77 @@ const handleDeleteRating = async (id, junkshopId, type) => {
     }
     return combined
   })()
+
+  const getYearFromDate = (dateStr) => {
+    return dateStr ? new Date(dateStr).getFullYear() : null
+  }
+
+  const getAvailableYears = () => {
+    const years = new Set()
+    years.add(2026)
+    pickups.forEach(p => {
+      if (p.created_at) years.add(getYearFromDate(p.created_at))
+    })
+    return Array.from(years).sort().reverse()
+  }
+
+  const filteredPickups = pickups.filter(p => {
+    if (pickupYearFilter !== 'all') {
+      const pickupYear = getYearFromDate(p.created_at)
+      if (pickupYear !== parseInt(pickupYearFilter)) return false
+    }
+
+    if (pickupArchiveFilter === 'active') return !p.is_archived
+    if (pickupArchiveFilter === 'archived') return p.is_archived
+
+    return true
+  })
+
+  const handleArchivePickup = async (pickupId, isArchiving) => {
+    const { error } = await supabase
+      .from('pickups')
+      .update({
+        is_archived: isArchiving,
+        archived_at: isArchiving ? new Date().toISOString() : null
+      })
+      .eq('id', pickupId)
+
+    if (!error) fetchData()
+  }
+
+  const downloadPickupsReport = (format) => {
+    const reportData = filteredPickups
+
+    if (format === 'csv') {
+      const rows = [
+        ['WAIZ - Pickup Transactions Report'],
+        [`Generated: ${new Date().toLocaleDateString('en-PH')}`],
+        [''],
+        ['Transaction ID', 'Household/User Name', 'Junkshop Name', 'Pickup Date', 'Waste Type', 'Weight', 'Amount', 'Status'],
+        ...reportData.map(p => [
+          p.id,
+          p.profiles?.full_name || '—',
+          p.junkshops?.shop_name || '—',
+          p.created_at?.slice(0, 10) || '—',
+          p.material_types?.join(', ') || '—',
+          p.est_weight_kg ? `${p.est_weight_kg} kg` : '—',
+          p.offered_price ? `₱${p.offered_price}` : '—',
+          p.status
+        ])
+      ]
+
+      const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `PickupTransactions_${new Date().getTime()}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+  }
 
   const totalKg = MATERIAL_DATA.reduce((s, m) => s + m.kg, 0)
 
@@ -804,54 +877,116 @@ const handleDeleteRating = async (id, junkshopId, type) => {
             <div>
               <div className="mb-6">
                 <h2 className="text-xl font-medium text-gray-800">Pickup Transactions</h2>
-                <p className="text-sm text-gray-400 mt-0.5">{pickups.length} total pickup records</p>
+                <p className="text-sm text-gray-400 mt-0.5">{filteredPickups.length} of {pickups.length} records</p>
               </div>
+
+              {/* Filter Toolbar */}
+              <div className="mb-4 flex items-center gap-3 flex-wrap">
+                {/* Year Filter */}
+                <select
+                  value={pickupYearFilter}
+                  onChange={(e) => setPickupYearFilter(e.target.value)}
+                  className="px-3 py-2 rounded-lg border text-xs font-medium"
+                  style={{ borderColor: '#E5E7EB', color: '#374151' }}>
+                  <option value="all">All Years</option>
+                  {getAvailableYears().map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+
+                {/* Archive Status Tabs */}
+                <div className="flex gap-2 border border-gray-200 rounded-lg p-1" style={{ backgroundColor: '#F9FAFB' }}>
+                  {['active', 'archived', 'all'].map(filter => (
+                    <button
+                      key={filter}
+                      onClick={() => setPickupArchiveFilter(filter)}
+                      className="px-3 py-1.5 rounded-md text-xs font-medium transition"
+                      style={{
+                        backgroundColor: pickupArchiveFilter === filter ? '#D8F3DC' : 'transparent',
+                        color: pickupArchiveFilter === filter ? '#1A4D35' : '#6B7280'
+                      }}>
+                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Download Buttons */}
+                <div className="flex gap-2 ml-auto">
+                  <button
+                    onClick={() => downloadPickupsReport('csv')}
+                    className="px-3 py-2 rounded-lg text-xs font-medium text-white flex items-center gap-1.5 transition hover:shadow-lg"
+                    style={{ backgroundColor: '#C97A3A', boxShadow: '0 2px 8px rgba(201, 122, 58, 0.2)' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    CSV
+                  </button>
+                </div>
+              </div>
+
               <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
                 <div className="grid text-xs font-medium text-gray-400 px-5 py-3 border-b border-gray-50"
-  style={{ gridTemplateColumns:'2fr 1.5fr 1fr 1fr 1fr' }}>
-  <span>Listing / Materials</span><span>Household</span>
-  <span>Weight</span><span>Amount</span><span>Status</span>
-</div>
-                {pickups.map(p => {
-  const s = STATUS_STYLE[p.status] || STATUS_STYLE.pending
-  return (
-    <div key={p.id}
-      className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50"
-      style={{ gridTemplateColumns:'2fr 1.5fr 1fr 1fr 1fr' }}>
-      <div className="min-w-0 pr-3">
-        <div className="text-sm font-medium text-gray-700 truncate">
-          {p.listings?.title || 'Direct request'}
-        </div>
-        {p.material_types?.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1">
-            {p.material_types.slice(0,3).map(m => (
-              <span key={m} className="text-xs px-1.5 py-0.5 rounded-full"
-                style={{ backgroundColor:'#D8F3DC', color:'#1A4D35' }}>
-                {m}
-              </span>
-            ))}
-          </div>
-        )}
-        {p.note && (
-          <div className="text-xs text-gray-400 mt-0.5 truncate">📝 {p.note}</div>
-        )}
-      </div>
-      <span className="text-sm text-gray-500">
-        {p.profiles?.full_name || '—'}
-      </span>
-      <span className="text-sm text-gray-500">
-        {p.est_weight_kg ? `~${p.est_weight_kg} kg` : '—'}
-      </span>
-      <span className="text-sm font-medium" style={{ color:'#1A4D35' }}>
-        {p.offered_price ? `₱${p.offered_price}` : '—'}
-      </span>
-      <span className="text-xs px-2.5 py-1 rounded-full font-medium w-fit"
-        style={{ backgroundColor: s.bg, color: s.color }}>
-        {p.status}
-      </span>
-    </div>
-  )
-})}
+                  style={{ gridTemplateColumns:'2fr 1.5fr 1fr 1fr 1fr 0.8fr' }}>
+                  <span>Listing / Materials</span><span>Household</span>
+                  <span>Weight</span><span>Amount</span><span>Status</span><span>Action</span>
+                </div>
+                {filteredPickups.length === 0 ? (
+                  <div className="px-5 py-8 text-center text-gray-400">
+                    <p className="text-sm">No transactions found</p>
+                  </div>
+                ) : (
+                  filteredPickups.map(p => {
+                    const s = STATUS_STYLE[p.status] || STATUS_STYLE.pending
+                    return (
+                      <div key={p.id}
+                        className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50"
+                        style={{ gridTemplateColumns:'2fr 1.5fr 1fr 1fr 1fr 0.8fr' }}>
+                        <div className="min-w-0 pr-3">
+                          <div className="text-sm font-medium text-gray-700 truncate">
+                            {p.listings?.title || 'Direct request'}
+                          </div>
+                          {p.material_types?.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {p.material_types.slice(0,3).map(m => (
+                                <span key={m} className="text-xs px-1.5 py-0.5 rounded-full"
+                                  style={{ backgroundColor:'#D8F3DC', color:'#1A4D35' }}>
+                                  {m}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {p.note && (
+                            <div className="text-xs text-gray-400 mt-0.5 truncate">📝 {p.note}</div>
+                          )}
+                        </div>
+                        <span className="text-sm text-gray-500">
+                          {p.profiles?.full_name || '—'}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {p.est_weight_kg ? `~${p.est_weight_kg} kg` : '—'}
+                        </span>
+                        <span className="text-sm font-medium" style={{ color:'#1A4D35' }}>
+                          {p.offered_price ? `₱${p.offered_price}` : '—'}
+                        </span>
+                        <span className="text-xs px-2.5 py-1 rounded-full font-medium w-fit"
+                          style={{ backgroundColor: s.bg, color: s.color }}>
+                          {p.status}
+                        </span>
+                        <button
+                          onClick={() => handleArchivePickup(p.id, !p.is_archived)}
+                          className="px-2 py-1 rounded text-xs font-medium transition"
+                          style={{
+                            backgroundColor: p.is_archived ? '#FEE2E2' : '#EFF6FF',
+                            color: p.is_archived ? '#991B1B' : '#1E40AF'
+                          }}>
+                          {p.is_archived ? 'Restore' : 'Archive'}
+                        </button>
+                      </div>
+                    )
+                  })
+                )}
               </div>
             </div>
           )}
