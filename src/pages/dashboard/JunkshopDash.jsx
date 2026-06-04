@@ -219,12 +219,21 @@ const handleCompleteAndRate = async (score) => {
 const handleOffer = async () => {
   if (!offerPrice || !viewRequest) return
   setOffering(true)
+  const noteValue = offerNote && offerNote.trim() ? offerNote.trim() : null
   const { error } = await supabase.from('pickups')
-    .update({ offered_price: parseFloat(offerPrice), status: 'offered' })
+    .update({
+      offered_price: parseFloat(offerPrice),
+      status: 'offered',
+      junkshop_note: noteValue
+    })
     .eq('id', viewRequest.id)
-  console.log('offer error:', JSON.stringify(error))
+  if (error) {
+    console.error('Update failed:', error)
+    alert('Error sending offer: ' + error.message)
+  }
   setOffering(false)
   setOfferPrice('')
+  setOfferNote('')
   setViewRequest(null)
   fetchData()
 }
@@ -632,7 +641,7 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
       {viewRequest?.status !== 'offered' && (
   <div className="mt-4 pt-4 border-t border-gray-100">
     <p className="text-xs font-medium text-gray-500 mb-2">Send a price offer</p>
-    <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-3 py-2">
+    <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-3 py-2 mb-3">
       <span className="text-xs text-gray-400">₱</span>
       <input
         type="number" min="0" step="0.5"
@@ -643,7 +652,19 @@ const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-xl o
       />
       <span className="text-xs text-gray-400">/kg</span>
     </div>
-    <div className="flex gap-2 mt-2">
+    <div className="mb-3">
+      <label className="block text-xs font-medium text-gray-500 mb-1.5">
+        Message <span className="text-gray-300 font-normal">— optional</span>
+      </label>
+      <textarea
+        className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-green-700 resize-none"
+        rows={2}
+        placeholder="e.g. We can pick up anytime this week"
+        value={offerNote}
+        onChange={e => setOfferNote(e.target.value)}
+      />
+    </div>
+    <div className="flex gap-2">
       <button
         onClick={() => { handleUpdateStatus(viewRequest.id, 'cancelled'); setViewRequest(null) }}
         className="flex-1 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">
