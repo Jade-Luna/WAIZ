@@ -92,6 +92,10 @@ const [pickupArchiveFilter, setPickupArchiveFilter] = useState('active')
 const [archivingId, setArchivingId] = useState(null)
 const [selectedPickups, setSelectedPickups] = useState(new Set())
 const [archivingBulk, setArchivingBulk] = useState(false)
+const [listingYearFilter, setListingYearFilter] = useState('all')
+const [listingArchiveFilter, setListingArchiveFilter] = useState('active')
+const [selectedListings, setSelectedListings] = useState(new Set())
+const [archivingListingBulk, setArchivingListingBulk] = useState(false)
 
 // Utility functions for year filtering
 const getYearFromDate = (dateStr) => {
@@ -207,6 +211,101 @@ const bulkArchivePickups = async (shouldArchive) => {
     alert('Error: ' + err.message)
   } finally {
     setArchivingBulk(false)
+  }
+}
+
+// Listings archive functions
+const getAvailableListingYears = () => {
+  const years = new Set()
+  years.add(2026)
+  listings.forEach(l => {
+    if (l.created_at) years.add(getYearFromDate(l.created_at))
+  })
+  return Array.from(years).sort((a, b) => b - a)
+}
+
+const filteredListingsArchive = listings.filter(l => {
+  if (listingYearFilter !== 'all') {
+    const listingYear = getYearFromDate(l.created_at)
+    if (listingYear !== parseInt(listingYearFilter)) return false
+  }
+
+  if (listingArchiveFilter === 'active') return !l.is_archived
+  if (listingArchiveFilter === 'archived') return l.is_archived
+
+  return true
+})
+
+const handleArchiveListing = async (listingId, isArchiving) => {
+  try {
+    const { error } = await supabase
+      .from('listings')
+      .update({
+        is_archived: isArchiving,
+        archived_at: isArchiving ? new Date().toISOString() : null
+      })
+      .eq('id', listingId)
+
+    if (error) {
+      console.error('Archive error:', error)
+      alert('Failed to archive listing: ' + error.message)
+    } else {
+      fetchData()
+    }
+  } catch (err) {
+    console.error('Archive exception:', err)
+    alert('Error: ' + err.message)
+  }
+}
+
+const toggleListingSelection = (listingId) => {
+  const newSet = new Set(selectedListings)
+  if (newSet.has(listingId)) {
+    newSet.delete(listingId)
+  } else {
+    newSet.add(listingId)
+  }
+  setSelectedListings(newSet)
+}
+
+const toggleSelectAllListings = () => {
+  if (selectedListings.size === filteredListings.length) {
+    setSelectedListings(new Set())
+  } else {
+    setSelectedListings(new Set(filteredListings.map(l => l.id)))
+  }
+}
+
+const bulkArchiveListings = async (shouldArchive) => {
+  if (selectedListings.size === 0) {
+    alert('Please select listings to archive')
+    return
+  }
+
+  setArchivingListingBulk(true)
+  try {
+    const listingIds = Array.from(selectedListings)
+
+    const { error } = await supabase
+      .from('listings')
+      .update({
+        is_archived: shouldArchive,
+        archived_at: shouldArchive ? new Date().toISOString() : null
+      })
+      .in('id', listingIds)
+
+    if (error) {
+      console.error('Bulk archive error:', error)
+      alert('Failed to archive listings: ' + error.message)
+    } else {
+      setSelectedListings(new Set())
+      await fetchData()
+    }
+  } catch (err) {
+    console.error('Bulk archive exception:', err)
+    alert('Error: ' + err.message)
+  } finally {
+    setArchivingListingBulk(false)
   }
 }
 
@@ -912,22 +1011,95 @@ const handleDeleteRating = async (id, junkshopId, type) => {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-xl font-medium text-gray-800">Listings Moderation</h2>
-                  <p className="text-sm text-gray-400 mt-0.5">{filteredListings.length} total listings</p>
+                  <p className="text-sm text-gray-400 mt-0.5">{filteredListingsArchive.length} of {listings.length} listings</p>
                 </div>
               </div>
+
+              {/* Filter Toolbar */}
+              <div className="mb-4 flex items-center gap-3 flex-wrap">
+                {/* Year Filter */}
+                <select
+                  value={listingYearFilter}
+                  onChange={(e) => setListingYearFilter(e.target.value)}
+                  className="px-3 py-2 rounded-lg border text-xs font-medium"
+                  style={{ borderColor: '#E5E7EB', color: '#374151' }}>
+                  <option value="all">All Years</option>
+                  {getAvailableListingYears().map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+
+                {/* Archive Status Tabs */}
+                <div className="flex gap-2 border border-gray-200 rounded-lg p-1" style={{ backgroundColor: '#F9FAFB' }}>
+                  {['active', 'archived', 'all'].map(filter => (
+                    <button
+                      key={filter}
+                      onClick={() => setListingArchiveFilter(filter)}
+                      className="px-3 py-1.5 rounded-md text-xs font-medium transition"
+                      style={{
+                        backgroundColor: listingArchiveFilter === filter ? '#D8F3DC' : 'transparent',
+                        color: listingArchiveFilter === filter ? '#1A4D35' : '#6B7280'
+                      }}>
+                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Bulk Archive Buttons */}
+                <div className="flex gap-2 ml-auto items-center">
+                  {selectedListings.size > 0 && (
+                    <>
+                      <span className="text-xs text-gray-600 font-medium">
+                        {selectedListings.size} selected
+                      </span>
+                      {listingArchiveFilter !== 'archived' && (
+                        <button
+                          onClick={() => bulkArchiveListings(true)}
+                          disabled={archivingListingBulk}
+                          className="px-3 py-2 rounded-lg text-xs font-medium text-white flex items-center gap-1.5 transition hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ backgroundColor: '#F97316' }}>
+                          Bulk Archive
+                        </button>
+                      )}
+                      {listingArchiveFilter !== 'active' && (
+                        <button
+                          onClick={() => bulkArchiveListings(false)}
+                          disabled={archivingListingBulk}
+                          className="px-3 py-2 rounded-lg text-xs font-medium text-white flex items-center gap-1.5 transition hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ backgroundColor: '#8B5CF6' }}>
+                          Bulk Restore
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
               <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
                 <div className="grid text-xs font-medium text-gray-400 px-5 py-3 border-b border-gray-50"
-                  style={{ gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr' }}>
+                  style={{ gridTemplateColumns:'0.5fr 2fr 1fr 1fr 1fr 1fr 0.8fr' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedListings.size === filteredListingsArchive.length && filteredListingsArchive.length > 0}
+                    onChange={toggleSelectAllListings}
+                    className="cursor-pointer"
+                  />
                   <span>Title</span><span>Category</span><span>Posted by</span>
                   <span>Barangay</span><span>Status</span><span>Actions</span>
                 </div>
-                {filteredListings.map(l => {
+                {filteredListingsArchive.map(l => {
                   const cat = CAT_COLORS[l.category] || CAT_COLORS.metal
                   const s   = STATUS_STYLE[l.status]  || STATUS_STYLE.available
                   return (
                     <div key={l.id}
                       className="grid items-center px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition"
-                      style={{ gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr auto' }}>
+                      style={{ gridTemplateColumns:'0.5fr 2fr 1fr 1fr 1fr 1fr 0.8fr' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedListings.has(l.id)}
+                        onChange={() => toggleListingSelection(l.id)}
+                        className="cursor-pointer"
+                      />
                       <span className="text-sm font-medium text-gray-700 truncate pr-3">{l.title}</span>
                       <span className="text-xs px-2.5 py-1 rounded-full font-medium w-fit"
                         style={{ backgroundColor: cat.bg, color: cat.color }}>
@@ -941,9 +1113,16 @@ const handleDeleteRating = async (id, junkshopId, type) => {
                         style={{ backgroundColor: s.bg, color: s.color }}>
                         {l.status}
                       </span>
-                      <button onClick={() => handleRemoveListing(l.id)}
-                        className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition">
-                        Remove
+                      <button
+                        onClick={() => handleArchiveListing(l.id, !l.is_archived)}
+                        className="text-xs px-3 py-1.5 rounded-lg font-medium transition hover:opacity-80"
+                        style={{
+                          backgroundColor: l.is_archived ? '#FEE2E2' : '#EFF6FF',
+                          color: l.is_archived ? '#991B1B' : '#1E40AF',
+                          border: 'none',
+                          cursor: 'pointer'
+                        }}>
+                        {l.is_archived ? 'Restore' : 'Archive'}
                       </button>
                     </div>
                   )
@@ -1231,7 +1410,7 @@ const handleDeleteRating = async (id, junkshopId, type) => {
             Baguio City Waste Diversion Report
           </h3>
           <p className="text-xs font-normal" style={{ color:'#B7E4C7' }}>
-            Live data for CENRO, SWMO, and DENR reporting
+           Realtime Data for reporting
           </p>
         </div>
         <div className="text-right ml-6">
@@ -1246,7 +1425,7 @@ const handleDeleteRating = async (id, junkshopId, type) => {
     </div>
 
     {/* Key metrics row */}
-    <div className="grid grid-cols-4 gap-3 mb-6">
+    <div className="grid grid-cols-4 gap-2 mb-6">
       {[
         {
           label: 'Household participation',
@@ -1277,7 +1456,7 @@ const handleDeleteRating = async (id, junkshopId, type) => {
           bg:    '#EAF3DE', color:'#173404', icon: '🌿', gradient: 'linear-gradient(135deg, #EAF3DE 0%, #C0DD97 100%)',
         },
       ].map(s => (
-        <div key={s.label} className="group rounded-xl p-3.5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer relative overflow-hidden" style={{
+        <div key={s.label} className="group rounded-xl p-2.5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer relative overflow-hidden" style={{
           background: s.gradient,
           border: `1.5px solid ${s.color}20`,
           boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
@@ -1287,7 +1466,7 @@ const handleDeleteRating = async (id, junkshopId, type) => {
 
           <div className="relative z-10">
             {/* Icon container */}
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg mb-2 transition-all duration-300 group-hover:scale-110" style={{
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base mb-1.5 transition-all duration-300 group-hover:scale-110" style={{
               backgroundColor: `${s.color}15`,
               border: `1px solid ${s.color}30`
             }}>
@@ -1295,12 +1474,12 @@ const handleDeleteRating = async (id, junkshopId, type) => {
             </div>
 
             {/* Value */}
-            <div className="text-2xl font-bold mb-0.5" style={{ color: s.color }}>
+            <div className="text-lg font-bold mb-0.5" style={{ color: s.color }}>
               {s.value}
             </div>
 
             {/* Label */}
-            <div className="text-xs font-semibold mb-1" style={{ color: s.color }}>
+            <div className="text-xs font-semibold mb-0.5" style={{ color: s.color }}>
               {s.label}
             </div>
 
@@ -1542,7 +1721,7 @@ const handleDeleteRating = async (id, junkshopId, type) => {
             Environmental Impact Report
           </h3>
           <p className="text-xs text-gray-500">
-            Suitable for DENR and international sustainability reporting
+            Suitable for international sustainability reporting
           </p>
         </div>
         <div className="space-y-2">
