@@ -1511,12 +1511,12 @@ const handleDeleteRating = async (id, junkshopId, type) => {
         </div>
         {(() => {
           const breakdown = [
-            { key:'metal',      label:'Metal',      color:'#085041', bg:'#D8F3DC' },
-            { key:'paper',      label:'Paper',      color:'#173404', bg:'#EAF3DE' },
-            { key:'plastic',    label:'Plastic',    color:'#042C53', bg:'#E6F1FB' },
-            { key:'ewaste',     label:'E-waste',    color:'#412402', bg:'#FAEEDA' },
-            { key:'glass',      label:'Glass',      color:'#26215C', bg:'#EEEDFE' },
-            { key:'secondhand', label:'Secondhand', color:'#4B1528', bg:'#FBEAF0' },
+            { key:'metal',      label:'Metal',      color:'#085041',  light:'#D8F3DC' },
+            { key:'paper',      label:'Paper',      color:'#173404',  light:'#EAF3DE' },
+            { key:'plastic',    label:'Plastic',    color:'#042C53',  light:'#E6F1FB' },
+            { key:'glass',      label:'Glass',      color:'#26215C',  light:'#EEEDFE' },
+            { key:'ewaste',     label:'E-waste',    color:'#7A3F08',  light:'#FAEEDA' },
+            { key:'secondhand', label:'Secondhand', color:'#4B1528',  light:'#FBEAF0' },
           ]
           const data = breakdown.map(b => ({
             ...b,
@@ -1525,67 +1525,106 @@ const handleDeleteRating = async (id, junkshopId, type) => {
               .reduce((s, l) => s + (l.weight_estimate || 0), 0)
           }))
           const maxKg = Math.max(...data.map(d => d.kg), 1)
-          const chartHeight = 180
-          const barWidth = 45
-          const chartWidth = data.length * 60 + 20
+          const chartHeight = 200
+          const barWidth = 50
+          const chartWidth = data.length * 65 + 60
 
           return (
-            <div className="overflow-x-auto -mx-1 px-1">
-              <svg width={chartWidth} height={chartHeight + 60} style={{ minWidth: '100%' }}>
-                {/* Y-axis labels */}
+            <div className="-mx-2 px-2">
+              <svg width={chartWidth} height={chartHeight + 80} style={{ minWidth: '100%', maxWidth: '100%' }}>
+                {/* Defs for gradients */}
+                <defs>
+                  {data.map(d => (
+                    <linearGradient key={`grad-${d.key}`} id={`grad-${d.key}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor={d.color} stopOpacity="0.9" />
+                      <stop offset="100%" stopColor={d.color} stopOpacity="0.6" />
+                    </linearGradient>
+                  ))}
+                </defs>
+
+                {/* Grid lines */}
                 {[0, 0.25, 0.5, 0.75, 1].map((percent, i) => {
-                  const kgValue = Math.round(maxKg * percent)
                   const y = chartHeight - (chartHeight * percent)
                   return (
-                    <g key={`y-${i}`}>
-                      <text x="18" y={y + 65} fontSize="11" fill="#9CA3AF" textAnchor="end" dominantBaseline="middle">
-                        {kgValue}
-                      </text>
+                    <g key={`grid-${i}`}>
                       {i > 0 && (
-                        <line x1="28" y1={y + 60} x2={chartWidth - 10} y2={y + 60} stroke="#E5E7EB" strokeWidth="1" strokeDasharray="2,2" />
+                        <line x1="50" y1={y + 65} x2={chartWidth - 10} y2={y + 65} stroke="#F3F4F6" strokeWidth="1.5" />
                       )}
                     </g>
                   )
                 })}
 
-                {/* Bars and labels */}
+                {/* Y-axis labels */}
+                {[0, 0.25, 0.5, 0.75, 1].map((percent, i) => {
+                  const kgValue = Math.round(maxKg * percent)
+                  const y = chartHeight - (chartHeight * percent)
+                  return (
+                    <text key={`label-${i}`} x="45" y={y + 70} fontSize="11" fontWeight="500" fill="#9CA3AF" textAnchor="end" dominantBaseline="middle">
+                      {kgValue}kg
+                    </text>
+                  )
+                })}
+
+                {/* Bars */}
                 {data.map((d, i) => {
                   const barHeight = (d.kg / maxKg) * chartHeight
-                  const x = 60 + i * 60
-                  const y = chartHeight + 60 - barHeight
+                  const x = 75 + i * 65
+                  const y = chartHeight + 65 - barHeight
 
                   return (
                     <g key={d.key}>
-                      {/* Bar */}
+                      {/* Shadow */}
+                      <rect
+                        x={x - barWidth / 2}
+                        y={y + 2}
+                        width={barWidth}
+                        height={barHeight}
+                        fill="#000"
+                        rx="6"
+                        opacity="0.05"
+                      />
+
+                      {/* Bar with gradient */}
                       <rect
                         x={x - barWidth / 2}
                         y={y}
                         width={barWidth}
                         height={barHeight}
-                        fill={d.color}
-                        rx="4"
-                        opacity="0.9"
-                        style={{ transition: 'opacity 0.2s' }}
+                        fill={`url(#grad-${d.key})`}
+                        rx="6"
+                        style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.08))' }}
                       />
 
-                      {/* Bar value label */}
+                      {/* Value label */}
                       <text
                         x={x}
-                        y={y - 8}
-                        fontSize="12"
-                        fontWeight="600"
+                        y={y - 12}
+                        fontSize="13"
+                        fontWeight="700"
                         fill={d.color}
                         textAnchor="middle"
                       >
-                        {d.kg > 0 ? `${Math.round(d.kg)}kg` : '—'}
+                        {d.kg > 0 ? `${Math.round(d.kg)}` : '0'}
                       </text>
 
-                      {/* X-axis label */}
+                      {/* Unit label */}
                       <text
                         x={x}
-                        y={chartHeight + 75}
-                        fontSize="12"
+                        y={y - 2}
+                        fontSize="10"
                         fontWeight="500"
+                        fill="#9CA3AF"
+                        textAnchor="middle"
+                      >
+                        kg
+                      </text>
+
+                      {/* Category label */}
+                      <text
+                        x={x}
+                        y={chartHeight + 78}
+                        fontSize="12"
+                        fontWeight="600"
                         fill="#374151"
                         textAnchor="middle"
                       >
@@ -1596,8 +1635,8 @@ const handleDeleteRating = async (id, junkshopId, type) => {
                 })}
 
                 {/* Axes */}
-                <line x1="28" y1="60" x2="28" y2={chartHeight + 60} stroke="#D1D5DB" strokeWidth="2" />
-                <line x1="28" y1={chartHeight + 60} x2={chartWidth - 10} y2={chartHeight + 60} stroke="#D1D5DB" strokeWidth="2" />
+                <line x1="50" y1="65" x2="50" y2={chartHeight + 65} stroke="#D1D5DB" strokeWidth="2" />
+                <line x1="50" y1={chartHeight + 65} x2={chartWidth - 10} y2={chartHeight + 65} stroke="#D1D5DB" strokeWidth="2" />
               </svg>
             </div>
           )
@@ -1643,37 +1682,61 @@ const handleDeleteRating = async (id, junkshopId, type) => {
           })
           const sorted = Object.entries(barangayCounts)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 8)
           const max = sorted[0]?.[1] || 1
 
+          const barangayColors = [
+            '#085041', '#173404', '#2D6B3F', '#042C53',
+            '#7A3F08', '#412402', '#26215C', '#1A4D35',
+            '#2F5233', '#1C3A3A', '#3D5A3D', '#234567'
+          ]
+
           if (sorted.length === 0) return (
-            <div className="text-center py-4">
+            <div className="text-center py-2">
               <p className="text-xs text-gray-400">No barangay data yet</p>
             </div>
           )
 
-          return sorted.map(([barangay, count], i) => (
-            <div key={barangay} className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
-                style={{ backgroundColor:'#1A4D35', color:'#fff' }}>
-                {i + 1}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs font-medium text-gray-700 truncate">{barangay}</span>
-                  <span className="font-bold ml-2 text-xs" style={{ color:'#1A4D35' }}>{count}</span>
-                </div>
-                <div className="h-1.5 rounded-full overflow-hidden bg-gray-100">
-                  <div className="h-full rounded-full transition-all duration-300"
-                    style={{
-                      width:`${(count/max)*100}%`,
-                      backgroundColor:'#1A4D35',
-                      boxShadow: '0 0 4px rgba(26, 77, 53, 0.6)'
-                    }} />
-                </div>
-              </div>
+          return (
+            <div className="space-y-1.5">
+              {sorted.map(([barangay, count], i) => {
+                const color = barangayColors[i % barangayColors.length]
+
+                return (
+                  <div key={barangay} className="flex items-center gap-2 group">
+                    {/* Rank Badge */}
+                    <div className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold shrink-0 flex-none"
+                      style={{ backgroundColor: `${color}25`, color: color, border: `1px solid ${color}40` }}>
+                      {i + 1}
+                    </div>
+
+                    {/* Barangay Name */}
+                    <div className="w-32 shrink-0">
+                      <p className="text-xs font-medium text-gray-700 truncate">{barangay}</p>
+                    </div>
+
+                    {/* Bar Container */}
+                    <div className="flex-1 min-w-0">
+                      <div className="h-1.5 rounded-full overflow-hidden bg-gray-100 relative">
+                        <div className="h-full rounded-full transition-all duration-500 group-hover:shadow-md"
+                          style={{
+                            width: `${(count / max) * 100}%`,
+                            background: `linear-gradient(90deg, ${color}70 0%, ${color} 100%)`,
+                            boxShadow: `0 0 4px ${color}30`
+                          }} />
+                      </div>
+                    </div>
+
+                    {/* Count Badge */}
+                    <div className="text-right shrink-0 flex-none w-10">
+                      <p className="text-xs font-bold" style={{ color: color }}>
+                        {count}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-          ))
+          )
         })()}
       </div>
     </div>
@@ -1714,37 +1777,124 @@ const handleDeleteRating = async (id, junkshopId, type) => {
         </div>
       </div>
 
-      {/* Environmental impact */}
-      <div className="bg-white rounded-2xl p-4 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }}>
-        <div className="mb-4">
+      {/* Environmental impact - Circular Progress Rings */}
+      <div className="bg-white rounded-2xl p-5 border border-gray-100" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }}>
+        <div className="mb-5">
           <h3 className="text-sm font-bold text-gray-900 mb-0.5">
             Environmental Impact Report
           </h3>
           <p className="text-xs text-gray-500">
-            Suitable for international sustainability reporting
+            Sustainability achievements — suitable for international reporting
           </p>
         </div>
-        <div className="space-y-2">
-          {[
-            { label:'Total kg diverted from SLF', value:`${stats.kg_diverted.toLocaleString()} kg`,      icon:'♻️', color: '#085041' },
-            { label:'CO₂ emissions avoided',       value:`${(stats.kg_diverted*0.5).toFixed(1)} kg CO₂`, icon:'🌿', color: '#173404' },
-            { label:'Tree planting equivalent',    value:`${Math.floor(stats.kg_diverted/15)} trees`,     icon:'🌳', color: '#2D6B3F' },
-            { label:'Water conserved',             value:`${(stats.kg_diverted*2).toLocaleString()} L`,   icon:'💧', color: '#042C53' },
-            { label:'E-waste properly handled',
-              value:`${listings.filter(l=>l.category==='ewaste').reduce((s,l)=>s+(l.weight_estimate||0),0)} kg`,
-              icon:'⚡', color: '#412402'
-            },
-          ].map(row => (
-            <div key={row.label}
-              className="flex items-center justify-between py-2 px-2.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition"
-              style={{ borderColor: `${row.color}15` }}>
-              <div className="flex items-center gap-2">
-                <span className="text-base">{row.icon}</span>
-                <span className="text-xs text-gray-600">{row.label}</span>
-              </div>
-              <span className="text-xs font-bold" style={{ color: row.color }}>{row.value}</span>
-            </div>
-          ))}
+
+        <div className="grid grid-cols-5 gap-4">
+          {(() => {
+            const metrics = [
+              {
+                label:'Waste Diverted',
+                value: stats.kg_diverted,
+                unit: 'kg',
+                icon:'♻️',
+                max: 10000,
+                color: '#085041',
+                lightColor: '#D8F3DC'
+              },
+              {
+                label:'CO₂ Avoided',
+                value: Math.round(stats.kg_diverted*0.5),
+                unit: 'kg',
+                icon:'🌿',
+                max: 5000,
+                color: '#173404',
+                lightColor: '#EAF3DE'
+              },
+              {
+                label:'Tree Equivalent',
+                value: Math.floor(stats.kg_diverted/15),
+                unit: 'trees',
+                icon:'🌳',
+                max: 500,
+                color: '#2D6B3F',
+                lightColor: '#C8E6C9'
+              },
+              {
+                label:'Water Conserved',
+                value: Math.round(stats.kg_diverted*2),
+                unit: 'L',
+                icon:'💧',
+                max: 20000,
+                color: '#042C53',
+                lightColor: '#E6F1FB'
+              },
+              {
+                label:'E-Waste Handled',
+                value: Math.round(listings.filter(l=>l.category==='ewaste').reduce((s,l)=>s+(l.weight_estimate||0),0)),
+                unit: 'kg',
+                icon:'⚡',
+                max: 5000,
+                color: '#7A3F08',
+                lightColor: '#FAEEDA'
+              },
+            ]
+
+            return metrics.map(metric => {
+              const percentage = Math.min((metric.value / metric.max) * 100, 100)
+              const circumference = 2 * Math.PI * 45
+              const strokeDashoffset = circumference - (percentage / 100) * circumference
+
+              return (
+                <div key={metric.label} className="flex flex-col items-center">
+                  {/* Circular Progress */}
+                  <div className="relative w-24 h-24 mb-3">
+                    <svg width="96" height="96" className="transform -rotate-90">
+                      {/* Background circle */}
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="45"
+                        fill="none"
+                        stroke={metric.lightColor}
+                        strokeWidth="6"
+                      />
+                      {/* Progress circle */}
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="45"
+                        fill="none"
+                        stroke={metric.color}
+                        strokeWidth="6"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={strokeDashoffset}
+                        strokeLinecap="round"
+                        style={{
+                          transition: 'stroke-dashoffset 0.5s ease-out'
+                        }}
+                      />
+                    </svg>
+
+                    {/* Center content */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <div className="text-2xl">{metric.icon}</div>
+                    </div>
+                  </div>
+
+                  {/* Metrics info */}
+                  <div className="text-center">
+                    <div className="text-xl font-bold" style={{ color: metric.color }}>
+                      {metric.value.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-600 mb-1">{metric.unit}</div>
+                    <div className="text-xs font-medium text-gray-700">{metric.label}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {percentage.toFixed(0)}% of est.
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          })()}
         </div>
       </div>
     </div>
